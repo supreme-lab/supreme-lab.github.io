@@ -846,92 +846,100 @@
           </table>
         </div>
 
-        <!-- 3. Scam-Baiting Generation -->
-        <div class="card">
-          <h3>3. Scam-Baiting Response Generation</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Dataset</th>
-                <th>Perplexity ↓</th>
-                <th>Dist-1 ↑</th>
-                <th>Dist-2 ↑</th>
-                <th>DialogRPT ↑</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>MASC</td>
-                <td>26.51</td>
-                <td>0.18</td>
-                <td>0.53</td>
-                <td>0.35</td>
-              </tr>
-              <tr>
-                <td>SASC</td>
-                <td>28.37</td>
-                <td>0.21</td>
-                <td>0.56</td>
-                <td>0.28</td>
-              </tr>
-              <tr>
-                <td>SSC</td>
-                <td><b>22.30</b></td>
-                <td><b>0.69</b></td>
-                <td><b>0.54</b></td>
-                <td><b>0.80</b></td>
-              </tr>
-              <tr>
-                <td>SSD</td>
-                <td>27.84</td>
-                <td>0.15</td>
-                <td>0.47</td>
-                <td>0.36</td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Side-by-side tables -->
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+
+          <!-- 3. Scam-Baiting Generation -->
+          <div class="card" style="flex:1; min-width:350px;">
+            <h3>3. Scam-Baiting Response Generation</h3>
+            <table border="1" cellspacing="0" cellpadding="5"
+              style="width:100%; border-collapse:collapse; text-align:center;">
+              <thead>
+                <tr>
+                  <th>Dataset</th>
+                  <th>Perplexity ↓</th>
+                  <th>Dist-1 ↑</th>
+                  <th>Dist-2 ↑</th>
+                  <th>DialogRPT ↑</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>MASC</td>
+                  <td>26.51</td>
+                  <td>0.18</td>
+                  <td>0.53</td>
+                  <td>0.35</td>
+                </tr>
+                <tr>
+                  <td>SASC</td>
+                  <td>28.37</td>
+                  <td>0.21</td>
+                  <td>0.56</td>
+                  <td>0.28</td>
+                </tr>
+                <tr>
+                  <td><b>SSC</b></td>
+                  <td><b>22.30</b></td>
+                  <td><b>0.69</b></td>
+                  <td><b>0.54</b></td>
+                  <td><b>0.80</b></td>
+                </tr>
+                <tr>
+                  <td>SSD</td>
+                  <td>27.84</td>
+                  <td>0.15</td>
+                  <td>0.47</td>
+                  <td>0.36</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 4. Human Evaluation -->
+          <div class="card" style="flex:1; min-width:350px;">
+            <h3>4. Human Evaluation</h3>
+            <table border="1" cellspacing="0" cellpadding="5"
+              style="width:100%; border-collapse:collapse; text-align:center;">
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>MD-Judge</th>
+                  <th>LlamaGuard3</th>
+                  <th>p-value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Realism (1–5)</td>
+                  <td>4.31 ± 0.52</td>
+                  <td>3.92 ± 0.61</td>
+                  <td>&lt;0.01</td>
+                </tr>
+                <tr>
+                  <td>Engagement (1–5)</td>
+                  <td>4.05 ± 0.60</td>
+                  <td>3.31 ± 0.65</td>
+                  <td>&lt;0.01</td>
+                </tr>
+                <tr>
+                  <td>Safety (%)</td>
+                  <td>96.0</td>
+                  <td>92.0</td>
+                  <td>&lt;0.05</td>
+                </tr>
+                <tr>
+                  <td>Effectiveness (1–5)</td>
+                  <td>4.12 ± 0.55</td>
+                  <td>3.43 ± 0.57</td>
+                  <td>&lt;0.01</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
         </div>
 
-        <!-- 4. Human Evaluation -->
-        <div class="card">
-          <h3>4. Human Evaluation</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Metric</th>
-                <th>MD-Judge</th>
-                <th>LlamaGuard3</th>
-                <th>p-value</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Realism (1–5)</td>
-                <td>4.31 ± 0.52</td>
-                <td>3.92 ± 0.61</td>
-                <td>&lt;0.01</td>
-              </tr>
-              <tr>
-                <td>Engagement (1–5)</td>
-                <td>4.05 ± 0.60</td>
-                <td>3.31 ± 0.65</td>
-                <td>&lt;0.01</td>
-              </tr>
-              <tr>
-                <td>Safety (%)</td>
-                <td>96.0</td>
-                <td>92.0</td>
-                <td>&lt;0.05</td>
-              </tr>
-              <tr>
-                <td>Effectiveness (1–5)</td>
-                <td>4.12 ± 0.55</td>
-                <td>3.43 ± 0.57</td>
-                <td>&lt;0.01</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
 
         <!-- 5. Multi-Turn Evaluation -->
         <div class="card">
