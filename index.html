@@ -130,6 +130,12 @@
     <section id="system-architecture" class="architecture">
       <div class="container">
         <h2>System Architecture</h2>
+        <!-- Figure -->
+        <div class="figure">
+          <img src="system-architecture.png" alt="System Architecture Diagram">
+          <p class="caption">Figure: Overview of the proposed real-time scam prevention system architecture. The pipeline includes four primary stages: (1) message monitoring and role identification, (2) scam detection using local LLMs, (3) AI-based scambaiting upon threshold breach, and (4) federated learning-based model aggregation on a global server to enhance detection while preserving privacy.</p>
+        </div>
+
         <p>
           Our system transforms scam defense from passive detection into
           <strong>active, AI-powered engagement</strong> that is safe, adaptive, and privacy-preserving.
@@ -1002,25 +1008,68 @@
       </div>
     </section>
 
+    <!-- Add this in your <head> -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    <!-- Conclusion -->
-    <section id="conclusion">
-      <h3>Conclusion</h3>
-      <p>
-        <em>AI-in-the-Loop</em> demonstrates that integrating detection, response, and federated adaptation provides an
-        effective and privacy-preserving solution to real-time scam defense.
-        The framework balances safety with user engagement and generalizes across diverse populations. Future work
-        includes extending
-        to multimodal scams and scaling to global deployments:contentReference[oaicite:10]{index=10}.
-      </p>
+    <section id="contributions" class="contributions">
+      <div class="container">
+        <h2><i class="fa-solid fa-lightbulb"></i> Key Contributions</h2>
+        <ul>
+          <li>
+            <i class="fa-solid fa-shield-halved"></i>
+            We introduce the problem of
+            <strong>privacy-preserving, AI-driven conversational scambaiting</strong>
+            using instruction-tuned LLMs.
+          </li>
+          <li>
+            <i class="fa-solid fa-scale-balanced"></i>
+            We design a <strong>novel utility function</strong> that balances scammer engagement
+            against personally identifiable information (PII) and behavioral risk.
+          </li>
+          <li>
+            <i class="fa-solid fa-filter"></i>
+            We implement a <strong>real-time response filtering mechanism</strong>
+            that enforces safety via harm scoring and strict thresholds.
+          </li>
+          <li>
+            <i class="fa-solid fa-diagram-project"></i>
+            We propose a <strong>federated learning architecture</strong>
+            that enables decentralized model training without requiring raw data collection.
+          </li>
+        </ul>
+      </div>
     </section>
 
-    <!-- References -->
-    <section id="references">
-      <h3>References</h3>
-      <p>See full paper for detailed citations. Key references include works on phishing detection, LLM safety
-        alignment, and federated learning security:contentReference[oaicite:11]{index=11}.</p>
+
+    <!-- Discussion Section -->
+    <section id="discussion-summary" class="discussion">
+      <div class="container">
+        <h2><i class="fa-solid fa-comments"></i> Discussion &amp; Future Directions</h2>
+        <p>
+          Our system provides <strong>real-time scam detection and safe scambaiting</strong>
+          on messaging platforms while preserving privacy. Despite high scam awareness,
+          users remain vulnerable, so we combine synthetic and real-world dialogues
+          with non-scam data to improve balance.
+        </p>
+        <p>
+          Key innovations include the <strong>joint optimization of detection, risk scoring,
+            and response generation</strong> through a privacy-weighted utility function,
+          outperforming prior classifiers and LLM-based systems.
+        </p>
+        <p>
+          We use <strong>federated learning with differential privacy</strong> to adapt against
+          evolving scams without leaking user data. Local fine-tuning improves detection
+          over time. Future enhancements will address <em>adversarial prompt tuning, voice-scam
+            defenses, and cross-cultural studies</em>.
+        </p>
+        <p>
+          Finally, <strong>role identification</strong> ensures AI engages only with the higher-risk
+          participant. Users retain full control with opt-out options, safety thresholds,
+          and harm filtering—ensuring safe, responsive, and trustworthy interventions.
+        </p>
+      </div>
     </section>
+
   </main>
 
   <footer>
