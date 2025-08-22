@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-in-the-Loop Scam Defense</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>AI-in-the-Loop</h1>
+      <h2>Privacy Preserving Real-Time Scam Detection Leveraging LLMs and Federated Learning</h2>
+      <p class="authors"><strong>Authors:</strong> Anon. — Proceedings on Privacy Enhancing Technologies</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Abstract -->
+    <section id="abstract">
+      <h3>Abstract</h3>
+      <p>
+        Scams exploiting real-time social engineering—such as phishing, impersonation, 
+        and phone fraud—are a persistent and evolving threat across digital platforms. 
+        Existing detection systems are typically reactive, offering limited protection 
+        during active scammer interactions. We propose a novel, privacy-preserving, 
+        AI-in-the-loop framework that proactively detects and disrupts scam conversations in real time. 
+        Our system integrates instruction-tuned large language models (LLMs) with a privacy-aware utility 
+        function that selects responses balancing conversational engagement and harm minimization. 
+        To prevent disclosure of personal or sensitive information, we apply rigorous PII scoring and 
+        enforce hard safety thresholds. Crucially, we couple this mechanism with federated learning, 
+        enabling on-device model updates without raw data aggregation—preserving user privacy while 
+        supporting continual learning from diverse, real-world interactions. Experimental results show 
+        that our approach improves scammer deception, sustains engagement, and adapts dynamically across scenarios. This is the first system to combine real-time conversational scam-baiting with privacy-preserving federated learning, offering a new paradigm for proactive, adaptive, and trustworthy scam defense.
+      </p>
+    </section>
+
+    <!-- Introduction -->
+    <section id="introduction">
+      <h3>Introduction</h3>
+      <p>
+        Scams in online social networks exploit users’ digital footprints, emotional states, and transactional interests. Traditional 
+        detection pipelines often lag behind evolving scam tactics. Our work introduces <em>AI-in-the-Loop</em>, where large language models
+        (LLMs) participate in both <strong>detection</strong> and <strong>response generation</strong>, supported by federated learning to preserve user data privacy:contentReference[oaicite:2]{index=2}.
+      </p>
+    </section>
+
+    <!-- Survey & Ethics -->
+    <section id="survey">
+      <h3>User Survey & Ethics</h3>
+      <p>
+        We conducted a survey with <strong>148 diverse participants</strong> across Bangladesh, India, and Mexico. 
+        Key findings:
+      </p>
+      <ul>
+        <li>74% expressed strong support for proactive AI-based scam defense.</li>
+        <li>79% agreed such systems could help them avoid scams altogether.</li>
+        <li>Data was collected anonymously without personal identifiers; only optional demographics were used.</li>
+      </ul>
+      <p>This survey shaped both the <em>response generation module</em> and the scam scenarios used in evaluation:contentReference[oaicite:3]{index=3}.</p>
+    </section>
+
+    <!-- System Design -->
+    <section id="design">
+      <h3>System Design</h3>
+      <p>Our framework consists of four interconnected components:</p>
+      <ol>
+        <li><strong>Real-time scam detection</strong> (detects malicious content as it occurs).</li>
+        <li><strong>AI-based scambaiting responses</strong> (to delay, confuse, or neutralize scammers).</li>
+        <li><strong>Safety-aware utility evaluation</strong> (balances engagement vs. harm penalties).</li>
+        <li><strong>Federated learning</strong> (privacy-preserving continual model adaptation).</li>
+      </ol>
+      <p>
+        Threat models addressed include <em>gradient leakage (DLG, iDLG)</em>, mitigated using <strong>Differential Privacy (DP-SGD)</strong>, 
+        ensuring resilience against inference attacks:contentReference[oaicite:4]{index=4}.
+      </p>
+    </section>
+
+    <!-- Methodology -->
+    <section id="methodology">
+      <h3>Methodology</h3>
+      <p>
+        We evaluate engagement (E) vs. harm (H) with a utility function parameterized by reward (α) and penalty (γ). 
+        Grid search across 12 configurations shows that <strong>α = 2.0, γ = 1.0</strong> yields optimal trade-offs for real-world deployment:contentReference[oaicite:5]{index=5}.
+      </p>
+      <p>
+        Features include semantic similarity (BERTScore), risk assessment, and multi-turn conversation analysis. Federated optimization 
+        aggregates local updates while respecting non-IID client heterogeneity:contentReference[oaicite:6]{index=6}.
+      </p>
+    </section>
+
+    <!-- Results -->
+    <section id="results">
+      <h3>Results</h3>
+      <ul>
+        <li><strong>Model Performance:</strong> Safety-aligned LLMs (LlamaGuard, MD-Judge) show high scam detection rates, with unsafe responses scoring ~0.8–1.0 vs. 0.1 for safe:contentReference[oaicite:7]{index=7}.</li>
+        <li><strong>Human Evaluation:</strong> Fine-tuned MD-Judge outperformed LlamaGuard3 across Realism, Engagement, Safety, and Effectiveness, with statistical significance:contentReference[oaicite:8]{index=8}.</li>
+        <li><strong>Utility Distribution:</strong> Balanced trade-off between engagement and harm ensures safe but natural AI responses:contentReference[oaicite:9]{index=9}.</li>
+      </ul>
+    </section>
+
+    <!-- Conclusion -->
+    <section id="conclusion">
+      <h3>Conclusion</h3>
+      <p>
+        <em>AI-in-the-Loop</em> demonstrates that integrating detection, response, and federated adaptation provides an effective and privacy-preserving solution to real-time scam defense. 
+        The framework balances safety with user engagement and generalizes across diverse populations. Future work includes extending 
+        to multimodal scams and scaling to global deployments:contentReference[oaicite:10]{index=10}.
+      </p>
+    </section>
+
+    <!-- References -->
+    <section id="references">
+      <h3>References</h3>
+      <p>See full paper for detailed citations. Key references include works on phishing detection, LLM safety alignment, and federated learning security:contentReference[oaicite:11]{index=11}.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 SUPREME LAB.</p>
+  </footer>
+</body>
+</html>
