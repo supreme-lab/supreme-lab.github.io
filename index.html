@@ -132,7 +132,10 @@
         <!-- Figure -->
         <div class="system-figure">
           <img src="system-architecture.png" alt="System Architecture Diagram">
-          <p class="caption">Figure: Overview of the proposed real-time scam prevention system architecture. The pipeline includes four primary stages: (1) message monitoring and role identification, (2) scam detection using local LLMs, (3) AI-based scambaiting upon threshold breach, and (4) federated learning-based model aggregation on a global server to enhance detection while preserving privacy.</p>
+          <p class="caption">Figure: Overview of the proposed real-time scam prevention system architecture. The
+            pipeline includes four primary stages: (1) message monitoring and role identification, (2) scam detection
+            using local LLMs, (3) AI-based scambaiting upon threshold breach, and (4) federated learning-based model
+            aggregation on a global server to enhance detection while preserving privacy.</p>
         </div>
 
         <p>
@@ -182,6 +185,339 @@
         </div>
       </div>
     </section>
+
+    <section id="datasets">
+      <h2>📊 Dataset Statistics</h2>
+      <p>
+        We compiled a range of real and synthetic datasets to evaluate scam detection and response generation.
+        These datasets cover both <b>classification</b> (scam vs. non-scam detection) and <b>generation</b>
+        (safe scambaiting responses) tasks.
+      </p>
+
+      <ul>
+        <li><b>SSD (Synthetic Scam Dialogue):</b> Multi-turn phone conversations labeled as scam or non-scam, including
+          refund, reward, SSN, and support scams.</li>
+        <li><b>SSC (Synthetic Scammer Conversation):</b> Conversations with scammers, baiters, and benign interactions.
+        </li>
+        <li><b>SASC (Single Agent Scam Conversation):</b> Simulated scam/non-scam calls with diverse receiver
+          personalities.</li>
+        <li><b>MASC (Multi-Agent Scam Conversation):</b> AI-generated dialogues between scammers and receivers with
+          varied personalities.</li>
+        <li><b>YTSC (YouTube Scam Conversations):</b> Real transcriptions from scam-related YouTube channels (tech
+          support, refund, SSN, reward).</li>
+      </ul>
+
+      <p>
+        To strengthen training, we also generated a <b>large synthetic multitask dataset</b> (ChatGPT-4o)
+        spanning scam types (appointment, delivery, refund, support, telemarketing, etc.) and a
+        <b>general non-scam</b> class. Each conversation was expanded into three tasks: PII Evaluation, Scam Risk
+        Scoring, and Scam-Baiting Response Generation.
+      </p>
+
+      <!-- Side by side tables -->
+      <div style="display:flex; gap:20px; flex-wrap:wrap;">
+        <!-- Table 1 -->
+        <div style="flex:1; min-width:350px;">
+          <table border="1" cellspacing="0" cellpadding="5"
+            style="width:100%; border-collapse:collapse; text-align:center;">
+            <caption><b>Classification & Generation Datasets</b></caption>
+            <tr>
+              <th>Type</th>
+              <th>ssc</th>
+              <th>sasc</th>
+              <th>masc</th>
+              <th>ssd</th>
+              <th>ytsc</th>
+              <th>asb</th>
+              <th>sbc</th>
+            </tr>
+            <tr>
+              <td>appointment</td>
+              <td>-</td>
+              <td>200</td>
+              <td>200</td>
+              <td>0</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>delivery</td>
+              <td>-</td>
+              <td>200</td>
+              <td>200</td>
+              <td>200</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>insurance</td>
+              <td>-</td>
+              <td>200</td>
+              <td>200</td>
+              <td>200</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>wrong</td>
+              <td>-</td>
+              <td>200</td>
+              <td>200</td>
+              <td>200</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>refund</td>
+              <td>-</td>
+              <td>200</td>
+              <td>200</td>
+              <td>200</td>
+              <td>4</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>reward</td>
+              <td>-</td>
+              <td>200</td>
+              <td>200</td>
+              <td>200</td>
+              <td>7</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>ssn</td>
+              <td>-</td>
+              <td>200</td>
+              <td>200</td>
+              <td>200</td>
+              <td>4</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>support</td>
+              <td>-</td>
+              <td>200</td>
+              <td>200</td>
+              <td>200</td>
+              <td>5</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>telemarketing</td>
+              <td>-</td>
+              <td>0</td>
+              <td>0</td>
+              <td>200</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td><b>#max conv len</b></td>
+              <td>13</td>
+              <td>28</td>
+              <td>30</td>
+              <td>28</td>
+              <td>67</td>
+              <td><b>871</b></td>
+              <td>73</td>
+            </tr>
+            <tr>
+              <td><b>#min conv len</b></td>
+              <td>6</td>
+              <td>4</td>
+              <td>3</td>
+              <td>6</td>
+              <td><b>13</b></td>
+              <td>2</td>
+              <td>3</td>
+            </tr>
+            <tr>
+              <td><b>#avg conv len</b></td>
+              <td>10</td>
+              <td>14</td>
+              <td>12</td>
+              <td>13</td>
+              <td>28</td>
+              <td><b>56</b></td>
+              <td>10</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Table 2 -->
+        <div style="flex:1; min-width:350px;">
+          <table border="1" cellspacing="0" cellpadding="5"
+            style="width:100%; border-collapse:collapse; text-align:center;">
+            <caption><b>Synthesized Multi-Task Dataset</b></caption>
+            <tr>
+              <th>Type</th>
+              <th>#Conversations</th>
+              <th>#Samples</th>
+            </tr>
+            <tr>
+              <td>appointment</td>
+              <td>500</td>
+              <td>1500</td>
+            </tr>
+            <tr>
+              <td>delivery</td>
+              <td>500</td>
+              <td>1500</td>
+            </tr>
+            <tr>
+              <td>insurance</td>
+              <td>500</td>
+              <td>1500</td>
+            </tr>
+            <tr>
+              <td>wrong</td>
+              <td>500</td>
+              <td>1500</td>
+            </tr>
+            <tr>
+              <td>refund</td>
+              <td>500</td>
+              <td>1500</td>
+            </tr>
+            <tr>
+              <td>reward</td>
+              <td>500</td>
+              <td>1500</td>
+            </tr>
+            <tr>
+              <td>support</td>
+              <td>500</td>
+              <td>1500</td>
+            </tr>
+            <tr>
+              <td>telemarketing</td>
+              <td>500</td>
+              <td>1500</td>
+            </tr>
+            <tr>
+              <td>gift_card</td>
+              <td>500</td>
+              <td>1500</td>
+            </tr>
+            <tr>
+              <td>account_suspension</td>
+              <td>500</td>
+              <td>1500</td>
+            </tr>
+            <tr>
+              <td>identity_verification</td>
+              <td>500</td>
+              <td>1500</td>
+            </tr>
+            <tr>
+              <td>general</td>
+              <td>2000</td>
+              <td>2000</td>
+            </tr>
+            <tr>
+              <th>Total</th>
+              <th>8000</th>
+              <th>20000</th>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Table 3 -->
+      <h3>⚖️ Risk & Engagement Scores</h3>
+      <table border="1" cellspacing="0" cellpadding="5"
+        style="width:100%; border-collapse:collapse; text-align:center;">
+        <tr>
+          <th>Type</th>
+          <th>Engagement</th>
+          <th>PII Risk</th>
+          <th>Scam Risk</th>
+        </tr>
+        <tr>
+          <td>account_suspension</td>
+          <td>0.64</td>
+          <td>0.80</td>
+          <td>0.87</td>
+        </tr>
+        <tr>
+          <td>appointment</td>
+          <td>0.66</td>
+          <td>0.80</td>
+          <td>0.88</td>
+        </tr>
+        <tr>
+          <td>delivery</td>
+          <td>0.65</td>
+          <td>0.81</td>
+          <td>0.87</td>
+        </tr>
+        <tr>
+          <td>gift_card</td>
+          <td>0.66</td>
+          <td>0.80</td>
+          <td>0.88</td>
+        </tr>
+        <tr>
+          <td>identity_verification</td>
+          <td>0.65</td>
+          <td>0.80</td>
+          <td>0.87</td>
+        </tr>
+        <tr>
+          <td>insurance</td>
+          <td>0.66</td>
+          <td>0.80</td>
+          <td>0.87</td>
+        </tr>
+        <tr>
+          <td>refund</td>
+          <td>0.66</td>
+          <td>0.80</td>
+          <td>0.87</td>
+        </tr>
+        <tr>
+          <td>reward</td>
+          <td>0.66</td>
+          <td>0.79</td>
+          <td>0.88</td>
+        </tr>
+        <tr>
+          <td>support</td>
+          <td>0.65</td>
+          <td>0.80</td>
+          <td>0.87</td>
+        </tr>
+        <tr>
+          <td>telemarketing</td>
+          <td>0.65</td>
+          <td>0.79</td>
+          <td>0.88</td>
+        </tr>
+        <tr>
+          <td>wrong</td>
+          <td>0.65</td>
+          <td>0.79</td>
+          <td>0.88</td>
+        </tr>
+        <tr>
+          <td>general</td>
+          <td>0.65</td>
+          <td>0.00</td>
+          <td>0.03</td>
+        </tr>
+      </table>
+    </section>
+
 
 
     <!-- Results -->
