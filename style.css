@@ -160,7 +160,12 @@ footer {
 
 .infographic {
   background: #f9fafb;
-  padding: 60px 20px;
+  /* padding: 60px 20px; */
+}
+
+.infographic-fed {
+  background: #f9fafb;
+  /* padding: 60px 20px; */
 }
 
 .infographic h2 {
@@ -242,7 +247,7 @@ footer {
 
 .architecture {
   background: #f9fafb;
-  padding: 60px 20px;
+  /* padding: 60px 20px; */
 }
 
 .architecture h2 {
