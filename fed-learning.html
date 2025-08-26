@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Federated Learning X-Shape Layout</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f9fc;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        /* Global linear progress */
+        .global-progress {
+            width: 500px;
+            height: 22px;
+            border: 1px solid #007bff;
+            border-radius: 12px;
+            margin: 20px auto;
+            background: #eaf6ff;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .global-bar {
+            height: 100%;
+            width: 0;
+            background: #007bff;
+            transition: width 0.2s linear;
+        }
+
+        .global-label {
+            margin-top: 6px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* X-shape container */
+        .layout {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            margin: auto;
+        }
+
+        .client,
+        .server {
+            width: 120px;
+            height: 208px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+            position: absolute;
+            padding: 10px;
+        }
+
+        .server {
+            background: #eaf6ff;
+            left: 48%;
+            top: 22%;
+            transform: translate(-50%, -50%);
+        }
+
+        .training {
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        /* Place clients in X shape */
+        #client1 {
+            top: 14px;
+            left: 83%;
+            transform: translateX(-50%);
+        }
+
+        /* Top */
+        #client2 {
+            bottom: 100px;
+            left: 30%;
+            transform: translateX(-50%);
+        }
+
+        /* Bottom */
+        #client3 {
+            top: 21%;
+            left: -1px;
+            transform: translateY(-50%);
+        }
+
+        /* Left */
+        #client4 {
+            top: 65%;
+            right: 90px;
+            transform: translateY(-50%);
+        }
+
+        /* Right */
+
+        /* Progress Ring */
+        .progress-ring {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin-top: 10px;
+        }
+
+        .progress-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 10;
+            stroke-linecap: round;
+        }
+
+        .progress-ring .bg {
+            stroke: #eee;
+        }
+
+        .progress-ring .progress {
+            stroke: #007bff;
+            stroke-dasharray: 345;
+            /* circumference for r=55 */
+            stroke-dashoffset: 345;
+            transition: stroke-dashoffset 0.1s linear;
+        }
+
+        /* LLM Icon */
+        .llm-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+        }
+
+        .global-server-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+        }
+
+        .progress-text {
+            margin-top: 5px;
+            font-size: 15px;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        svg.arrows {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        circle.data-dot-send {
+            fill: red;
+            r: 5;
+        }
+        circle.data-dot-return {
+            fill: green;
+            r: 5;
+        }
+
+        .client-icon {
+            width: 24px;
+            height: 24px;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        .client-label-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Federated Learning</h2>
+
+    <!-- Global progress -->
+    <div class="global-progress">
+        <div class="global-bar" id="globalBar"></div>
+    </div>
+    <div class="global-label" id="globalLabel">Global Round: 0 / 30</div>
+
+    <div class="layout">
+        <!-- Server in center -->
+        <div class="server" id="server">
+            🌐 Global Server
+            <img src="global-server.png" class="global-server-icon" alt="Global Server Icon">
+            <div class="training">Idle</div>
+        </div>
+
+        <!-- Clients -->
+        <div class="client" id="client1">
+            <div class="client-label-row">
+                <img src="mobile-1.png" class="client-icon" alt="Client 1 Icon">
+                <span>Client 1</span>
+            </div>
+            <div class="progress-ring">
+                <svg width="120" height="120">
+                    <circle class="bg" cx="60" cy="60" r="55"></circle>
+                    <circle class="progress" id="c1-progress" cx="60" cy="60" r="55"></circle>
+                </svg>
+                <img src="model-icon.png" class="llm-icon" alt="LLM Icon">
+            </div>
+            <div class="progress-text" id="c1-text">0%</div>
+            <div class="training">Idle</div>
+        </div>
+
+        <div class="client" id="client2">
+            <div class="client-label-row">
+                <img src="pc-icon.png" class="client-icon" alt="Client 1 Icon">
+                <span>Client 2</span>
+            </div>
+            <div class="progress-ring">
+                <svg width="120" height="120">
+                    <circle class="bg" cx="60" cy="60" r="55"></circle>
+                    <circle class="progress" id="c2-progress" cx="60" cy="60" r="55"></circle>
+                </svg>
+                <img src="model-icon.png" class="llm-icon" alt="LLM Icon">
+            </div>
+            <div class="progress-text" id="c2-text">0%</div>
+            <div class="training">Idle</div>
+        </div>
+
+        <div class="client" id="client3">
+            <div class="client-label-row">
+                <img src="mobile-2.png" class="client-icon" alt="Client 1 Icon">
+                <span>Client 3</span>
+            </div>
+            <div class="progress-ring">
+                <svg width="120" height="120">
+                    <circle class="bg" cx="60" cy="60" r="55"></circle>
+                    <circle class="progress" id="c3-progress" cx="60" cy="60" r="55"></circle>
+                </svg>
+                <img src="model-icon.png" class="llm-icon" alt="LLM Icon">
+            </div>
+            <div class="progress-text" id="c3-text">0%</div>
+            <div class="training">Idle</div>
+        </div>
+
+        <div class="client" id="client4">
+            <div class="client-label-row">
+                <img src="laptop-icon.png" class="client-icon" alt="Client 1 Icon">
+                <span>Client 4</span>
+            </div>
+            <div class="progress-ring">
+                <svg width="120" height="120">
+                    <circle class="bg" cx="60" cy="60" r="55"></circle>
+                    <circle class="progress" id="c4-progress" cx="60" cy="60" r="55"></circle>
+                </svg>
+                <img src="model-icon.png" class="llm-icon" alt="LLM Icon">
+            </div>
+            <div class="progress-text" id="c4-text">0%</div>
+            <div class="training">Idle</div>
+        </div>
+    </div>
+
+    <svg class="arrows" id="svg-arrows"></svg>
+
+    <script>
+        const clients = [
+            { id: "client1", prog: "c1-progress", text: "c1-text" },
+            { id: "client2", prog: "c2-progress", text: "c2-text" },
+            { id: "client3", prog: "c3-progress", text: "c3-text" },
+            { id: "client4", prog: "c4-progress", text: "c4-text" },
+        ];
+        const server = document.getElementById('server');
+        const svg = document.getElementById('svg-arrows');
+        const globalBar = document.getElementById("globalBar");
+        const globalLabel = document.getElementById("globalLabel");
+
+        let phase = 0;
+        let globalRound = 0;
+
+        function clearArrows() { svg.innerHTML = ""; }
+
+        function createFlow(fromEl, toEl, direction) {
+            const r1 = fromEl.getBoundingClientRect();
+            const r2 = toEl.getBoundingClientRect();
+            const b = document.body.getBoundingClientRect();
+            const x1 = r1.left + r1.width / 2 - b.left;
+            const y1 = r1.top + r1.height / 2 - b.top;
+            const x2 = r2.left + r2.width / 2 - b.left;
+            const y2 = r2.top + r2.height / 2 - b.top;
+            const midX = (x1 + x2) / 2, midY = (y1 + y2) / 2 - 80;
+
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            const pid = "path-" + Math.random().toString(36).substr(2, 5);
+            path.setAttribute("id", pid);
+            path.setAttribute("d", `M${x1},${y1} Q${midX},${midY} ${x2},${y2}`);
+            if (direction === "sendtolocal") {
+               path.setAttribute("stroke", "green"); 
+            } else {
+                path.setAttribute("stroke", "red"); 
+            }
+            
+            path.setAttribute("fill", "none");
+            path.setAttribute("stroke-width", "2");
+            svg.appendChild(path);
+
+            for (let i = 0; i < 4; i++) {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                if (direction === "sendtolocal") {
+                    circle.classList.add("data-dot-return");
+                } else {
+                    circle.classList.add("data-dot-send");
+                }   
+                // circle.classList.add("data-dot");
+                svg.appendChild(circle);
+                const anim = document.createElementNS("http://www.w3.org/2000/svg", "animateMotion");
+                anim.setAttribute("dur", "2s");
+                anim.setAttribute("repeatCount", "indefinite");
+                anim.setAttribute("begin", `${i * 0.4}s`);
+                anim.innerHTML = `<mpath href="#${pid}"/>`;
+                circle.appendChild(anim);
+            }
+        }
+
+        function updateClientProgress(client, iter, maxIter) {
+            const circ = 345;
+            const prog = document.getElementById(client.prog);
+            const txt = document.getElementById(client.text);
+            const percent = Math.min(100, Math.floor((iter / maxIter) * 100));
+            const offset = circ - (percent / 100) * circ;
+            prog.style.strokeDashoffset = offset;
+            txt.textContent = percent + "%";
+        }
+
+        function cycle() {
+            clearArrows();
+            if (phase === 0) {
+                // Local training
+                clients.forEach(c => {
+                    let iter = 0;
+                    const intv = setInterval(() => {
+                        iter++;
+                        updateClientProgress(c, iter, 100);
+                        document.querySelector(`#${c.id} .training`).textContent = "Local Training...";
+                        if (iter >= 100) clearInterval(intv);
+                    }, 30);
+                });
+            } else if (phase === 1) {
+                // Send updates
+                clients.forEach(c => {
+                    document.querySelector(`#${c.id} .training`).textContent = "Sending Updates...";
+                    createFlow(document.getElementById(c.id), server, "sendtoglobal");
+                });
+                server.querySelector(".training").textContent = "Receiving...";
+            } else if (phase === 2) {
+                // Aggregation
+                server.querySelector(".training").textContent = "Aggregating (FedAvg)...";
+                globalRound++;
+                let percent = (globalRound / 30) * 100;
+                globalBar.style.width = percent + "%";
+                globalLabel.textContent = `Global Round: ${globalRound} / 30`;
+            } else if (phase === 3) {
+                // Broadcast
+                clients.forEach(c => {
+                    document.querySelector(`#${c.id} .training`).textContent = "Updating Global Model...";
+                    createFlow(server, document.getElementById(c.id), "sendtolocal");
+                });
+                server.querySelector(".training").textContent = "Broadcasting...";
+            }
+            phase = (phase + 1) % 4;
+        }
+
+        setInterval(cycle, 4000);
+    </script>
+</body>
+
+</html>
