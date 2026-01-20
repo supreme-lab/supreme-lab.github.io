@@ -13,9 +13,21 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- KaTeX for equations (client-side rendering) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" integrity="sha384-wcIxkf9k3pYg1nV1m0a8a5mA1dVd7hQq+Fmbt7uYQ4v9gQ3NQ8dZQxj1x0b+Yl3o" crossorigin="anonymous">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" integrity="sha384-8bYjV9M+CE7QnCCT1m8n1Yy0emU1XyP7p2uP7b8mT6bYp8m5bVxRZk1p2iXQf0fG" crossorigin="anonymous"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" integrity="sha384-f0oJmE5o0X2oW8oWmOeM7m8Jm4w1n8qOQ6dY5e3p0a7uQ+uJb4+Z9hX0eV1nDq2Y" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+        delimiters: [
+            {left: "\\(", right: "\\)", display: false},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "$$", right: "$$", display: true},
+            {left: "$", right: "$", display: false}
+        ]
+        });
+    });
+    </script>
 
   <style>
     :root{
