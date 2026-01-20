@@ -1,782 +1,1058 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LLM-Guided Dynamic-UMAP for Personalized Federated Graph Learning</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LLM-Guided Dynamic-UMAP for Personalized Federated Graph Learning</title>
 
-  <!-- Font substitution due to unknown licensing on embedded TeX fonts (Computer Modern/Latin Modern) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:wght@400;600;700&family=STIX+Two+Math&display=swap" rel="stylesheet">
+    <!-- Font substitution due to unknown licensing on embedded TeX fonts (Computer Modern/Latin Modern) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:wght@400;600;700&family=STIX+Two+Math&display=swap"
+        rel="stylesheet">
 
-  <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Icons (used in the layout template you shared) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-  <!-- KaTeX for equations (client-side rendering) -->
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- KaTeX for equations (client-side rendering) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"></script>
     <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        renderMathInElement(document.body, {
-        delimiters: [
-            {left: "\\(", right: "\\)", display: false},
-            {left: "\\[", right: "\\]", display: true},
-            {left: "$$", right: "$$", display: true},
-            {left: "$", right: "$", display: false}
-        ]
+        document.addEventListener("DOMContentLoaded", function () {
+            if (window.renderMathInElement) {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        { left: "$$", right: "$$", display: true },
+                        { left: "\\[", right: "\\]", display: true },
+                        { left: "$", right: "$", display: false },
+                        { left: "\\(", right: "\\)", display: false }
+                    ],
+                    throwOnError: false
+                });
+            }
         });
-    });
     </script>
 
-  <style>
-    :root{
-      --paper-w: 816px; /* 8.5in @96dpi */
-      --paper-h: 1056px; /* 11in @96dpi */
-    }
-    body{ font-family: "STIX Two Text", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-    .math{ font-family: "STIX Two Math", "STIX Two Text", serif; }
-    .page{ width: min(var(--paper-w), 100%); }
-    .break-after-page{ break-after: page; page-break-after: always; }
-    .avoid-break{ break-inside: avoid; page-break-inside: avoid; }
-    @media print{
-      body{ background: white !important; }
-      .screen-shadow{ box-shadow: none !important; }
-      .page-wrap{ padding: 0 !important; }
-      .page{ width: 100% !important; border: none !important; border-radius: 0 !important; }
-    }
-  </style>
+    <style>
+        :root {
+            --paper-w: 816px;
+            /* 8.5in @96dpi */
+            --paper-h: 1056px;
+            /* 11in @96dpi */
+        }
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      if (window.renderMathInElement) {
-        renderMathInElement(document.body, {
-          delimiters: [
-            {left: "$$", right: "$$", display: true},
-            {left: "\\[", right: "\\]", display: true},
-            {left: "$", right: "$", display: false},
-            {left: "\\(", right: "\\)", display: false}
-          ]
-        });
-      }
-    });
-  </script>
+        body {
+            font-family: "STIX Two Text", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        }
+
+        .math {
+            font-family: "STIX Two Math", "STIX Two Text", serif;
+        }
+
+        .page {
+            width: min(var(--paper-w), 100%);
+        }
+
+        .break-after-page {
+            break-after: page;
+            page-break-after: always;
+        }
+
+        .avoid-break {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        @media print {
+            body {
+                background: white !important;
+            }
+
+            .screen-shadow {
+                box-shadow: none !important;
+            }
+
+            .page-wrap {
+                padding: 0 !important;
+            }
+
+            .page {
+                width: 100% !important;
+                border: none !important;
+                border-radius: 0 !important;
+            }
+
+            .hero {
+                display: none !important;
+            }
+
+            /* hide landing hero when printing PDF-style pages */
+            .site-section {
+                display: none !important;
+            }
+
+            /* hide web-only sections when printing */
+        }
+    </style>
 </head>
 
 <body class="bg-neutral-100 text-neutral-900">
-  <a class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:shadow" href="#main">
-    Skip to content
-  </a>
+    <a class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:shadow"
+        href="#main">
+        Skip to content
+    </a>
 
-  <main id="main" class="page-wrap mx-auto flex flex-col items-center gap-8 px-4 py-8">
-    <!-- PAGE 1 -->
-    <section class="page break-after-page screen-shadow rounded-md border border-neutral-200 bg-white px-10 py-10" aria-label="Page 1">
-      <header class="text-center">
-        <h1 class="text-[1.45rem] font-bold tracking-tight leading-snug">
-          LLM-GUIDED DYNAMIC-UMAP FOR PERSONALIZED<br class="hidden sm:block" />
-          FEDERATED GRAPH LEARNING
-        </h1>
-
-        <div class="mt-5 text-[0.98rem] leading-snug">
-          <p class="font-semibold">Sai Puppala<sup>2</sup>, Ismail Hossain<sup>1</sup>, Md Jahangir Alam<sup>1</sup>, Tanzim Ahad<sup>1</sup>, Sajedul Talukder<sup>1</sup></p>
-          <p class="mt-2">Computer Science</p>
-          <p class="mt-1">1University of Texas at El Paso, TX, USA, 79902</p>
-          <p class="mt-1">School of Computing</p>
-          <p class="mt-1">2Southern Illinois University Carbondale, IL, USA, 62901</p>
-          <p class="mt-2 text-[0.95rem]">{ihossain, malam10}@miners.utep.edu, sai.puppala@siu.edu, stalukder@utep.edu</p>
-        </div>
-      </header>
-
-      <article class="mt-7">
-        <h2 class="text-[1.05rem] font-bold tracking-wide">ABSTRACT</h2>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          We present a novel approach that uses large language models (LLMs) to assist graph machine learning (GML) under personalization and privacy constraints.
-          Our approach integrates (i) LLM-assisted data augmentation for sparse graphs, (ii) prompt and instruction tuning to adapt foundation models to graph tasks,
-          and (iii) in-context learning to provide few-shot graph reasoning signals. These signals parameterize a Dynamic-UMAP manifold of client-specific graph embeddings
-          inside a Bayesian variational objective for personalized federated learning. The method supports node classification and link prediction in low-resource settings
-          and aligns LLM latent representations with graph structure via a cross-modal regularizer. We provide a convergence sketch for our variational aggregation, detail
-          a privacy threat model with moments-accountant DP, and report applications to knowledge graph completion, recommendation-style link prediction, and citation/product
-          graphs, along with proposed evaluation protocols for LLM-augmented GML.
-        </p>
-      </article>
-
-      <article class="mt-7">
-        <h2 class="text-[1.1rem] font-bold">1 Introduction</h2>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          Graphs power applications from recommendation and scientific discovery to knowledge graph (KG) completion and question answering (QA) [10, 12].
-          In practice, graphs are heterogeneous, private, and sparse across clients (e.g., institutions or edge devices). Meanwhile, LLMs encode extensive world knowledge and can be prompted or instruction-tuned
-          to provide structural priors, textual context, and few-shot signals [5]. We ask: How can LLMs assist personalized federated GML when labeled edges/nodes are scarce and data cannot leave clients?
-        </p>
-        <p class="mt-3 text-[0.98rem] leading-relaxed">
-          We propose LLM-Guided Dynamic-UMAP (LG-DUMAP), a Gaussian variational framework that: (1) builds client-specific graph manifolds using Dynamic-UMAP over graph embeddings;
-          (2) injects LLM guidance via prompt/instruction-tuned text encoders and in-context exemplars; (3) performs personalized federated variational inference with privacy-preserving aggregation
-          of similarity prototypes (markers) summarizing local similarity structures; and (4) aligns LLM and graph latent spaces to improve low-resource performance.
-        </p>
-
-        <h3 class="mt-4 text-[1rem] font-bold">Contributions.</h3>
-        <ul class="mt-2 list-disc pl-6 text-[0.98rem] leading-relaxed">
-          <li>A parametric UMAP-style manifold objective coupled with variational marker aggregation for personalized federation.</li>
-          <li>Cross-modal alignment to LLM text space and calibrated pseudo-edges with abstention for robustness.</li>
-          <li>A concrete privacy threat model with secure aggregation, per-client clipping, and moments-accountant DP; and an attack-driven evaluation via membership inference.</li>
-          <li>Expanded baselines (Per-FedAvg, pFedMe, Ditto, FedProx; LightGCN/RotatE/ComplEx/CompGCN) with systems evidence (cost/latency, partial participation) and worst-client/percentile reporting.</li>
-        </ul>
-      </article>
-
-      <footer class="mt-10 flex items-end justify-between text-[0.85rem] text-neutral-700">
-        <p class="italic">arXiv:2511.09438v1 [cs.LG] 12 Nov 2025</p>
-        <p class="tabular-nums">1</p>
-      </footer>
-    </section>
-
-    <!-- PAGE 2 -->
-    <section class="page break-after-page screen-shadow rounded-md border border-neutral-200 bg-white px-10 py-8" aria-label="Page 2">
-      <header class="flex items-center justify-center">
-        <p class="text-[0.9rem] text-neutral-700">Variational Gaussian Mixture Manifold Models</p>
-      </header>
-
-      <article class="mt-4">
-        <figure class="avoid-break">
-          <figcaption class="text-center text-[0.98rem]">
-            <span class="font-semibold">Table 1:</span> Acronyms used.
-          </figcaption>
-
-          <div class="mt-2 overflow-x-auto">
-            <table class="w-full border-collapse text-[0.95rem]" role="table" aria-label="Table 1 Acronyms used">
-              <tbody class="divide-y divide-neutral-300">
-                <tr class="border-y border-neutral-300">
-                  <th scope="row" class="w-40 py-2 pr-4 text-left font-semibold">GML</th>
-                  <td class="py-2">Graph machine learning</td>
-                </tr>
-                <tr>
-                  <th scope="row" class="py-2 pr-4 text-left font-semibold">UMAP</th>
-                  <td class="py-2">Uniform Manifold Approximation and Projection</td>
-                </tr>
-                <tr>
-                  <th scope="row" class="py-2 pr-4 text-left font-semibold">DP</th>
-                  <td class="py-2">Differential privacy</td>
-                </tr>
-                <tr>
-                  <th scope="row" class="py-2 pr-4 text-left font-semibold">CKA</th>
-                  <td class="py-2">Centered Kernel Alignment</td>
-                </tr>
-                <tr>
-                  <th scope="row" class="py-2 pr-4 text-left font-semibold">GNN</th>
-                  <td class="py-2">Graph neural network</td>
-                </tr>
-                <tr>
-                  <th scope="row" class="py-2 pr-4 text-left font-semibold">KDE</th>
-                  <td class="py-2">Kernel density estimation</td>
-                </tr>
-                <tr>
-                  <th scope="row" class="py-2 pr-4 text-left font-semibold">KG</th>
-                  <td class="py-2">Knowledge graph</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </figure>
-
-        <h2 class="mt-7 text-[1.1rem] font-bold">2 Related Work</h2>
-
-        <h3 class="mt-3 text-[1rem] font-bold">2.1 LLM-Augmented Graph Learning</h3>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          Hybrid pipelines use language encoders to guide graph learning by supplying semantic priors, pseudo-labels, and retrieval-style context [5].
-          In text-rich graphs (e.g., citation networks, product catalogs, and KGs), LLM embeddings can act as additional node features, enable label/edge proposals under extreme sparsity,
-          and furnish rationales. We leverage these capabilities with a calibrated admission policy for pseudo-edges (temperature scaling, confidence thresholding) to mitigate overconfident hallucinations [9].
-          Compared to text-only or late-fusion baselines [10, 12], we integrate language supervision within a geometric objective, coupling cross-modal alignment with a parametric manifold learner.
-        </p>
-
-        <h3 class="mt-4 text-[1rem] font-bold">2.2 Personalized Federated Learning for (Graph) Models</h3>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          FedAvg assumes homogeneous objectives and suffers on non-IID clients; remedies include FedProx [15] and personalization strategies such as Per-FedAvg [7], pFedMe [6], and Ditto [14].
-          Most operate at the level of model parameters. In contrast, we personalize through a lightweight variational prototype layer (markers) that summarizes local similarity structure and is safe to share
-          under privacy budgets. This differs from prior federated GNN work that aggregates entire GNN weights/gradients, incurring larger communication and privacy footprints.
-          We also incorporate partial participation and report worst-client/percentile metrics to characterize non-IID regimes.
-        </p>
-
-        <h3 class="mt-4 text-[1rem] font-bold">2.3 Parametric Manifold Learning and UMAP</h3>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          UMAP is a widely used non-linear dimensionality reduction technique built on fuzzy simplicial sets [16]; parametric variants learn an explicit mapping that can be amortized across data and clients [18].
-          Unlike purely unsupervised application of (parametric) UMAP to graph embeddings, our Dynamic-UMAP is optimized jointly with downstream tasks and a cross-modal regularizer tying the manifold to LLM embeddings.
-          We additionally introduce markers—a KDE-style similarity model on interpoint distances in the learned space—which (i) acts as a compact, aggregatable representation for federation and
-          (ii) improves link modeling in low-resource regimes. We report manifold trustworthiness/continuity and representation-similarity diagnostics (CKA, Procrustes) to probe geometry and modality alignment [8, 13].
-        </p>
-
-        <h3 class="mt-4 text-[1rem] font-bold">2.4 Knowledge-Graph and Recommendation Baselines</h3>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          For KG completion, translational and rotational families (TransE/RotatE) and bilinear approaches (ComplEx) remain strong baselines [3, 20, 21].
-          Structure-aware GNNs such as CompGCN add relation composition into message passing [22]. In recommendation, LightGCN shows that stripped-down propagation without non-linearities is competitive on
-          collaborative filtering [11]. Our evaluation situates LG-DUMAP against these methods and emphasizes few-shot/cold-start conditions where text priors help most.
-          We also include heterophily stress tests (e.g., Chameleon, Squirrel) where neighborhood homophily is weak and geometric signals matter [17].
-        </p>
-      </article>
-
-      <footer class="mt-8 flex items-end justify-between text-[0.85rem] text-neutral-700">
-        <span aria-hidden="true"></span>
-        <p class="tabular-nums">2</p>
-      </footer>
-    </section>
-
-    <!-- PAGE 3 -->
-    <section class="page break-after-page screen-shadow rounded-md border border-neutral-200 bg-white px-10 py-8" aria-label="Page 3">
-      <header class="flex items-center justify-center">
-        <p class="text-[0.9rem] text-neutral-700">Variational Gaussian Mixture Manifold Models</p>
-      </header>
-
-      <article class="mt-4">
-        <h2 class="text-[1.1rem] font-bold">3 Methodology</h2>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          Each client <span class="math">\(k \in \{1, \ldots, N\}\)</span> owns a private graph <span class="math">\(G_k = (V_k, E_k, X_k, T_k)\)</span> with node features <span class="math">\(X_k\)</span>, optional node/edge texts <span class="math">\(T_k\)</span>,
-          and tasks: node classification or link prediction. Clients cannot share raw data. The server maintains global priors but aggregates only privacy-preserving statistics.
-        </p>
-        <p class="mt-3 text-[0.98rem] leading-relaxed">
-          <span class="font-semibold">LLM guidance.</span> An LLM <span class="math">\(\mathcal{L}\)</span> provides (a) text embeddings for <span class="math">\(T_k\)</span>, (b) instruction/prompt-tuned decoding to propose edges or node labels in low-resource regimes, and (c) in-context exemplars for few-shot behaviors.
-          We denote the LLM text encoder by <span class="math">\(h_{\theta}(\cdot)\)</span> and a lightweight adapter/prompt <span class="math">\(P\)</span>.
-        </p>
-        <p class="mt-3 text-[0.98rem] leading-relaxed">
-          We integrate UMAP, graph encoders, and LLM guidance within a variational federated objective.
-        </p>
-
-        <h3 class="mt-5 text-[1rem] font-bold">3.1 Graph and Text Fusion Embeddings</h3>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          We compute node embeddings by fusing a GNN encoder <span class="math">\(\phi_k\)</span> with LLM text embeddings:
-        </p>
-        <div class="mt-2 flex items-start justify-between gap-4">
-          <div class="math text-[0.98rem] leading-relaxed">
-            \[
-              \tilde{X}_k = \mathrm{Fuse}\big(\mathrm{GNN}_{\phi_k}(G_k),\; h_{\theta}(T_k; P)\big) \in \mathbb{R}^{|V_k| \times m}. \tag{1}
-            \]
-          </div>
+    <!-- ===== HERO (matches the layout style you shared) ===== -->
+    <header
+        class="hero relative overflow-hidden bg-gradient-to-b from-neutral-950 via-neutral-900 to-neutral-800 text-white">
+        <div class="absolute inset-0 opacity-30" aria-hidden="true">
+            <div class="absolute -top-32 -left-32 h-80 w-80 rounded-full bg-white/10 blur-3xl"></div>
+            <div class="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-white/10 blur-3xl"></div>
         </div>
 
-        <h3 class="mt-5 text-[1rem] font-bold">3.2 Dynamic-UMAP Manifold</h3>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          We learn a low-dimensional manifold preserving local graph structure and LLM priors [16, 18]:
-        </p>
-        <div class="mt-2 math text-[0.98rem] leading-relaxed">
-          \[
-            Z_k = g_{\beta_k}(\tilde{X}_k) \in \mathbb{R}^{|V_k| \times d}. \tag{2}
-          \]
-        </div>
-        <p class="mt-3 text-[0.98rem] leading-relaxed">
-          The UMAP objective uses neighborhood probabilities <span class="math">\((p_{ij}, q_{ij})\)</span> with
-        </p>
-        <div class="mt-2 math text-[0.98rem] leading-relaxed">
-          \[
-            \mathcal{L}^{(k)}_{\mathrm{UMAP}} = -\sum_{(i,j)\in E^{\mathrm{nn}}_k}\Big[p_{ij}\log q_{ij} + (1-p_{ij})\log(1-q_{ij})\Big], \tag{3}
-          \]
-          \[
-            q_{ij} = \Big(1 + a\lVert z_i - z_j \rVert^{2b}\Big)^{-1}, \tag{4}
-          \]
-        </div>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          where <span class="math">\((a, b)\)</span> follow standard UMAP settings [16]. We optimize <span class="math">\(g_{\beta_k}\)</span> jointly with downstream losses.
-        </p>
+        <div class="relative mx-auto max-w-6xl px-4 py-12 sm:py-16">
+            <h1 class="text-balance text-3xl font-bold tracking-tight sm:text-4xl">
+                LLM-Guided Dynamic-UMAP for Personalized Federated Graph Learning
+            </h1>
 
-        <h3 class="mt-5 text-[1rem] font-bold">3.3 LLM-Augmented Similarity and Markers</h3>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          Let <span class="math">\(s_{ij} = \lVert z_i - z_j \rVert_2\)</span> in <span class="math">\(Z_k\)</span>. Markers are scalar prototypes in the distance space (not vectors in <span class="math">\(Z_k\)</span>).
-          We model a soft assignment of pairwise distances to <span class="math">\(\mathcal{M} = \{m_1, \ldots, m_{|\mathcal{M}|}\} \subset \mathbb{R}_{\ge 0}\)</span> via a KDE-style mixture:
-        </p>
-        <div class="mt-2 math text-[0.98rem] leading-relaxed">
-          \[
-            p^e_{ij} =
-            \frac{
-              \exp\Big(-\lVert s_{ij} - m_e \rVert^2/(2\sigma^2_{\mathrm{kern}})\Big)
-            }{
-              \sum_{m'\in\mathcal{M}} \exp\Big(-\lVert s_{ij} - m' \rVert^2/(2\sigma^2_{\mathrm{kern}})\Big)
-            }. \tag{5}
-          \]
-        </div>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          Markers are initialized from labeled edges and calibrated LLM pseudo-edges (accepted if confidence <span class="math">\(c\ge\tau\)</span> after temperature scaling).
-        </p>
-
-        <h3 class="mt-5 text-[1rem] font-bold">3.4 Cross-Modal Alignment</h3>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          We align <span class="math">\(Z_k\)</span> with LLM embeddings using cosine similarity with explicit normalization:
-        </p>
-        <div class="mt-2 math text-[0.98rem] leading-relaxed">
-          \[
-            \mathcal{L}^{(k)}_{\mathrm{align}} =
-            \sum_{i\in V_k}\left(1 -
-              \frac{\langle z_i,\; h_{\theta}(T_{k,i}; P)\rangle}{\lVert z_i\rVert_2\, \lVert h_{\theta}(T_{k,i}; P)\rVert_2}
-            \right). \tag{6}
-          \]
-        </div>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          We assess representation similarity with CKA and Procrustes analyses [8, 13].
-        </p>
-
-        <h3 class="mt-5 text-[1rem] font-bold">3.5 Client Variational Objective</h3>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">For client <span class="math">\(k\)</span>, the loss is</p>
-        <div class="mt-2 math text-[0.98rem] leading-relaxed">
-          \[
-            \mathcal{L}_k = \mathbb{E}_{q_{\phi_k}(\mathcal{M})}\big[\mathcal{J}_k(Z_k)\big] + \lambda\,\mathrm{KL}\big(q_{\phi_k}(\mathcal{M})\,\Vert\, s(\mathcal{M})\big)
-            + \gamma\,\mathcal{L}^{(k)}_{\mathrm{align}} + \eta\,\mathcal{L}^{(k)}_{\mathrm{UMAP}}. \tag{7}
-          \]
-        </div>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          where <span class="math">\(\mathcal{J}_k\)</span> includes classification NLL and link prediction BCE using <span class="math">\(p^e_{ij}\)</span>. The prior <span class="math">\(s(\mathcal{M})\)</span> is a simple Gaussian mixture over marker locations; <span class="math">\(q_{\phi_k}(\mathcal{M})\)</span> is the client’s variational posterior over markers.
-        </p>
-
-        <h3 class="mt-5 text-[1rem] font-bold">3.6 Server Aggregation (Personalized)</h3>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">The server aggregates markers only:</p>
-        <div class="mt-2 math text-[0.98rem] leading-relaxed">
-          \[
-            M^{t+1} = M^{t} + \frac{\sum_k w_k\,\mathbb{E}_{q_{\phi_k}(\mathcal{M})}\big[M_k - M^{t}\big]}{\sum_k w_k}. \tag{8}
-          \]
-        </div>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          No raw data, node embeddings, or GNN weights are shared.
-        </p>
-
-        <h3 class="mt-5 text-[1rem] font-bold">Key Hyperparameters</h3>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          UMAP dim <span class="math">\(d=32\)</span>, neighbors = 15; markers: <span class="math">\(|\mathcal{M}^{+}|=8\)</span>, <span class="math">\(|\mathcal{M}^{-}|=8\)</span>, bandwidth <span class="math">\(\sigma_{\mathrm{kern}}=1.0\)</span>;
-          alignment <span class="math">\(\gamma=0.2\)</span>, UMAP <span class="math">\(\eta=1.0\)</span>, KL <span class="math">\(\lambda=0.1\)</span>;
-          Adam lr <span class="math">\(2\times 10^{-3}\)</span> (GNN/UMAP) and <span class="math">\(5\times 10^{-5}\)</span> (adapters);
-          rounds 50, local epochs 2, batch 1024 node-pairs; DP: clip <span class="math">\(C=1.0\)</span>, Gaussian noise scale <span class="math">\(\sigma_{\mathrm{dp}}\)</span> as in Table 2;
-          acceptance threshold <span class="math">\(\tau\in\{0.6,0.7,0.8,0.9\}\)</span>.
-        </p>
-      </article>
-
-      <footer class="mt-8 flex items-end justify-between text-[0.85rem] text-neutral-700">
-        <span aria-hidden="true"></span>
-        <p class="tabular-nums">3</p>
-      </footer>
-    </section>
-
-    <!-- PAGE 4 -->
-    <section class="page break-after-page screen-shadow rounded-md border border-neutral-200 bg-white px-10 py-8" aria-label="Page 4">
-      <header class="flex items-center justify-center">
-        <p class="text-[0.9rem] text-neutral-700">Variational Gaussian Mixture Manifold Models</p>
-      </header>
-
-      <article class="mt-4">
-        <figure class="avoid-break">
-          <figcaption class="text-center text-[0.98rem]">
-            <span class="font-semibold">Algorithm 1</span> LG-DUMAP (one round <span class="math">\(t\to t+1\)</span>)
-          </figcaption>
-
-          <div class="mt-2 border-y border-neutral-400 py-3">
-            <p class="text-[0.95rem] leading-relaxed">
-              <span class="font-semibold">Require:</span>
-              Client graphs <span class="math">\(G_k\)</span>, texts <span class="math">\(T_k\)</span>; encoder <span class="math">\(h_\theta\)</span>;
-              adapters/prompts <span class="math">\(P_k\)</span> (optional); <span class="math">\(M^t\)</span>; <span class="math">\((\lambda,\gamma,\eta)\)</span>;
-              DP clip <span class="math">\(C\)</span>, noise <span class="math">\(\sigma_{\mathrm{dp}}\)</span> (optional)
+            <p class="mt-4 text-[1.05rem] leading-relaxed text-white/90">
+                <span class="font-semibold">Sai Puppala<sup>2</sup></span>,
+                <span class="font-semibold">Ismail Hossain<sup>1</sup></span>,
+                <span class="font-semibold">Md Jahangir Alam<sup>1</sup></span>,
+                <span class="font-semibold">Tanzim Ahad<sup>1</sup></span>,
+                <span class="font-semibold">Sajedul Talukder<sup>1</sup></span>
             </p>
 
-            <ol class="mt-3 space-y-1 text-[0.95rem] leading-relaxed" aria-label="Algorithm steps">
-              <li><span class="tabular-nums">1:</span> <span class="font-semibold">for</span> each participating client <span class="math">\(k\)</span> in parallel <span class="font-semibold">do</span></li>
-              <li><span class="tabular-nums">2:</span> <span class="math">\(X_{\mathrm{gnn}}\leftarrow \mathrm{GNN}_{\phi_k}(G_k);\; X_{\text{text}}\leftarrow h_\theta(T_k; P_k);\; \tilde{X}_k\leftarrow \mathrm{Fuse}(X_{\mathrm{gnn}}, X_{\text{text}})\)</span></li>
-              <li><span class="tabular-nums">3:</span> Build ANN kNN on <span class="math">\(\tilde{X}_k\)</span>; compute <span class="math">\(p_{ij}\)</span> (<em>graph-aware</em>)</li>
-              <li><span class="tabular-nums">4:</span> Update parametric UMAP <span class="math">\(g_{\beta_k}\)</span> to obtain <span class="math">\(Z_k\)</span> by minimizing <span class="math">\(\mathcal{L}^{(k)}_{\mathrm{UMAP}}\)</span></li>
-              <li><span class="tabular-nums">5:</span> LLM augmentation: propose pseudo-edges/labels with confidence <span class="math">\(c\)</span>; accept if <span class="math">\(c\ge \tau\)</span> (post-hoc temperature)</li>
-              <li><span class="tabular-nums">6:</span> Form/update <span class="math">\(\mathcal{M}^{+}_k,\; \mathcal{M}^{-}_k\)</span>; fit <span class="math">\(q_{\phi_k}(\mathcal{M})\)</span> on distance space</li>
-              <li><span class="tabular-nums">7:</span> Optimize <span class="math">\(\mathcal{L}_k\)</span> with gradient clipping <span class="math">\(\lVert g\rVert\le C\)</span>; add DP noise if enabled</li>
-              <li><span class="tabular-nums">8:</span> Share <span class="math">\(\mathbb{E}_{q(\mathcal{M})}[M_k]\)</span> (and optional <span class="math">\(\Delta P_k\)</span>) via secure aggregation</li>
-              <li><span class="tabular-nums">9:</span> <span class="font-semibold">end for</span></li>
-              <li><span class="tabular-nums">10:</span> Server aggregates to <span class="math">\(M^{t+1}\)</span> and broadcasts</li>
-            </ol>
-          </div>
-        </figure>
-
-        <figure class="mt-5 avoid-break">
-          <figcaption class="text-center text-[0.98rem]">
-            <span class="font-semibold">Table 2:</span> DP accounting and attack outcomes on ogbn-arxiv.
-            <span class="math">\(\delta=10^{-5}\)</span>, sampling rate <span class="math">\(q=0.2\)</span>, rounds <span class="math">\(T=50\)</span>.
-          </figcaption>
-
-          <div class="mt-2 overflow-x-auto">
-            <table class="w-full border-collapse text-[0.95rem]" role="table" aria-label="Table 2 DP accounting and attack outcomes">
-              <thead>
-                <tr class="border-y border-neutral-400">
-                  <th scope="col" class="py-2 text-left font-semibold">Setting</th>
-                  <th scope="col" class="py-2 text-left font-semibold">Clip <span class="math">\(C\)</span></th>
-                  <th scope="col" class="py-2 text-left font-semibold">Noise <span class="math">\(\sigma_{dp}\)</span></th>
-                  <th scope="col" class="py-2 text-left font-semibold"><span class="math">\(\epsilon\)</span></th>
-                  <th scope="col" class="py-2 text-left font-semibold">Time/round (s)</th>
-                  <th scope="col" class="py-2 text-left font-semibold">F1 (%)</th>
-                  <th scope="col" class="py-2 text-left font-semibold">Attack AUROC<span aria-hidden="true">↓</span></th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-neutral-300">
-                <tr>
-                  <td class="py-1.5">No DP</td>
-                  <td class="py-1.5">–</td>
-                  <td class="py-1.5">–</td>
-                  <td class="py-1.5"><span class="math">\(\infty\)</span></td>
-                  <td class="py-1.5">7.6</td>
-                  <td class="py-1.5">74.3</td>
-                  <td class="py-1.5">0.73</td>
-                </tr>
-                <tr>
-                  <td class="py-1.5">DP-8</td>
-                  <td class="py-1.5">1.0</td>
-                  <td class="py-1.5">0.6</td>
-                  <td class="py-1.5">8</td>
-                  <td class="py-1.5">7.8</td>
-                  <td class="py-1.5">73.6</td>
-                  <td class="py-1.5">0.57</td>
-                </tr>
-                <tr>
-                  <td class="py-1.5">DP-4</td>
-                  <td class="py-1.5">1.0</td>
-                  <td class="py-1.5">0.9</td>
-                  <td class="py-1.5">4</td>
-                  <td class="py-1.5">7.9</td>
-                  <td class="py-1.5">72.7</td>
-                  <td class="py-1.5">0.53</td>
-                </tr>
-                <tr>
-                  <td class="py-1.5">DP-2</td>
-                  <td class="py-1.5">1.0</td>
-                  <td class="py-1.5">1.3</td>
-                  <td class="py-1.5">2</td>
-                  <td class="py-1.5">8.1</td>
-                  <td class="py-1.5">71.6</td>
-                  <td class="py-1.5">0.51</td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr class="border-b border-neutral-400"><td colspan="7" class="h-0.5"></td></tr>
-              </tfoot>
-            </table>
-          </div>
-        </figure>
-
-        <h2 class="mt-6 text-[1.1rem] font-bold">4 Threat Model and Differential Privacy Guarantees</h2>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          We assume an <em>honest-but-curious</em> server. Clients never disclose raw graphs/texts. Communication uses secure aggregation [2].
-          We apply per-client clipping at norm <span class="math">\(C\)</span> and add Gaussian noise with variance <span class="math">\(\sigma^2_{dp}C^2\)</span> to shared marker statistics before aggregation.
-          Using the moments accountant with sampling rate <span class="math">\(q\)</span> and <span class="math">\(T\)</span> rounds, we report overall <span class="math">\((\epsilon,\delta)\)</span> [1] and evaluate empirical privacy via membership inference (Section 5).
-        </p>
-
-        <h2 class="mt-6 text-[1.1rem] font-bold">5 Calibration and Safety for LLM Proposals</h2>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          We calibrate LLM pseudo-edges via temperature scaling (<span class="math">\(T\)</span>) on a validation slice and report ECE (15 bins) and Brier scores [4, 9].
-          Pseudo-edges with confidence <span class="math">\(\hat{p}\ge\tau\)</span> are admitted; we study F1 vs. <span class="math">\(\tau\in\{0.6,0.7,0.8,0.9\}\)</span> and acceptance counts.
-        </p>
-
-        <aside class="mt-4 avoid-break rounded-md border border-[#bdbdbd] bg-[#f4f4f4] p-0" role="note" aria-label="Calibration metrics callout">
-          <!-- Dark gray bar sampled from PDF: RGB(81,81,81) → #515151 -->
-          <div class="rounded-t-md bg-[#515151] px-4 py-2 text-[0.95rem] font-semibold text-white">
-            Calibration Metrics
-          </div>
-          <div class="px-4 py-3 text-[0.95rem] leading-relaxed">
-            <p>
-              Expected Calibration Error (ECE):
-              <span class="math">\(\mathrm{ECE} = \sum_b \frac{|B_b|}{n}\,|\mathrm{acc}(B_b)-\mathrm{conf}(B_b)|\)</span>.
-              Brier:
-              <span class="math">\(\frac{1}{n}\sum_i(\hat{p}_i-y_i)^2\)</span>.
+            <p class="mt-3 text-white/85">
+                <sup>1</sup>University of Texas at El Paso, TX, USA, 79902<br />
+                <sup>2</sup>Southern Illinois University Carbondale, IL, USA, 62901
             </p>
-          </div>
-        </aside>
 
-        <h2 class="mt-6 text-[1.1rem] font-bold">6 Theory</h2>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          Assume each client loss <span class="math">\(\mathcal{L}_k\)</span> is <span class="math">\(L\)</span>-smooth and the update variance is bounded.
-          The aggregated marker update is a stochastic approximation to a stationary point of <span class="math">\(\mathcal{L}(M)=\frac{1}{N}\sum_k \mathcal{L}_k(M)\)</span>.
-        </p>
-        <p class="mt-3 text-[0.98rem] leading-relaxed">
-          <span class="font-semibold">Proposition 1 (Convergence of Marker Averaging).</span>
-          Under <span class="math">\(L\)</span>-smoothness, bounded variance, and diminishing step size (or Polyak averaging) with partial participation rate <span class="math">\(p&gt;0\)</span>,
-          we have <span class="math">\(\lim_{t\to\infty}\mathbb{E}\lVert\nabla\mathcal{L}(M^t)\rVert = 0\)</span>, with an <span class="math">\(\mathcal{O}(1/\sqrt{t})\)</span> rate under standard assumptions.
-        </p>
-        <p class="mt-3 text-[0.98rem] leading-relaxed">
-          <span class="font-semibold">Lemma 1 (Alignment improves local curvature).</span>
-          If LLM embeddings form <span class="math">\(\delta\)</span>-separated clusters consistent with labels and <span class="math">\(\gamma&gt;0\)</span>, the alignment term adds a positive semidefinite component to the neighborhood Hessian,
-          reducing variance of <span class="math">\(p^e_{ij}\)</span> and accelerating convergence.
-        </p>
-      </article>
+            <p class="mt-3 text-sm text-white/75">
+                {ihossain, malam10}@miners.utep.edu, sai.puppala@siu.edu, stalukder@utep.edu
+            </p>
 
-      <footer class="mt-8 flex items-end justify-between text-[0.85rem] text-neutral-700">
-        <span aria-hidden="true"></span>
-        <p class="tabular-nums">4</p>
-      </footer>
-    </section>
+            <div class="mt-6 flex flex-wrap gap-3">
+                <!-- Update these links as needed -->
+                <a href="https://arxiv.org/abs/2511.09438"
+                    class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-900 shadow-sm hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-white/70">
+                    <i class="fa-regular fa-file-lines" aria-hidden="true"></i>
+                    Paper
+                </a>
+                <a href="#"
+                    class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-white/20 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    aria-label="Code link (set URL)">
+                    <i class="fa-brands fa-github" aria-hidden="true"></i>
+                    Code
+                </a>
+                <a href="#"
+                    class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-white/20 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    aria-label="Dataset link (set URL)">
+                    <i class="fa-solid fa-database" aria-hidden="true"></i>
+                    Dataset
+                </a>
+                <!-- <a href="#abstract"
+                    class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-white/20 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/50">
+                    <i class="fa-solid fa-scroll" aria-hidden="true"></i>
+                    Abstract
+                </a> -->
+                <!-- <a href="#paper-pages"
+                    class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-white/20 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/50">
+                    <i class="fa-solid fa-file-circle-check" aria-hidden="true"></i>
+                    PDF Layout View
+                </a> -->
+            </div>
+        </div>
+    </header>
 
-    <!-- PAGE 5 -->
-    <section class="page break-after-page screen-shadow rounded-md border border-neutral-200 bg-white px-10 py-8" aria-label="Page 5">
-      <header class="flex items-center justify-center">
-        <p class="text-[0.9rem] text-neutral-700">Variational Gaussian Mixture Manifold Models</p>
-      </header>
+    <!-- ===== MAIN (web-style sections + your existing PDF-like pages) ===== -->
+    <main id="main" class="mx-auto max-w-6xl px-4 py-10">
+        <!-- Web-style Abstract section (from your template) -->
+        <section id="abstract" class="site-section rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+            <h2 class="text-xl font-bold tracking-tight">Abstract</h2>
+            <p class="mt-3 text-[0.98rem] leading-relaxed text-neutral-800">
+                We present a novel approach that uses large language models (LLMs) to assist graph machine learning
+                (GML) under personalization and privacy constraints.
+                Our approach integrates (i) LLM-assisted data augmentation for sparse graphs, (ii) prompt and
+                instruction tuning to adapt foundation models to graph tasks,
+                and (iii) in-context learning to provide few-shot graph reasoning signals. These signals parameterize a
+                Dynamic-UMAP manifold of client-specific graph embeddings
+                inside a Bayesian variational objective for personalized federated learning. The method supports node
+                classification and link prediction in low-resource settings
+                and aligns LLM latent representations with graph structure via a cross-modal regularizer. We provide a
+                convergence sketch for our variational aggregation, detail
+                a privacy threat model with moments-accountant DP, and report applications to knowledge graph
+                completion, recommendation-style link prediction, and citation/product
+                graphs, along with proposed evaluation protocols for LLM-augmented GML.
+            </p>
+        </section>
+        <section class="site-section rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+            <h2 class="text-xl font-bold tracking-tight">Introduction</h2>
+            <p class="mt-3 text-[0.98rem] leading-relaxed text-neutral-800">
+                Graphs power applications from recommendation and scientific discovery to knowledge graph (KG)
+                completion and question answering (QA) [10, 12].
+                In practice, graphs are heterogeneous, private, and sparse across clients (e.g., institutions or edge
+                devices). Meanwhile, LLMs encode extensive world knowledge and can be prompted or instruction-tuned
+                to provide structural priors, textual context, and few-shot signals [5]. We ask: How can LLMs assist
+                personalized federated GML when labeled edges/nodes are scarce and data cannot leave clients?
+            </p>
+            <p class="mt-3 text-[0.98rem] leading-relaxed text-neutral-800">
+                We propose LLM-Guided Dynamic-UMAP (LG-DUMAP), a Gaussian variational framework that: (1) builds
+                client-specific graph manifolds using Dynamic-UMAP over graph embeddings;
+                (2) injects LLM guidance via prompt/instruction-tuned text encoders and in-context exemplars; (3)
+                performs personalized federated variational inference with privacy-preserving aggregation
+                of similarity prototypes (markers) summarizing local similarity structures; and (4) aligns LLM and graph
+                latent spaces to improve low-resource performance.
+            </p>
 
-      <article class="mt-4">
-        <figure class="avoid-break">
-          <figcaption class="text-center text-[0.98rem]">
-            <span class="font-semibold">Table 3:</span> Main results (mean±std over 5 seeds). Best in <span class="font-semibold">bold</span>.
-          </figcaption>
+            <h3 class="mt-4 text-[1rem] font-bold">Contributions.</h3>
+            <ul class="mt-2 list-disc pl-6 text-[0.98rem] leading-relaxed">
+                <li>A parametric UMAP-style manifold objective coupled with variational marker aggregation for
+                    personalized federation.</li>
+                <li>Cross-modal alignment to LLM text space and calibrated pseudo-edges with abstention for robustness.
+                </li>
+                <li>A concrete privacy threat model with secure aggregation, per-client clipping, and moments-accountant
+                    DP; and an attack-driven evaluation via membership inference.</li>
+                <li>Expanded baselines (Per-FedAvg, pFedMe, Ditto, FedProx; LightGCN/RotatE/ComplEx/CompGCN) with
+                    systems evidence (cost/latency, partial participation) and worst-client/percentile reporting.</li>
+            </ul>
 
-          <div class="mt-2 overflow-x-auto">
-            <table class="w-full border-collapse text-[0.95rem]" role="table" aria-label="Table 3 Main results">
-              <thead>
-                <tr class="border-y border-neutral-400">
-                  <th scope="col" class="py-2 text-left font-semibold">Method</th>
-                  <th scope="col" class="py-2 text-left font-semibold">Cora (Acc)</th>
-                  <th scope="col" class="py-2 text-left font-semibold">ogbn-arxiv (F1)</th>
-                  <th scope="col" class="py-2 text-left font-semibold">FB15k-237 (MRR)</th>
-                  <th scope="col" class="py-2 text-left font-semibold">ogbn-products (Acc)</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-neutral-300">
-                <tr>
-                  <td class="py-1.5">Local-GNN (GraphSAGE [10])</td>
-                  <td class="py-1.5">79.8 ± 1.2</td>
-                  <td class="py-1.5">68.9 ± 0.6</td>
-                  <td class="py-1.5">0.297 ± 0.004</td>
-                  <td class="py-1.5">77.2 ± 0.5</td>
-                </tr>
-                <tr>
-                  <td class="py-1.5">FedAvg-GNN</td>
-                  <td class="py-1.5">82.1 ± 0.9</td>
-                  <td class="py-1.5">71.1 ± 0.5</td>
-                  <td class="py-1.5">0.314 ± 0.003</td>
-                  <td class="py-1.5">79.6 ± 0.6</td>
-                </tr>
-                <tr>
-                  <td class="py-1.5">LLM Text-only (frozen encoder) [5]</td>
-                  <td class="py-1.5">76.5 ± 1.4</td>
-                  <td class="py-1.5">69.7 ± 0.7</td>
-                  <td class="py-1.5">0.289 ± 0.006</td>
-                  <td class="py-1.5">78.3 ± 0.7</td>
-                </tr>
-                <tr>
-                  <td class="py-1.5">LLM+GNN (late fusion) [10, 12]</td>
-                  <td class="py-1.5">83.4 ± 0.8</td>
-                  <td class="py-1.5">72.0 ± 0.5</td>
-                  <td class="py-1.5">0.323 ± 0.004</td>
-                  <td class="py-1.5">80.8 ± 0.5</td>
-                </tr>
-                <tr class="font-semibold">
-                  <td class="py-1.5">LG-DUMAP(P) (ours)</td>
-                  <td class="py-1.5">84.9 ± 0.7</td>
-                  <td class="py-1.5">73.2 ± 0.5</td>
-                  <td class="py-1.5">0.334 ± 0.004</td>
-                  <td class="py-1.5">82.0 ± 0.5</td>
-                </tr>
-                <tr class="font-semibold">
-                  <td class="py-1.5">LG-DUMAP(I) (ours)</td>
-                  <td class="py-1.5">86.1 ± 0.6</td>
-                  <td class="py-1.5">74.3 ± 0.4</td>
-                  <td class="py-1.5">0.347 ± 0.003</td>
-                  <td class="py-1.5">83.1 ± 0.5</td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr class="border-b border-neutral-400"><td colspan="5" class="h-0.5"></td></tr>
-              </tfoot>
-            </table>
-          </div>
-        </figure>
+            <footer class="mt-10 flex items-end justify-between text-[0.85rem] text-neutral-700">
+                <p class="italic">arXiv:2511.09438v1 [cs.LG] 12 Nov 2025</p>
+                <p class="tabular-nums">1</p>
+            </footer>
+        </section>
+        <section class="site-section rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+            <header class="flex items-center justify-center">
+                <p class="text-[0.9rem] text-neutral-700">Variational Gaussian Mixture Manifold Models</p>
+            </header>
 
-        <figure class="mt-6 avoid-break">
-          <figcaption class="text-center text-[0.98rem]">
-            <span class="font-semibold">Table 4:</span> Overhead and DP trade-offs on ogbn-arxiv.
-          </figcaption>
+            <article class="mt-4">
+                <figure class="avoid-break">
+                    <figcaption class="text-center text-[0.98rem]">
+                        <span class="font-semibold">Table 1:</span> Acronyms used.
+                    </figcaption>
 
-          <div class="mt-2 overflow-x-auto">
-            <table class="w-full border-collapse text-[0.95rem]" role="table" aria-label="Table 4 Overhead and DP trade-offs">
-              <thead>
-                <tr class="border-y border-neutral-400">
-                  <th scope="col" class="py-2 text-left font-semibold">Setting</th>
-                  <th scope="col" class="py-2 text-left font-semibold">KB/round (c→s)</th>
-                  <th scope="col" class="py-2 text-left font-semibold">Time/round (s)</th>
-                  <th scope="col" class="py-2 text-left font-semibold">LLM tokens/round</th>
-                  <th scope="col" class="py-2 text-left font-semibold">Adapter size (KB)</th>
-                  <th scope="col" class="py-2 text-left font-semibold">F1 (%)</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-neutral-300">
-                <tr>
-                  <td class="py-1.5">FedAvg-GNN</td>
-                  <td class="py-1.5">92</td>
-                  <td class="py-1.5">6.1</td>
-                  <td class="py-1.5">–</td>
-                  <td class="py-1.5">–</td>
-                  <td class="py-1.5">71.1</td>
-                </tr>
-                <tr>
-                  <td class="py-1.5">LG-DUMAP(P)</td>
-                  <td class="py-1.5">118</td>
-                  <td class="py-1.5">7.0</td>
-                  <td class="py-1.5"><span class="math">\(1.2\times 10^4\)</span></td>
-                  <td class="py-1.5">220</td>
-                  <td class="py-1.5">73.2</td>
-                </tr>
-                <tr>
-                  <td class="py-1.5">LG-DUMAP(I)</td>
-                  <td class="py-1.5">131</td>
-                  <td class="py-1.5">7.6</td>
-                  <td class="py-1.5"><span class="math">\(1.9\times 10^4\)</span></td>
-                  <td class="py-1.5">350</td>
-                  <td class="py-1.5">74.3</td>
-                </tr>
-                <tr>
-                  <td class="py-1.5">LG-DUMAP(I)+DP (<span class="math">\(\epsilon=8\)</span>)</td>
-                  <td class="py-1.5">131</td>
-                  <td class="py-1.5">7.8</td>
-                  <td class="py-1.5"><span class="math">\(1.9\times 10^4\)</span></td>
-                  <td class="py-1.5">350</td>
-                  <td class="py-1.5">73.6</td>
-                </tr>
-                <tr>
-                  <td class="py-1.5">LG-DUMAP(I)+DP (<span class="math">\(\epsilon=4\)</span>)</td>
-                  <td class="py-1.5">131</td>
-                  <td class="py-1.5">7.9</td>
-                  <td class="py-1.5"><span class="math">\(1.9\times 10^4\)</span></td>
-                  <td class="py-1.5">350</td>
-                  <td class="py-1.5">72.7</td>
-                </tr>
-                <tr>
-                  <td class="py-1.5">LG-DUMAP(I)+DP (<span class="math">\(\epsilon=2\)</span>)</td>
-                  <td class="py-1.5">131</td>
-                  <td class="py-1.5">8.1</td>
-                  <td class="py-1.5"><span class="math">\(1.9\times 10^4\)</span></td>
-                  <td class="py-1.5">350</td>
-                  <td class="py-1.5">71.6</td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr class="border-b border-neutral-400"><td colspan="6" class="h-0.5"></td></tr>
-              </tfoot>
-            </table>
-          </div>
-        </figure>
+                    <div class="mt-2 overflow-x-auto">
+                        <table class="w-full border-collapse text-[0.95rem]" role="table"
+                            aria-label="Table 1 Acronyms used">
+                            <tbody class="divide-y divide-neutral-300">
+                                <tr class="border-y border-neutral-300">
+                                    <th scope="row" class="w-40 py-2 pr-4 text-left font-semibold">GML</th>
+                                    <td class="py-2">Graph machine learning</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="py-2 pr-4 text-left font-semibold">UMAP</th>
+                                    <td class="py-2">Uniform Manifold Approximation and Projection</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="py-2 pr-4 text-left font-semibold">DP</th>
+                                    <td class="py-2">Differential privacy</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="py-2 pr-4 text-left font-semibold">CKA</th>
+                                    <td class="py-2">Centered Kernel Alignment</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="py-2 pr-4 text-left font-semibold">GNN</th>
+                                    <td class="py-2">Graph neural network</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="py-2 pr-4 text-left font-semibold">KDE</th>
+                                    <td class="py-2">Kernel density estimation</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="py-2 pr-4 text-left font-semibold">KG</th>
+                                    <td class="py-2">Knowledge graph</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </figure>
 
-        <h2 class="mt-7 text-[1.1rem] font-bold">7 Experiments</h2>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          We evaluate node classification and link prediction under federated, low-resource settings with textual side information [12].
-        </p>
+                <h2 class="mt-7 text-[1.1rem] font-bold">2 Related Work</h2>
 
-        <h3 class="mt-4 text-[1rem] font-bold">7.1 Datasets, Splits, and Evaluation Protocol</h3>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          <span class="font-semibold">Datasets.</span>
-          Cora, Citeseer (node classification); ogbn-arxiv and ogbn-products (node classification); FB15k-237 (KG completion); and Chameleon/Squirrel for heterophily stress [12, 17].
-        </p>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          <span class="font-semibold">Federated splits.</span>
-          We form <span class="math">\(N=20\)</span> non-IID clients via topic/label stratification. Few-shot regimes use 5–40 labeled nodes/edges per client; <span class="font-semibold">cold-start</span> introduces 30% text-only nodes.
-          Clients participate with sampling <span class="math">\(q\in\{0.2,0.5,1.0\}\)</span> per round (partial participation). Text-only nodes contribute features via <span class="math">\(h_{\theta}(\cdot)\)</span> and enter kNN construction on <span class="math">\(\tilde{X}_k\)</span>;
-          their labels/edges are proposed by calibrated LLMs.
-        </p>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          <span class="font-semibold">Metrics.</span>
-          Accuracy / Micro-F1 (with worst-client and 10th-percentile reporting), KG MRR/Hits@K, manifold trustworthiness/continuity, and cross-modal alignment (cosine, CKA, Procrustes) [8, 13].
-          Privacy is summarized by <span class="math">\((\epsilon,\delta)\)</span> and empirical attack AUROC for membership inference [19]. We also track systems cost: KB/round, time/round, LLM tokens, adapter size.
-        </p>
-      </article>
+                <h3 class="mt-3 text-[1rem] font-bold">2.1 LLM-Augmented Graph Learning</h3>
+                <p class="mt-2 text-[0.98rem] leading-relaxed">
+                    Hybrid pipelines use language encoders to guide graph learning by supplying semantic priors,
+                    pseudo-labels, and retrieval-style context [5].
+                    In text-rich graphs (e.g., citation networks, product catalogs, and KGs), LLM embeddings can act as
+                    additional node features, enable label/edge proposals under extreme sparsity,
+                    and furnish rationales. We leverage these capabilities with a calibrated admission policy for
+                    pseudo-edges (temperature scaling, confidence thresholding) to mitigate overconfident hallucinations
+                    [9].
+                    Compared to text-only or late-fusion baselines [10, 12], we integrate language supervision within a
+                    geometric objective, coupling cross-modal alignment with a parametric manifold learner.
+                </p>
 
-      <footer class="mt-8 flex items-end justify-between text-[0.85rem] text-neutral-700">
-        <span aria-hidden="true"></span>
-        <p class="tabular-nums">5</p>
-      </footer>
-    </section>
+                <h3 class="mt-4 text-[1rem] font-bold">2.2 Personalized Federated Learning for (Graph) Models</h3>
+                <p class="mt-2 text-[0.98rem] leading-relaxed">
+                    FedAvg assumes homogeneous objectives and suffers on non-IID clients; remedies include FedProx [15]
+                    and personalization strategies such as Per-FedAvg [7], pFedMe [6], and Ditto [14].
+                    Most operate at the level of model parameters. In contrast, we personalize through a lightweight
+                    variational prototype layer (markers) that summarizes local similarity structure and is safe to
+                    share
+                    under privacy budgets. This differs from prior federated GNN work that aggregates entire GNN
+                    weights/gradients, incurring larger communication and privacy footprints.
+                    We also incorporate partial participation and report worst-client/percentile metrics to characterize
+                    non-IID regimes.
+                </p>
 
-    <!-- PAGE 6 -->
-    <section class="page break-after-page screen-shadow rounded-md border border-neutral-200 bg-white px-10 py-8" aria-label="Page 6">
-      <header class="flex items-center justify-center">
-        <p class="text-[0.9rem] text-neutral-700">Variational Gaussian Mixture Manifold Models</p>
-      </header>
+                <h3 class="mt-4 text-[1rem] font-bold">2.3 Parametric Manifold Learning and UMAP</h3>
+                <p class="mt-2 text-[0.98rem] leading-relaxed">
+                    UMAP is a widely used non-linear dimensionality reduction technique built on fuzzy simplicial sets
+                    [16]; parametric variants learn an explicit mapping that can be amortized across data and clients
+                    [18].
+                    Unlike purely unsupervised application of (parametric) UMAP to graph embeddings, our Dynamic-UMAP is
+                    optimized jointly with downstream tasks and a cross-modal regularizer tying the manifold to LLM
+                    embeddings.
+                    We additionally introduce markers—a KDE-style similarity model on interpoint distances in the
+                    learned space—which (i) acts as a compact, aggregatable representation for federation and
+                    (ii) improves link modeling in low-resource regimes. We report manifold trustworthiness/continuity
+                    and representation-similarity diagnostics (CKA, Procrustes) to probe geometry and modality alignment
+                    [8, 13].
+                </p>
 
-      <article class="mt-4">
-        <h3 class="text-[1rem] font-bold">7.2 Baselines and Implementation Details</h3>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          <span class="font-semibold">Baselines.</span>
-          Federated personalization: Local-GNN, FedAvg-GNN, Per-FedAvg [7], pFedMe [6], Ditto [14], FedProx [15].
-          KG/link: TransE [3], RotatE [20], ComplEx [21], CompGCN [22]. Recommendation: LightGCN [11].
-          Fusion: LLM Text-only (frozen encoder) [5], and LLM+GNN (late fusion) [10, 12].
-        </p>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          <span class="font-semibold">Our variants.</span>
-          LG-DUMAP(P) uses prompt-tuned adapters; LG-DUMAP(I) uses instruction-tuned adapters with the same backbone.
-        </p>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          <span class="font-semibold">Setup.</span>
-          GraphSAGE (2-layer, hidden=256) [10]; Dynamic-UMAP with <span class="math">\(d=32\)</span>, neighbors = 15; markers <span class="math">\(|\mathcal{M}^{+}|=8\)</span>, <span class="math">\(|\mathcal{M}^{-}|=8\)</span>, bandwidth <span class="math">\(\sigma_{\mathrm{kern}}=1.0\)</span>;
-          Adam lr <span class="math">\(2\times 10^{-3}\)</span> (GNN/UMAP), <span class="math">\(5\times 10^{-5}\)</span> (adapters); 50 rounds; 2 local epochs; batch size 1024 node-pairs;
-          <span class="math">\(\gamma=0.2\)</span>, <span class="math">\(\eta=1.0\)</span>, <span class="math">\(\lambda=0.1\)</span>; frozen text encoder with 16 prompt tokens.
-        </p>
+                <h3 class="mt-4 text-[1rem] font-bold">2.4 Knowledge-Graph and Recommendation Baselines</h3>
+                <p class="mt-2 text-[0.98rem] leading-relaxed">
+                    For KG completion, translational and rotational families (TransE/RotatE) and bilinear approaches
+                    (ComplEx) remain strong baselines [3, 20, 21].
+                    Structure-aware GNNs such as CompGCN add relation composition into message passing [22]. In
+                    recommendation, LightGCN shows that stripped-down propagation without non-linearities is competitive
+                    on
+                    collaborative filtering [11]. Our evaluation situates LG-DUMAP against these methods and emphasizes
+                    few-shot/cold-start conditions where text priors help most.
+                    We also include heterophily stress tests (e.g., Chameleon, Squirrel) where neighborhood homophily is
+                    weak and geometric signals matter [17].
+                </p>
+            </article>
 
-        <h3 class="mt-5 text-[1rem] font-bold">7.3 Results and Analysis</h3>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          <span class="font-semibold">Main results.</span>
-          LG-DUMAP consistently outperforms both graph-only and naive language–graph fusion baselines across citation, product, and KG tasks.
-        </p>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          <span class="font-semibold">Observations.</span>
-          (1) Graph-only vs. federation. FedAvg-GNN improves over Local-GNN on all datasets (e.g., Cora: +2.3 Acc; ogbn-arxiv: +2.2 F1).
-          (2) Language alone is insufficient. LLM Text-only underperforms graph-aware models on structural tasks, indicating topology remains essential.
-          (3) Naive fusion helps, but falls short. Late fusion adds text features post hoc and yields steady gains over graph-only baselines, but lacks manifold-level coupling.
-          (4) Our approach closes the gap. LG-DUMAP(P) delivers additional gains via prompt-tuned guidance and Dynamic-UMAP.
-          (5) Instruction-tuned variant is best. LG-DUMAP(I) consistently wins (e.g., ogbn-arxiv: 74.3 F1). The uplift over late fusion supports cross-modal alignment and marker-based similarity modeling rather than feature concatenation.
-        </p>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          <span class="font-semibold">Few-shot, cold-start, and alignment.</span>
-          In low-label regimes and 30% cold-start, LG-DUMAP(I) retains the largest fraction of full-data performance;
-          manifold trustworthiness/continuity and CKA/Procrustes indicate tighter coupling between <span class="math">\(Z\)</span> and <span class="math">\(h_{\theta}\)</span> than late fusion.
-        </p>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          <span class="font-semibold">Efficiency and privacy trade-offs.</span>
-          Table 4 summarizes communication/runtime and DP effects. Adding calibrated language guidance and parametric UMAP raises cost modestly but improves accuracy/F1.
-          Client-level DP (Gaussian mechanism with moments accountant) degrades F1 gracefully as <span class="math">\(\epsilon\)</span> tightens, while still outperforming the graph-only federation baseline at moderate budgets.
-        </p>
+            <footer class="mt-8 flex items-end justify-between text-[0.85rem] text-neutral-700">
+                <span aria-hidden="true"></span>
+                <p class="tabular-nums">2</p>
+            </footer>
+        </section>
 
-        <h2 class="mt-6 text-[1.1rem] font-bold">References</h2>
-        <ol class="mt-2 list-decimal pl-6 text-[0.95rem] leading-relaxed">
-          <li>Martin Abadi, Andy Chu, Ian Goodfellow, H. Brendan McMahan, Ilya Mironov, Kunal Talwar, and Li Zhang. 2016. Deep Learning with Differential Privacy. In Proceedings of the 2016 ACM SIGSAC Conference on Computer and Communications Security.</li>
-          <li>Keith Bonawitz, Vladimir Ivanov, Ben Kreuter, et al. 2017. Practical Secure Aggregation for Privacy-Preserving Machine Learning. In Proceedings of the 2017 ACM SIGSAC Conference on Computer and Communications Security.</li>
-          <li>Antoine Bordes, Nicolas Usunier, Alberto Garcia-Duran, Jason Weston, and Oksana Yakhnenko. 2013. Translating Embeddings for Modeling Multi-relational Data. In Advances in Neural Information Processing Systems.</li>
-          <li>Glenn W. Brier. 1950. Verification of Forecasts Expressed in Terms of Probability. Monthly Weather Review 78, 1 (1950), 1–3.</li>
-          <li>Tom B. Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, et al. 2020. Language Models are Few-Shot Learners. In Advances in Neural Information Processing Systems.</li>
-          <li>Canh T. Dinh, Nguyen H. Tran, and Tuan D. Nguyen. 2020. Federated Learning with Moreau Envelopes. arXiv preprint arXiv:2006.08848 (2020).</li>
-          <li>Alireza Fallah, Aryan Mokhtari, and Asuman Ozdaglar. 2020. Personalized Federated Learning with Theoretical Guarantees: A Model-Agnostic Meta-Learning Approach. In Advances in Neural Information Processing Systems.</li>
-          <li>John C. Gower. 1975. Generalized Procrustes Analysis. Psychometrika 40, 1 (1975), 33–51.</li>
-          <li>Chuan Guo, Geoff Pleiss, Yu Sun, and Kilian Q. Weinberger. 2017. On Calibration of Modern Neural Networks. In Proceedings of the 34th International Conference on Machine Learning.</li>
-          <li>William L. Hamilton, Rex Ying, and Jure Leskovec. 2017. Inductive Representation Learning on Large Graphs. In Advances in Neural Information Processing Systems.</li>
-          <li>Xiangnan He, Kuan Deng, Xiang Wang, Yan Li, Yongdong Zhang, and Meng Wang. 2020. LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation. In Proceedings of the 43rd International ACM SIGIR Conference on Research and Development in Information Retrieval.</li>
-          <li>Weihua Hu, Matthias Fey, Marinka Zitnik, Yuxiao Dong, Hongyu Ren, Bowen Liu, Michele Catasta, and Jure Leskovec. 2020. Open Graph Benchmark: Datasets for Machine Learning on Graphs. In Advances in Neural Information Processing Systems.</li>
-          <li>Simon Kornblith, Mohammad Norouzi, Honglak Lee, and Geoffrey Hinton. 2019. Similarity of Neural Network Representations Revisited. In Proceedings of the 36th International Conference on Machine Learning.</li>
-          <li>Tian Li, Shengyuan Hu, Ahmad Beirami, Virginia Smith, et al. 2021. Ditto: Simple and Communication-Efficient Personalized Federated Learning. arXiv preprint arXiv:2012.04221 (2021).</li>
-          <li>Tian Li, Anit Kumar Sahu, Ameet Talwalkar, and Virginia Smith. 2020. Federated Optimization in Heterogeneous Networks. In Proceedings of Machine Learning and Systems.</li>
-        </ol>
-      </article>
+        <section class="site-section rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+                <header class="flex items-center justify-center">
+                    <p class="text-[0.9rem] text-neutral-700">Variational Gaussian Mixture Manifold Models</p>
+                </header>
 
-      <footer class="mt-8 flex items-end justify-between text-[0.85rem] text-neutral-700">
-        <span aria-hidden="true"></span>
-        <p class="tabular-nums">6</p>
-      </footer>
-    </section>
+                <article class="mt-4">
+                    <h2 class="text-[1.1rem] font-bold">3 Methodology</h2>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        Each client <span class="math">\(k \in \{1, \ldots, N\}\)</span> owns a private graph <span
+                            class="math">\(G_k = (V_k, E_k, X_k, T_k)\)</span> with node features <span
+                            class="math">\(X_k\)</span>, optional node/edge texts <span class="math">\(T_k\)</span>,
+                        and tasks: node classification or link prediction. Clients cannot share raw data. The server
+                        maintains global priors but aggregates only privacy-preserving statistics.
+                    </p>
+                    <p class="mt-3 text-[0.98rem] leading-relaxed">
+                        <span class="font-semibold">LLM guidance.</span> An LLM <span
+                            class="math">\(\mathcal{L}\)</span> provides (a) text embeddings for <span
+                            class="math">\(T_k\)</span>, (b) instruction/prompt-tuned decoding to propose edges or node
+                        labels in low-resource regimes, and (c) in-context exemplars for few-shot behaviors.
+                        We denote the LLM text encoder by <span class="math">\(h_{\theta}(\cdot)\)</span> and a
+                        lightweight adapter/prompt <span class="math">\(P\)</span>.
+                    </p>
+                    <p class="mt-3 text-[0.98rem] leading-relaxed">
+                        We integrate UMAP, graph encoders, and LLM guidance within a variational federated objective.
+                    </p>
 
-    <!-- PAGE 7 -->
-    <section class="page break-after-page screen-shadow rounded-md border border-neutral-200 bg-white px-10 py-8" aria-label="Page 7">
-      <header class="flex items-center justify-center">
-        <p class="text-[0.9rem] text-neutral-700">Variational Gaussian Mixture Manifold Models</p>
-      </header>
+                    <h3 class="mt-5 text-[1rem] font-bold">3.1 Graph and Text Fusion Embeddings</h3>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        We compute node embeddings by fusing a GNN encoder <span class="math">\(\phi_k\)</span> with LLM
+                        text embeddings:
+                    </p>
+                    <div class="mt-2 math text-[0.98rem] leading-relaxed">
+                        \[
+                        \tilde{X}_k = \mathrm{Fuse}\big(\mathrm{GNN}_{\phi_k}(G_k),\; h_{\theta}(T_k; P)\big) \in
+                        \mathbb{R}^{|V_k| \times m}. \tag{1}
+                        \]
+                    </div>
 
-      <article class="mt-4">
-        <ol start="16" class="list-decimal pl-6 text-[0.95rem] leading-relaxed">
-          <li>Leland McInnes, John Healy, and James Melville. 2018. UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction. arXiv preprint arXiv:1802.03426 (2018).</li>
-          <li>Hongbin Pei, Bingzhe Wei, Kevin Chen-Chuan Li, Yiming Sun, and Bo Chang. 2020. Geom-GCN: Geometric Graph Convolutional Networks. In International Conference on Learning Representations.</li>
-          <li>Tim Sainburg, Leland McInnes, and Timothy Q. Gentner. 2021. Parametric UMAP: Learning Embeddings with Deep Neural Networks for Dimensionality Reduction. arXiv preprint arXiv:2009.12945 (2021).</li>
-          <li>Reza Shokri, Marco Stronati, Congzheng Song, and Vitaly Shmatikov. 2017. Membership Inference Attacks Against Machine Learning Models. In 2017 IEEE Symposium on Security and Privacy (SP).</li>
-          <li>Zhiqing Sun, Zhi-Hong Deng, Jian-Yun Nie, and Jian Tang. 2019. RotatE: Knowledge Graph Embedding by Relational Rotation in Complex Space. In International Conference on Learning Representations.</li>
-          <li>Théo Trouillon, Johannes Welbl, Sebastian Riedel, Éric Gaussier, and Guillaume Bouchard. 2016. Complex Embeddings for Simple Link Prediction. In Proceedings of the 33rd International Conference on Machine Learning.</li>
-          <li>Shikhar Vashishth, Soumya Sanyal, Nilesh Nitin, and Partha Talukdar. 2020. Composition-based Multi-Relational Graph Convolutional Networks. In International Conference on Learning Representations.</li>
-        </ol>
+                    <h3 class="mt-5 text-[1rem] font-bold">3.2 Dynamic-UMAP Manifold</h3>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        We learn a low-dimensional manifold preserving local graph structure and LLM priors [16, 18]:
+                    </p>
+                    <div class="mt-2 math text-[0.98rem] leading-relaxed">
+                        \[
+                        Z_k = g_{\beta_k}(\tilde{X}_k) \in \mathbb{R}^{|V_k| \times d}. \tag{2}
+                        \]
+                    </div>
+                    <p class="mt-3 text-[0.98rem] leading-relaxed">
+                        The UMAP objective uses neighborhood probabilities <span class="math">\((p_{ij},
+                            q_{ij})\)</span> with
+                    </p>
+                    <div class="mt-2 math text-[0.98rem] leading-relaxed">
+                        \[
+                        \mathcal{L}^{(k)}_{\mathrm{UMAP}} = -\sum_{(i,j)\in E^{\mathrm{nn}}_k}\Big[p_{ij}\log q_{ij} +
+                        (1-p_{ij})\log(1-q_{ij})\Big], \tag{3}
+                        \]
+                        \[
+                        q_{ij} = \Big(1 + a\lVert z_i - z_j \rVert^{2b}\Big)^{-1}, \tag{4}
+                        \]
+                    </div>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        where <span class="math">\((a, b)\)</span> follow standard UMAP settings [16]. We optimize <span
+                            class="math">\(g_{\beta_k}\)</span> jointly with downstream losses.
+                    </p>
 
-        <h2 class="mt-7 text-[1.1rem] font-bold">A Convergence Sketch (Extended)</h2>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          Let <span class="math">\(\mathcal{L}(M)=\frac{1}{N}\sum_k \mathcal{L}_k(M)\)</span> be <span class="math">\(L\)</span>-smooth and let the aggregated update be
-          <span class="math">\(M^{t+1}=M^t + \frac{1}{N}\sum_k \mathbb{E}_{q_{\phi_k}}[M_k - M^t]\)</span> with bounded variance.
-          With client sampling rate <span class="math">\(p&gt;0\)</span> and diminishing step size or Polyak averaging, standard stochastic approximation results yield
-          <span class="math">\(\lim_t \lVert \nabla \mathcal{L}(M^t)\rVert \to 0\)</span> at <span class="math">\(\mathcal{O}(1/\sqrt{t})\)</span>.
-          The KL term stabilizes around Gaussian mixture priors; alignment adds local positive curvature when semantic clusters are separable.
-        </p>
+                    <h3 class="mt-5 text-[1rem] font-bold">3.3 LLM-Augmented Similarity and Markers</h3>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        Let <span class="math">\(s_{ij} = \lVert z_i - z_j \rVert_2\)</span> in <span
+                            class="math">\(Z_k\)</span>. Markers are scalar prototypes in the distance space (not
+                        vectors in <span class="math">\(Z_k\)</span>).
+                        We model a soft assignment of pairwise distances to <span class="math">\(\mathcal{M} = \{m_1,
+                            \ldots, m_{|\mathcal{M}|}\} \subset \mathbb{R}_{\ge 0}\)</span> via a KDE-style mixture:
+                    </p>
+                    <div class="mt-2 math text-[0.98rem] leading-relaxed">
+                        \[
+                        p^e_{ij} =
+                        \frac{
+                        \exp\Big(-\lVert s_{ij} - m_e \rVert^2/(2\sigma^2_{\mathrm{kern}})\Big)
+                        }{
+                        \sum_{m'\in\mathcal{M}} \exp\Big(-\lVert s_{ij} - m' \rVert^2/(2\sigma^2_{\mathrm{kern}})\Big)
+                        }. \tag{5}
+                        \]
+                    </div>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        Markers are initialized from labeled edges and calibrated LLM pseudo-edges (accepted if
+                        confidence <span class="math">\(c\ge\tau\)</span> after temperature scaling).
+                    </p>
 
-        <h2 class="mt-6 text-[1.1rem] font-bold">B Configuration Snippet (YAML)</h2>
-        <pre class="mt-2 overflow-x-auto rounded-md border border-neutral-200 bg-neutral-50 p-4 text-[0.92rem] leading-relaxed" aria-label="YAML configuration snippet"><code>model:
+                    <h3 class="mt-5 text-[1rem] font-bold">3.4 Cross-Modal Alignment</h3>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        We align <span class="math">\(Z_k\)</span> with LLM embeddings using cosine similarity with
+                        explicit normalization:
+                    </p>
+                    <div class="mt-2 math text-[0.98rem] leading-relaxed">
+                        \[
+                        \mathcal{L}^{(k)}_{\mathrm{align}} =
+                        \sum_{i\in V_k}\left(1 -
+                        \frac{\langle z_i,\; h_{\theta}(T_{k,i}; P)\rangle}{\lVert z_i\rVert_2\, \lVert
+                        h_{\theta}(T_{k,i}; P)\rVert_2}
+                        \right). \tag{6}
+                        \]
+                    </div>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        We assess representation similarity with CKA and Procrustes analyses [8, 13].
+                    </p>
+
+                    <h3 class="mt-5 text-[1rem] font-bold">3.5 Client Variational Objective</h3>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">For client <span class="math">\(k\)</span>, the loss
+                        is</p>
+                    <div class="mt-2 math text-[0.98rem] leading-relaxed">
+                        \[
+                        \mathcal{L}_k = \mathbb{E}_{q_{\phi_k}(\mathcal{M})}\big[\mathcal{J}_k(Z_k)\big] +
+                        \lambda\,\mathrm{KL}\big(q_{\phi_k}(\mathcal{M})\,\Vert\, s(\mathcal{M})\big)
+                        + \gamma\,\mathcal{L}^{(k)}_{\mathrm{align}} + \eta\,\mathcal{L}^{(k)}_{\mathrm{UMAP}}. \tag{7}
+                        \]
+                    </div>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        where <span class="math">\(\mathcal{J}_k\)</span> includes classification NLL and link
+                        prediction BCE using <span class="math">\(p^e_{ij}\)</span>. The prior <span
+                            class="math">\(s(\mathcal{M})\)</span> is a simple Gaussian mixture over marker locations;
+                        <span class="math">\(q_{\phi_k}(\mathcal{M})\)</span> is the client’s variational posterior over
+                        markers.
+                    </p>
+
+                    <h3 class="mt-5 text-[1rem] font-bold">3.6 Server Aggregation (Personalized)</h3>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">The server aggregates markers only:</p>
+                    <div class="mt-2 math text-[0.98rem] leading-relaxed">
+                        \[
+                        M^{t+1} = M^{t} + \frac{\sum_k w_k\,\mathbb{E}_{q_{\phi_k}(\mathcal{M})}\big[M_k -
+                        M^{t}\big]}{\sum_k w_k}. \tag{8}
+                        \]
+                    </div>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        No raw data, node embeddings, or GNN weights are shared.
+                    </p>
+
+                    <h3 class="mt-5 text-[1rem] font-bold">Key Hyperparameters</h3>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        UMAP dim <span class="math">\(d=32\)</span>, neighbors = 15; markers: <span
+                            class="math">\(|\mathcal{M}^{+}|=8\)</span>, <span
+                            class="math">\(|\mathcal{M}^{-}|=8\)</span>, bandwidth <span
+                            class="math">\(\sigma_{\mathrm{kern}}=1.0\)</span>;
+                        alignment <span class="math">\(\gamma=0.2\)</span>, UMAP <span class="math">\(\eta=1.0\)</span>,
+                        KL <span class="math">\(\lambda=0.1\)</span>;
+                        Adam lr <span class="math">\(2\times 10^{-3}\)</span> (GNN/UMAP) and <span
+                            class="math">\(5\times 10^{-5}\)</span> (adapters);
+                        rounds 50, local epochs 2, batch 1024 node-pairs; DP: clip <span class="math">\(C=1.0\)</span>,
+                        Gaussian noise scale <span class="math">\(\sigma_{\mathrm{dp}}\)</span> as in Table 2;
+                        acceptance threshold <span class="math">\(\tau\in\{0.6,0.7,0.8,0.9\}\)</span>.
+                    </p>
+                </article>
+
+                <footer class="mt-8 flex items-end justify-between text-[0.85rem] text-neutral-700">
+                    <span aria-hidden="true"></span>
+                    <p class="tabular-nums">3</p>
+                </footer>
+                <header class="flex items-center justify-center">
+                    <p class="text-[0.9rem] text-neutral-700">Variational Gaussian Mixture Manifold Models</p>
+                </header>
+
+                <article class="mt-4">
+                    <figure class="avoid-break">
+                        <figcaption class="text-center text-[0.98rem]">
+                            <span class="font-semibold">Algorithm 1</span> LG-DUMAP (one round <span class="math">\(t\to
+                                t+1\)</span>)
+                        </figcaption>
+
+                        <div class="mt-2 border-y border-neutral-400 py-3">
+                            <p class="text-[0.95rem] leading-relaxed">
+                                <span class="font-semibold">Require:</span>
+                                Client graphs <span class="math">\(G_k\)</span>, texts <span
+                                    class="math">\(T_k\)</span>; encoder <span class="math">\(h_\theta\)</span>;
+                                adapters/prompts <span class="math">\(P_k\)</span> (optional); <span
+                                    class="math">\(M^t\)</span>; <span class="math">\((\lambda,\gamma,\eta)\)</span>;
+                                DP clip <span class="math">\(C\)</span>, noise <span
+                                    class="math">\(\sigma_{\mathrm{dp}}\)</span> (optional)
+                            </p>
+
+                            <ol class="mt-3 space-y-1 text-[0.95rem] leading-relaxed" aria-label="Algorithm steps">
+                                <li><span class="tabular-nums">1:</span> <span class="font-semibold">for</span> each
+                                    participating client <span class="math">\(k\)</span> in parallel <span
+                                        class="font-semibold">do</span></li>
+                                <li><span class="tabular-nums">2:</span> <span class="math">\(X_{\mathrm{gnn}}\leftarrow
+                                        \mathrm{GNN}_{\phi_k}(G_k);\; X_{\text{text}}\leftarrow h_\theta(T_k; P_k);\;
+                                        \tilde{X}_k\leftarrow \mathrm{Fuse}(X_{\mathrm{gnn}}, X_{\text{text}})\)</span>
+                                </li>
+                                <li><span class="tabular-nums">3:</span> Build ANN kNN on <span
+                                        class="math">\(\tilde{X}_k\)</span>; compute <span
+                                        class="math">\(p_{ij}\)</span> (<em>graph-aware</em>)</li>
+                                <li><span class="tabular-nums">4:</span> Update parametric UMAP <span
+                                        class="math">\(g_{\beta_k}\)</span> to obtain <span class="math">\(Z_k\)</span>
+                                    by minimizing <span class="math">\(\mathcal{L}^{(k)}_{\mathrm{UMAP}}\)</span></li>
+                                <li><span class="tabular-nums">5:</span> LLM augmentation: propose pseudo-edges/labels
+                                    with confidence <span class="math">\(c\)</span>; accept if <span class="math">\(c\ge
+                                        \tau\)</span> (post-hoc temperature)</li>
+                                <li><span class="tabular-nums">6:</span> Form/update <span
+                                        class="math">\(\mathcal{M}^{+}_k,\; \mathcal{M}^{-}_k\)</span>; fit <span
+                                        class="math">\(q_{\phi_k}(\mathcal{M})\)</span> on distance space</li>
+                                <li><span class="tabular-nums">7:</span> Optimize <span
+                                        class="math">\(\mathcal{L}_k\)</span> with gradient clipping <span
+                                        class="math">\(\lVert g\rVert\le C\)</span>; add DP noise if enabled</li>
+                                <li><span class="tabular-nums">8:</span> Share <span
+                                        class="math">\(\mathbb{E}_{q(\mathcal{M})}[M_k]\)</span> (and optional <span
+                                        class="math">\(\Delta P_k\)</span>) via secure aggregation</li>
+                                <li><span class="tabular-nums">9:</span> <span class="font-semibold">end for</span></li>
+                                <li><span class="tabular-nums">10:</span> Server aggregates to <span
+                                        class="math">\(M^{t+1}\)</span> and broadcasts</li>
+                            </ol>
+                        </div>
+                    </figure>
+
+                    <figure class="mt-5 avoid-break">
+                        <figcaption class="text-center text-[0.98rem]">
+                            <span class="font-semibold">Table 2:</span> DP accounting and attack outcomes on ogbn-arxiv.
+                            <span class="math">\(\delta=10^{-5}\)</span>, sampling rate <span
+                                class="math">\(q=0.2\)</span>, rounds <span class="math">\(T=50\)</span>.
+                        </figcaption>
+
+                        <div class="mt-2 overflow-x-auto">
+                            <table class="w-full border-collapse text-[0.95rem]" role="table"
+                                aria-label="Table 2 DP accounting and attack outcomes">
+                                <thead>
+                                    <tr class="border-y border-neutral-400">
+                                        <th scope="col" class="py-2 text-left font-semibold">Setting</th>
+                                        <th scope="col" class="py-2 text-left font-semibold">Clip <span
+                                                class="math">\(C\)</span></th>
+                                        <th scope="col" class="py-2 text-left font-semibold">Noise <span
+                                                class="math">\(\sigma_{dp}\)</span></th>
+                                        <th scope="col" class="py-2 text-left font-semibold"><span
+                                                class="math">\(\epsilon\)</span></th>
+                                        <th scope="col" class="py-2 text-left font-semibold">Time/round (s)</th>
+                                        <th scope="col" class="py-2 text-left font-semibold">F1 (%)</th>
+                                        <th scope="col" class="py-2 text-left font-semibold">Attack AUROC<span
+                                                aria-hidden="true">↓</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-neutral-300">
+                                    <tr>
+                                        <td class="py-1.5">No DP</td>
+                                        <td class="py-1.5">–</td>
+                                        <td class="py-1.5">–</td>
+                                        <td class="py-1.5"><span class="math">\(\infty\)</span></td>
+                                        <td class="py-1.5">7.6</td>
+                                        <td class="py-1.5">74.3</td>
+                                        <td class="py-1.5">0.73</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5">DP-8</td>
+                                        <td class="py-1.5">1.0</td>
+                                        <td class="py-1.5">0.6</td>
+                                        <td class="py-1.5">8</td>
+                                        <td class="py-1.5">7.8</td>
+                                        <td class="py-1.5">73.6</td>
+                                        <td class="py-1.5">0.57</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5">DP-4</td>
+                                        <td class="py-1.5">1.0</td>
+                                        <td class="py-1.5">0.9</td>
+                                        <td class="py-1.5">4</td>
+                                        <td class="py-1.5">7.9</td>
+                                        <td class="py-1.5">72.7</td>
+                                        <td class="py-1.5">0.53</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5">DP-2</td>
+                                        <td class="py-1.5">1.0</td>
+                                        <td class="py-1.5">1.3</td>
+                                        <td class="py-1.5">2</td>
+                                        <td class="py-1.5">8.1</td>
+                                        <td class="py-1.5">71.6</td>
+                                        <td class="py-1.5">0.51</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="border-b border-neutral-400">
+                                        <td colspan="7" class="h-0.5"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </figure>
+
+                    <h2 class="mt-6 text-[1.1rem] font-bold">4 Threat Model and Differential Privacy Guarantees</h2>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        We assume an <em>honest-but-curious</em> server. Clients never disclose raw graphs/texts.
+                        Communication uses secure aggregation [2].
+                        We apply per-client clipping at norm <span class="math">\(C\)</span> and add Gaussian noise with
+                        variance <span class="math">\(\sigma^2_{dp}C^2\)</span> to shared marker statistics before
+                        aggregation.
+                        Using the moments accountant with sampling rate <span class="math">\(q\)</span> and <span
+                            class="math">\(T\)</span> rounds, we report overall <span
+                            class="math">\((\epsilon,\delta)\)</span> [1] and evaluate empirical privacy via membership
+                        inference (Section 5).
+                    </p>
+
+                    <h2 class="mt-6 text-[1.1rem] font-bold">5 Calibration and Safety for LLM Proposals</h2>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        We calibrate LLM pseudo-edges via temperature scaling (<span class="math">\(T\)</span>) on a
+                        validation slice and report ECE (15 bins) and Brier scores [4, 9].
+                        Pseudo-edges with confidence <span class="math">\(\hat{p}\ge\tau\)</span> are admitted; we study
+                        F1 vs. <span class="math">\(\tau\in\{0.6,0.7,0.8,0.9\}\)</span> and acceptance counts.
+                    </p>
+
+                    <aside class="mt-4 avoid-break rounded-md border border-[#bdbdbd] bg-[#f4f4f4] p-0" role="note"
+                        aria-label="Calibration metrics callout">
+                        <!-- Dark gray bar sampled from PDF: RGB(81,81,81) → #515151 -->
+                        <div class="rounded-t-md bg-[#515151] px-4 py-2 text-[0.95rem] font-semibold text-white">
+                            Calibration Metrics
+                        </div>
+                        <div class="px-4 py-3 text-[0.95rem] leading-relaxed">
+                            <p>
+                                Expected Calibration Error (ECE):
+                                <span class="math">\(\mathrm{ECE} = \sum_b
+                                    \frac{|B_b|}{n}\,|\mathrm{acc}(B_b)-\mathrm{conf}(B_b)|\)</span>.
+                                Brier:
+                                <span class="math">\(\frac{1}{n}\sum_i(\hat{p}_i-y_i)^2\)</span>.
+                            </p>
+                        </div>
+                    </aside>
+
+                    <h2 class="mt-6 text-[1.1rem] font-bold">6 Theory</h2>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        Assume each client loss <span class="math">\(\mathcal{L}_k\)</span> is <span
+                            class="math">\(L\)</span>-smooth and the update variance is bounded.
+                        The aggregated marker update is a stochastic approximation to a stationary point of <span
+                            class="math">\(\mathcal{L}(M)=\frac{1}{N}\sum_k \mathcal{L}_k(M)\)</span>.
+                    </p>
+                    <p class="mt-3 text-[0.98rem] leading-relaxed">
+                        <span class="font-semibold">Proposition 1 (Convergence of Marker Averaging).</span>
+                        Under <span class="math">\(L\)</span>-smoothness, bounded variance, and diminishing step size
+                        (or Polyak averaging) with partial participation rate <span class="math">\(p&gt;0\)</span>,
+                        we have <span class="math">\(\lim_{t\to\infty}\mathbb{E}\lVert\nabla\mathcal{L}(M^t)\rVert =
+                            0\)</span>, with an <span class="math">\(\mathcal{O}(1/\sqrt{t})\)</span> rate under
+                        standard assumptions.
+                    </p>
+                    <p class="mt-3 text-[0.98rem] leading-relaxed">
+                        <span class="font-semibold">Lemma 1 (Alignment improves local curvature).</span>
+                        If LLM embeddings form <span class="math">\(\delta\)</span>-separated clusters consistent with
+                        labels and <span class="math">\(\gamma&gt;0\)</span>, the alignment term adds a positive
+                        semidefinite component to the neighborhood Hessian,
+                        reducing variance of <span class="math">\(p^e_{ij}\)</span> and accelerating convergence.
+                    </p>
+                </article>
+
+                <footer class="mt-8 flex items-end justify-between text-[0.85rem] text-neutral-700">
+                    <span aria-hidden="true"></span>
+                    <p class="tabular-nums">4</p>
+                </footer>
+            </section>
+
+            <!-- PAGE 5 -->
+            <section class="site-section rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+                <header class="flex items-center justify-center">
+                    <p class="text-[0.9rem] text-neutral-700">Variational Gaussian Mixture Manifold Models</p>
+                </header>
+
+                <article class="mt-4">
+                    <figure class="avoid-break">
+                        <figcaption class="text-center text-[0.98rem]">
+                            <span class="font-semibold">Table 3:</span> Main results (mean±std over 5 seeds). Best in
+                            <span class="font-semibold">bold</span>.
+                        </figcaption>
+
+                        <div class="mt-2 overflow-x-auto">
+                            <table class="w-full border-collapse text-[0.95rem]" role="table"
+                                aria-label="Table 3 Main results">
+                                <thead>
+                                    <tr class="border-y border-neutral-400">
+                                        <th scope="col" class="py-2 text-left font-semibold">Method</th>
+                                        <th scope="col" class="py-2 text-left font-semibold">Cora (Acc)</th>
+                                        <th scope="col" class="py-2 text-left font-semibold">ogbn-arxiv (F1)</th>
+                                        <th scope="col" class="py-2 text-left font-semibold">FB15k-237 (MRR)</th>
+                                        <th scope="col" class="py-2 text-left font-semibold">ogbn-products (Acc)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-neutral-300">
+                                    <tr>
+                                        <td class="py-1.5">Local-GNN (GraphSAGE [10])</td>
+                                        <td class="py-1.5">79.8 ± 1.2</td>
+                                        <td class="py-1.5">68.9 ± 0.6</td>
+                                        <td class="py-1.5">0.297 ± 0.004</td>
+                                        <td class="py-1.5">77.2 ± 0.5</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5">FedAvg-GNN</td>
+                                        <td class="py-1.5">82.1 ± 0.9</td>
+                                        <td class="py-1.5">71.1 ± 0.5</td>
+                                        <td class="py-1.5">0.314 ± 0.003</td>
+                                        <td class="py-1.5">79.6 ± 0.6</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5">LLM Text-only (frozen encoder) [5]</td>
+                                        <td class="py-1.5">76.5 ± 1.4</td>
+                                        <td class="py-1.5">69.7 ± 0.7</td>
+                                        <td class="py-1.5">0.289 ± 0.006</td>
+                                        <td class="py-1.5">78.3 ± 0.7</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5">LLM+GNN (late fusion) [10, 12]</td>
+                                        <td class="py-1.5">83.4 ± 0.8</td>
+                                        <td class="py-1.5">72.0 ± 0.5</td>
+                                        <td class="py-1.5">0.323 ± 0.004</td>
+                                        <td class="py-1.5">80.8 ± 0.5</td>
+                                    </tr>
+                                    <tr class="font-semibold">
+                                        <td class="py-1.5">LG-DUMAP(P) (ours)</td>
+                                        <td class="py-1.5">84.9 ± 0.7</td>
+                                        <td class="py-1.5">73.2 ± 0.5</td>
+                                        <td class="py-1.5">0.334 ± 0.004</td>
+                                        <td class="py-1.5">82.0 ± 0.5</td>
+                                    </tr>
+                                    <tr class="font-semibold">
+                                        <td class="py-1.5">LG-DUMAP(I) (ours)</td>
+                                        <td class="py-1.5">86.1 ± 0.6</td>
+                                        <td class="py-1.5">74.3 ± 0.4</td>
+                                        <td class="py-1.5">0.347 ± 0.003</td>
+                                        <td class="py-1.5">83.1 ± 0.5</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="border-b border-neutral-400">
+                                        <td colspan="5" class="h-0.5"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </figure>
+
+                    <figure class="mt-6 avoid-break">
+                        <figcaption class="text-center text-[0.98rem]">
+                            <span class="font-semibold">Table 4:</span> Overhead and DP trade-offs on ogbn-arxiv.
+                        </figcaption>
+
+                        <div class="mt-2 overflow-x-auto">
+                            <table class="w-full border-collapse text-[0.95rem]" role="table"
+                                aria-label="Table 4 Overhead and DP trade-offs">
+                                <thead>
+                                    <tr class="border-y border-neutral-400">
+                                        <th scope="col" class="py-2 text-left font-semibold">Setting</th>
+                                        <th scope="col" class="py-2 text-left font-semibold">KB/round (c→s)</th>
+                                        <th scope="col" class="py-2 text-left font-semibold">Time/round (s)</th>
+                                        <th scope="col" class="py-2 text-left font-semibold">LLM tokens/round</th>
+                                        <th scope="col" class="py-2 text-left font-semibold">Adapter size (KB)</th>
+                                        <th scope="col" class="py-2 text-left font-semibold">F1 (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-neutral-300">
+                                    <tr>
+                                        <td class="py-1.5">FedAvg-GNN</td>
+                                        <td class="py-1.5">92</td>
+                                        <td class="py-1.5">6.1</td>
+                                        <td class="py-1.5">–</td>
+                                        <td class="py-1.5">–</td>
+                                        <td class="py-1.5">71.1</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5">LG-DUMAP(P)</td>
+                                        <td class="py-1.5">118</td>
+                                        <td class="py-1.5">7.0</td>
+                                        <td class="py-1.5"><span class="math">\(1.2\times 10^4\)</span></td>
+                                        <td class="py-1.5">220</td>
+                                        <td class="py-1.5">73.2</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5">LG-DUMAP(I)</td>
+                                        <td class="py-1.5">131</td>
+                                        <td class="py-1.5">7.6</td>
+                                        <td class="py-1.5"><span class="math">\(1.9\times 10^4\)</span></td>
+                                        <td class="py-1.5">350</td>
+                                        <td class="py-1.5">74.3</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5">LG-DUMAP(I)+DP (<span class="math">\(\epsilon=8\)</span>)
+                                        </td>
+                                        <td class="py-1.5">131</td>
+                                        <td class="py-1.5">7.8</td>
+                                        <td class="py-1.5"><span class="math">\(1.9\times 10^4\)</span></td>
+                                        <td class="py-1.5">350</td>
+                                        <td class="py-1.5">73.6</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5">LG-DUMAP(I)+DP (<span class="math">\(\epsilon=4\)</span>)
+                                        </td>
+                                        <td class="py-1.5">131</td>
+                                        <td class="py-1.5">7.9</td>
+                                        <td class="py-1.5"><span class="math">\(1.9\times 10^4\)</span></td>
+                                        <td class="py-1.5">350</td>
+                                        <td class="py-1.5">72.7</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5">LG-DUMAP(I)+DP (<span class="math">\(\epsilon=2\)</span>)
+                                        </td>
+                                        <td class="py-1.5">131</td>
+                                        <td class="py-1.5">8.1</td>
+                                        <td class="py-1.5"><span class="math">\(1.9\times 10^4\)</span></td>
+                                        <td class="py-1.5">350</td>
+                                        <td class="py-1.5">71.6</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="border-b border-neutral-400">
+                                        <td colspan="6" class="h-0.5"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </figure>
+
+                    <h2 class="mt-7 text-[1.1rem] font-bold">7 Experiments</h2>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        We evaluate node classification and link prediction under federated, low-resource settings with
+                        textual side information [12].
+                    </p>
+
+                    <h3 class="mt-4 text-[1rem] font-bold">7.1 Datasets, Splits, and Evaluation Protocol</h3>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        <span class="font-semibold">Datasets.</span>
+                        Cora, Citeseer (node classification); ogbn-arxiv and ogbn-products (node classification);
+                        FB15k-237 (KG completion); and Chameleon/Squirrel for heterophily stress [12, 17].
+                    </p>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        <span class="font-semibold">Federated splits.</span>
+                        We form <span class="math">\(N=20\)</span> non-IID clients via topic/label stratification.
+                        Few-shot regimes use 5–40 labeled nodes/edges per client; <span
+                            class="font-semibold">cold-start</span> introduces 30% text-only nodes.
+                        Clients participate with sampling <span class="math">\(q\in\{0.2,0.5,1.0\}\)</span> per round
+                        (partial participation). Text-only nodes contribute features via <span
+                            class="math">\(h_{\theta}(\cdot)\)</span> and enter kNN construction on <span
+                            class="math">\(\tilde{X}_k\)</span>;
+                        their labels/edges are proposed by calibrated LLMs.
+                    </p>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        <span class="font-semibold">Metrics.</span>
+                        Accuracy / Micro-F1 (with worst-client and 10th-percentile reporting), KG MRR/Hits@K, manifold
+                        trustworthiness/continuity, and cross-modal alignment (cosine, CKA, Procrustes) [8, 13].
+                        Privacy is summarized by <span class="math">\((\epsilon,\delta)\)</span> and empirical attack
+                        AUROC for membership inference [19]. We also track systems cost: KB/round, time/round, LLM
+                        tokens, adapter size.
+                    </p>
+                </article>
+
+                <footer class="mt-8 flex items-end justify-between text-[0.85rem] text-neutral-700">
+                    <span aria-hidden="true"></span>
+                    <p class="tabular-nums">5</p>
+                </footer>
+            </section>
+
+            <!-- PAGE 6 -->
+            <section class="site-section rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+                <header class="flex items-center justify-center">
+                    <p class="text-[0.9rem] text-neutral-700">Variational Gaussian Mixture Manifold Models</p>
+                </header>
+
+                <article class="mt-4">
+                    <h3 class="text-[1rem] font-bold">7.2 Baselines and Implementation Details</h3>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        <span class="font-semibold">Baselines.</span>
+                        Federated personalization: Local-GNN, FedAvg-GNN, Per-FedAvg [7], pFedMe [6], Ditto [14],
+                        FedProx [15].
+                        KG/link: TransE [3], RotatE [20], ComplEx [21], CompGCN [22]. Recommendation: LightGCN [11].
+                        Fusion: LLM Text-only (frozen encoder) [5], and LLM+GNN (late fusion) [10, 12].
+                    </p>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        <span class="font-semibold">Our variants.</span>
+                        LG-DUMAP(P) uses prompt-tuned adapters; LG-DUMAP(I) uses instruction-tuned adapters with the
+                        same backbone.
+                    </p>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        <span class="font-semibold">Setup.</span>
+                        GraphSAGE (2-layer, hidden=256) [10]; Dynamic-UMAP with <span class="math">\(d=32\)</span>,
+                        neighbors = 15; markers <span class="math">\(|\mathcal{M}^{+}|=8\)</span>, <span
+                            class="math">\(|\mathcal{M}^{-}|=8\)</span>, bandwidth <span
+                            class="math">\(\sigma_{\mathrm{kern}}=1.0\)</span>;
+                        Adam lr <span class="math">\(2\times 10^{-3}\)</span> (GNN/UMAP), <span class="math">\(5\times
+                            10^{-5}\)</span> (adapters); 50 rounds; 2 local epochs; batch size 1024 node-pairs;
+                        <span class="math">\(\gamma=0.2\)</span>, <span class="math">\(\eta=1.0\)</span>, <span
+                            class="math">\(\lambda=0.1\)</span>; frozen text encoder with 16 prompt tokens.
+                    </p>
+
+                    <h3 class="mt-5 text-[1rem] font-bold">7.3 Results and Analysis</h3>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        <span class="font-semibold">Main results.</span>
+                        LG-DUMAP consistently outperforms both graph-only and naive language–graph fusion baselines
+                        across citation, product, and KG tasks.
+                    </p>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        <span class="font-semibold">Observations.</span>
+                        (1) Graph-only vs. federation. FedAvg-GNN improves over Local-GNN on all datasets (e.g., Cora:
+                        +2.3 Acc; ogbn-arxiv: +2.2 F1).
+                        (2) Language alone is insufficient. LLM Text-only underperforms graph-aware models on structural
+                        tasks, indicating topology remains essential.
+                        (3) Naive fusion helps, but falls short. Late fusion adds text features post hoc and yields
+                        steady gains over graph-only baselines, but lacks manifold-level coupling.
+                        (4) Our approach closes the gap. LG-DUMAP(P) delivers additional gains via prompt-tuned guidance
+                        and Dynamic-UMAP.
+                        (5) Instruction-tuned variant is best. LG-DUMAP(I) consistently wins (e.g., ogbn-arxiv: 74.3
+                        F1). The uplift over late fusion supports cross-modal alignment and marker-based similarity
+                        modeling rather than feature concatenation.
+                    </p>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        <span class="font-semibold">Few-shot, cold-start, and alignment.</span>
+                        In low-label regimes and 30% cold-start, LG-DUMAP(I) retains the largest fraction of full-data
+                        performance;
+                        manifold trustworthiness/continuity and CKA/Procrustes indicate tighter coupling between <span
+                            class="math">\(Z\)</span> and <span class="math">\(h_{\theta}\)</span> than late fusion.
+                    </p>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        <span class="font-semibold">Efficiency and privacy trade-offs.</span>
+                        Table 4 summarizes communication/runtime and DP effects. Adding calibrated language guidance and
+                        parametric UMAP raises cost modestly but improves accuracy/F1.
+                        Client-level DP (Gaussian mechanism with moments accountant) degrades F1 gracefully as <span
+                            class="math">\(\epsilon\)</span> tightens, while still outperforming the graph-only
+                        federation baseline at moderate budgets.
+                    </p>
+
+                    <h2 class="mt-6 text-[1.1rem] font-bold">References</h2>
+                    <ol class="mt-2 list-decimal pl-6 text-[0.95rem] leading-relaxed">
+                        <li>Martin Abadi, Andy Chu, Ian Goodfellow, H. Brendan McMahan, Ilya Mironov, Kunal Talwar, and
+                            Li Zhang. 2016. Deep Learning with Differential Privacy. In Proceedings of the 2016 ACM
+                            SIGSAC Conference on Computer and Communications Security.</li>
+                        <li>Keith Bonawitz, Vladimir Ivanov, Ben Kreuter, et al. 2017. Practical Secure Aggregation for
+                            Privacy-Preserving Machine Learning. In Proceedings of the 2017 ACM SIGSAC Conference on
+                            Computer and Communications Security.</li>
+                        <li>Antoine Bordes, Nicolas Usunier, Alberto Garcia-Duran, Jason Weston, and Oksana Yakhnenko.
+                            2013. Translating Embeddings for Modeling Multi-relational Data. In Advances in Neural
+                            Information Processing Systems.</li>
+                        <li>Glenn W. Brier. 1950. Verification of Forecasts Expressed in Terms of Probability. Monthly
+                            Weather Review 78, 1 (1950), 1–3.</li>
+                        <li>Tom B. Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, et al. 2020. Language Models are
+                            Few-Shot Learners. In Advances in Neural Information Processing Systems.</li>
+                        <li>Canh T. Dinh, Nguyen H. Tran, and Tuan D. Nguyen. 2020. Federated Learning with Moreau
+                            Envelopes. arXiv preprint arXiv:2006.08848 (2020).</li>
+                        <li>Alireza Fallah, Aryan Mokhtari, and Asuman Ozdaglar. 2020. Personalized Federated Learning
+                            with Theoretical Guarantees: A Model-Agnostic Meta-Learning Approach. In Advances in Neural
+                            Information Processing Systems.</li>
+                        <li>John C. Gower. 1975. Generalized Procrustes Analysis. Psychometrika 40, 1 (1975), 33–51.
+                        </li>
+                        <li>Chuan Guo, Geoff Pleiss, Yu Sun, and Kilian Q. Weinberger. 2017. On Calibration of Modern
+                            Neural Networks. In Proceedings of the 34th International Conference on Machine Learning.
+                        </li>
+                        <li>William L. Hamilton, Rex Ying, and Jure Leskovec. 2017. Inductive Representation Learning on
+                            Large Graphs. In Advances in Neural Information Processing Systems.</li>
+                        <li>Xiangnan He, Kuan Deng, Xiang Wang, Yan Li, Yongdong Zhang, and Meng Wang. 2020. LightGCN:
+                            Simplifying and Powering Graph Convolution Network for Recommendation. In Proceedings of the
+                            43rd International ACM SIGIR Conference on Research and Development in Information
+                            Retrieval.</li>
+                        <li>Weihua Hu, Matthias Fey, Marinka Zitnik, Yuxiao Dong, Hongyu Ren, Bowen Liu, Michele
+                            Catasta, and Jure Leskovec. 2020. Open Graph Benchmark: Datasets for Machine Learning on
+                            Graphs. In Advances in Neural Information Processing Systems.</li>
+                        <li>Simon Kornblith, Mohammad Norouzi, Honglak Lee, and Geoffrey Hinton. 2019. Similarity of
+                            Neural Network Representations Revisited. In Proceedings of the 36th International
+                            Conference on Machine Learning.</li>
+                        <li>Tian Li, Shengyuan Hu, Ahmad Beirami, Virginia Smith, et al. 2021. Ditto: Simple and
+                            Communication-Efficient Personalized Federated Learning. arXiv preprint arXiv:2012.04221
+                            (2021).</li>
+                        <li>Tian Li, Anit Kumar Sahu, Ameet Talwalkar, and Virginia Smith. 2020. Federated Optimization
+                            in Heterogeneous Networks. In Proceedings of Machine Learning and Systems.</li>
+                    </ol>
+                </article>
+
+                <footer class="mt-8 flex items-end justify-between text-[0.85rem] text-neutral-700">
+                    <span aria-hidden="true"></span>
+                    <p class="tabular-nums">6</p>
+                </footer>
+            </section>
+
+            <!-- PAGE 7 -->
+            <section class="site-section rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+                <header class="flex items-center justify-center">
+                    <p class="text-[0.9rem] text-neutral-700">Variational Gaussian Mixture Manifold Models</p>
+                </header>
+
+                <article class="mt-4">
+                    <ol start="16" class="list-decimal pl-6 text-[0.95rem] leading-relaxed">
+                        <li>Leland McInnes, John Healy, and James Melville. 2018. UMAP: Uniform Manifold Approximation
+                            and Projection for Dimension Reduction. arXiv preprint arXiv:1802.03426 (2018).</li>
+                        <li>Hongbin Pei, Bingzhe Wei, Kevin Chen-Chuan Li, Yiming Sun, and Bo Chang. 2020. Geom-GCN:
+                            Geometric Graph Convolutional Networks. In International Conference on Learning
+                            Representations.</li>
+                        <li>Tim Sainburg, Leland McInnes, and Timothy Q. Gentner. 2021. Parametric UMAP: Learning
+                            Embeddings with Deep Neural Networks for Dimensionality Reduction. arXiv preprint
+                            arXiv:2009.12945 (2021).</li>
+                        <li>Reza Shokri, Marco Stronati, Congzheng Song, and Vitaly Shmatikov. 2017. Membership
+                            Inference Attacks Against Machine Learning Models. In 2017 IEEE Symposium on Security and
+                            Privacy (SP).</li>
+                        <li>Zhiqing Sun, Zhi-Hong Deng, Jian-Yun Nie, and Jian Tang. 2019. RotatE: Knowledge Graph
+                            Embedding by Relational Rotation in Complex Space. In International Conference on Learning
+                            Representations.</li>
+                        <li>Théo Trouillon, Johannes Welbl, Sebastian Riedel, Éric Gaussier, and Guillaume Bouchard.
+                            2016. Complex Embeddings for Simple Link Prediction. In Proceedings of the 33rd
+                            International Conference on Machine Learning.</li>
+                        <li>Shikhar Vashishth, Soumya Sanyal, Nilesh Nitin, and Partha Talukdar. 2020. Composition-based
+                            Multi-Relational Graph Convolutional Networks. In International Conference on Learning
+                            Representations.</li>
+                    </ol>
+
+                    <h2 class="mt-7 text-[1.1rem] font-bold">A Convergence Sketch (Extended)</h2>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        Let <span class="math">\(\mathcal{L}(M)=\frac{1}{N}\sum_k \mathcal{L}_k(M)\)</span> be <span
+                            class="math">\(L\)</span>-smooth and let the aggregated update be
+                        <span class="math">\(M^{t+1}=M^t + \frac{1}{N}\sum_k \mathbb{E}_{q_{\phi_k}}[M_k - M^t]\)</span>
+                        with bounded variance.
+                        With client sampling rate <span class="math">\(p&gt;0\)</span> and diminishing step size or
+                        Polyak averaging, standard stochastic approximation results yield
+                        <span class="math">\(\lim_t \lVert \nabla \mathcal{L}(M^t)\rVert \to 0\)</span> at <span
+                            class="math">\(\mathcal{O}(1/\sqrt{t})\)</span>.
+                        The KL term stabilizes around Gaussian mixture priors; alignment adds local positive curvature
+                        when semantic clusters are separable.
+                    </p>
+
+                    <h2 class="mt-6 text-[1.1rem] font-bold">B Configuration Snippet (YAML)</h2>
+                    <pre class="mt-2 overflow-x-auto rounded-md border border-neutral-200 bg-neutral-50 p-4 text-[0.92rem] leading-relaxed"
+                        aria-label="YAML configuration snippet"><code>model:
   gnn: graphsage
   hidden: 256
   umap_dim: 32
@@ -801,45 +1077,58 @@ calibration:
   threshold_tau: 0.8
 federation:
   client_sampling: [0.2, 0.5, 1.0]</code></pre>
-      </article>
+                </article>
 
-      <footer class="mt-8 flex items-end justify-between text-[0.85rem] text-neutral-700">
-        <span aria-hidden="true"></span>
-        <p class="tabular-nums">7</p>
-      </footer>
-    </section>
+                <footer class="mt-8 flex items-end justify-between text-[0.85rem] text-neutral-700">
+                    <span aria-hidden="true"></span>
+                    <p class="tabular-nums">7</p>
+                </footer>
+            </section>
 
-    <!-- PAGE 8 -->
-    <section class="page screen-shadow rounded-md border border-neutral-200 bg-white px-10 py-8" aria-label="Page 8">
-      <header class="flex items-center justify-center">
-        <p class="text-[0.9rem] text-neutral-700">Variational Gaussian Mixture Manifold Models</p>
-      </header>
+            <!-- PAGE 8 -->
+            <section class="site-section rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+                <header class="flex items-center justify-center">
+                    <p class="text-[0.9rem] text-neutral-700">Variational Gaussian Mixture Manifold Models</p>
+                </header>
 
-      <article class="mt-4">
-        <h2 class="text-[1.1rem] font-bold">C Prompts for Graph Tasks (Examples)</h2>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          KG completion: “Given triples (head, relation, tail) and entity descriptions, propose K tails for (head, relation, _). Return relation-consistent candidates and short rationales.”
-        </p>
-        <p class="mt-2 text-[0.98rem] leading-relaxed">
-          Node labeling: “Given node titles and abstracts, map to taxonomy labels with 3 in-context examples. Return label and rationale; abstain if confidence &lt; <span class="math">\(\tau\)</span>.”
-        </p>
+                <article class="mt-4">
+                    <h2 class="text-[1.1rem] font-bold">C Prompts for Graph Tasks (Examples)</h2>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        KG completion: “Given triples (head, relation, tail) and entity descriptions, propose K tails
+                        for (head, relation, _). Return relation-consistent candidates and short rationales.”
+                    </p>
+                    <p class="mt-2 text-[0.98rem] leading-relaxed">
+                        Node labeling: “Given node titles and abstracts, map to taxonomy labels with 3 in-context
+                        examples. Return label and rationale; abstain if confidence &lt; <span
+                            class="math">\(\tau\)</span>.”
+                    </p>
 
-        <h2 class="mt-6 text-[1.1rem] font-bold">D Reproducibility Checklist</h2>
-        <ul class="mt-2 list-disc pl-6 text-[0.98rem] leading-relaxed">
-          <li>Seeds: {1,2,3,4,5}; deterministic flags; mean±std.</li>
-          <li>Hardware: 1×A100 40GB, 16 vCPU, 64GB RAM.</li>
-          <li>Libraries: PyTorch 2.3, DGL 2.1, faiss 1.8, umap-learn 0.5.5, transformers 4.43.</li>
-          <li>Scripts: non-IID splits; DP accountant config; logging of tokens/round and calibration metrics.</li>
-          <li>Partial participation: runs for <span class="math">\(q\in\{0.2,0.5,1.0\}\)</span>; worst-client metrics.</li>
-          <li>Figures: provenance (seed, commit, date); export raw CSVs.</li>
-        </ul>
-      </article>
+                    <h2 class="mt-6 text-[1.1rem] font-bold">D Reproducibility Checklist</h2>
+                    <ul class="mt-2 list-disc pl-6 text-[0.98rem] leading-relaxed">
+                        <li>Seeds: {1,2,3,4,5}; deterministic flags; mean±std.</li>
+                        <li>Hardware: 1×A100 40GB, 16 vCPU, 64GB RAM.</li>
+                        <li>Libraries: PyTorch 2.3, DGL 2.1, faiss 1.8, umap-learn 0.5.5, transformers 4.43.</li>
+                        <li>Scripts: non-IID splits; DP accountant config; logging of tokens/round and calibration
+                            metrics.</li>
+                        <li>Partial participation: runs for <span class="math">\(q\in\{0.2,0.5,1.0\}\)</span>;
+                            worst-client metrics.</li>
+                        <li>Figures: provenance (seed, commit, date); export raw CSVs.</li>
+                    </ul>
+                </article>
 
-      <footer class="mt-8 flex items-end justify-between text-[0.85rem] text-neutral-700">
-        <span aria-hidden="true"></span>
-        <p class="tabular-nums">8</p>
-      </footer>
-    </section>
-  </main>
+                <footer class="mt-8 flex items-end justify-between text-[0.85rem] text-neutral-700">
+                    <span aria-hidden="true"></span>
+                    <p class="tabular-nums">8</p>
+                </footer>
+            </section>
+
+
+            <!-- Footer like your template -->
+            <footer class="site-section mt-12 border-t border-neutral-200 py-8 text-center text-sm text-neutral-600"
+                role="contentinfo">
+                <p>© 2025. All rights reserved.</p>
+            </footer>
+    </main>
 </body>
+
 </html>
