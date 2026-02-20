@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conference Deadline Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ── tokens ── */
+:root {
+  --bg:       #080b14;
+  --bg-2:     #0c1020;
+  --bg-3:     #101828;
+  --card:     #0e1525;
+  --b1:       rgba(255,255,255,0.06);
+  --b2:       rgba(255,255,255,0.11);
+  --tx:       #dde2f0;
+  --tx2:      #8892aa;
+  --tx3:      #4d5570;
+  --gold:     #f0b429;
+  --gold-d:   rgba(240,180,41,0.15);
+  --teal:     #22d3ee;
+  --teal-d:   rgba(34,211,238,0.1);
+  --green:    #4ade80;
+  --red:      #f87171;
+  --red-d:    rgba(248,113,113,0.1);
+  --orange:   #fb923c;
+  --violet:   #a78bfa;
+  --mono: 'IBM Plex Mono', monospace;
+  --serif: 'Fraunces', Georgia, serif;
+  --sans: 'DM Sans', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(34,211,238,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,0.015) 1px,transparent 1px);
+  background-size:48px 48px}
+.glow{position:fixed;border-radius:50%;pointer-events:none;z-index:0}
+.glow-a{width:800px;height:800px;top:-300px;right:-200px;background:radial-gradient(circle,rgba(167,139,250,0.04) 0%,transparent 65%)}
+.glow-b{width:600px;height:600px;bottom:-200px;left:-100px;background:radial-gradient(circle,rgba(34,211,238,0.05) 0%,transparent 65%)}
+
+/* ── header ── */
+header{position:relative;z-index:10;border-bottom:1px solid var(--b1);background:rgba(8,11,20,0.95);backdrop-filter:blur(20px);padding:0 2rem}
+.hdr{max-width:1600px;margin:0 auto;display:flex;align-items:center;height:60px;gap:1.5rem}
+.brand-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--teal),var(--violet));border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.85rem;color:var(--bg);font-weight:700;flex-shrink:0}
+.brand-title{font-family:var(--mono);font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.14em}
+.brand-sub{font-family:var(--mono);font-size:0.58rem;color:var(--tx3);letter-spacing:0.1em;margin-top:1px}
+
+/* major tabs */
+.major-tabs{display:flex;gap:2px;margin-left:1.5rem}
+.mtab{font-family:var(--mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;
+  padding:0.4rem 0.9rem;border-radius:6px;border:1px solid transparent;
+  background:transparent;color:var(--tx3);cursor:pointer;transition:all 0.2s;
+  display:flex;align-items:center;gap:0.4rem;white-space:nowrap}
+.mtab:hover{color:var(--tx2);background:rgba(255,255,255,0.04)}
+.mtab.active{background:var(--teal-d);border-color:rgba(34,211,238,0.25);color:var(--teal)}
+
+.hdr-meta{display:flex;align-items:center;gap:1.5rem;margin-left:auto}
+.live-chip{display:flex;align-items:center;gap:0.4rem;font-family:var(--mono);font-size:0.6rem;
+  text-transform:uppercase;letter-spacing:0.12em;padding:0.25rem 0.65rem;border-radius:20px;
+  background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);color:var(--green)}
+.ldot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s ease infinite}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.3;transform:scale(0.7)}}
+#clock{font-family:var(--mono);font-size:0.72rem;color:var(--tx2);letter-spacing:0.08em}
+#hdr-count{font-family:var(--mono);font-size:0.65rem;color:var(--tx3)}
+
+/* ── page ── */
+.page{position:relative;z-index:1;max-width:1600px;margin:0 auto;padding:1.75rem 2rem 4rem}
+
+/* major title bar */
+.major-bar{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;
+  padding:1rem 1.5rem;background:var(--card);border:1px solid var(--b1);border-radius:10px}
+#major-icon{font-size:1.6rem}
+.major-info{}
+#major-label{font-family:var(--serif);font-size:1.35rem;font-weight:500}
+#major-sub{font-family:var(--mono);font-size:0.62rem;color:var(--tx3);letter-spacing:0.08em;margin-top:2px}
+
+/* stats strip */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;
+  background:var(--b1);border:1px solid var(--b1);border-radius:10px;overflow:hidden;margin-bottom:1.75rem}
+.stile{background:var(--card);padding:1rem 1.25rem;display:flex;flex-direction:column;gap:0.25rem;transition:background 0.2s}
+.stile:hover{background:var(--bg-3)}
+.sval{font-family:var(--serif);font-size:1.9rem;font-weight:500;line-height:1}
+.sval .a{color:var(--teal)}
+.slabel{font-family:var(--mono);font-size:0.58rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--tx3)}
+.ssub{font-family:var(--mono);font-size:0.62rem;color:var(--tx3)}
+
+/* urgent ticker */
+.ticker{background:rgba(248,113,113,0.07);border:1px solid rgba(248,113,113,0.2);
+  border-radius:8px;padding:0.65rem 1.25rem;margin-bottom:1.5rem;
+  display:flex;align-items:center;gap:1rem;overflow:hidden}
+.ticker-lbl{font-family:var(--mono);font-size:0.62rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--red);flex-shrink:0}
+.ticker-lbl::before{content:'⚠  '}
+.ticker-txt{font-family:var(--mono);font-size:0.72rem;color:var(--tx2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ti{margin-right:2.5rem}
+.ti .cn{color:var(--tx);font-weight:600}
+.ti .dy{color:var(--red)}
+
+/* domain pills */
+.dpills{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.dpill{font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;
+  padding:0.3rem 0.75rem;border-radius:20px;border:1px solid var(--b2);
+  background:transparent;color:var(--tx3);cursor:pointer;transition:all 0.18s}
+.dpill:hover{color:var(--tx2)}
+.dpill.active{color:#080b14}
+
+/* controls */
+.ctrl{display:flex;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.sw{position:relative;flex:1;min-width:220px}
+.sw input{width:100%;background:var(--card);border:1px solid var(--b2);border-radius:8px;
+  padding:0.65rem 1rem 0.65rem 2.4rem;color:var(--tx);font-family:var(--sans);font-size:0.84rem;
+  outline:none;transition:border-color 0.2s,box-shadow 0.2s}
+.sw input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(34,211,238,0.07)}
+.sw input::placeholder{color:var(--tx3)}
+.si{position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:var(--tx3);font-size:0.8rem;pointer-events:none}
+.fg{display:flex;gap:0.6rem;flex-wrap:wrap}
+.fsel{background:var(--card);border:1px solid var(--b2);border-radius:8px;
+  padding:0.6rem 2rem 0.6rem 0.85rem;color:var(--tx);font-family:var(--mono);font-size:0.68rem;
+  text-transform:uppercase;letter-spacing:0.08em;outline:none;cursor:pointer;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234d5570' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 0.7rem center;transition:border-color 0.2s}
+.fsel:hover{border-color:var(--teal)}
+.sg{display:flex;gap:0.4rem}
+.sbtn{font-family:var(--mono);font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;
+  padding:0.6rem 0.85rem;border-radius:8px;border:1px solid var(--b2);
+  background:var(--card);color:var(--tx2);cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.sbtn:hover{border-color:var(--gold);color:var(--gold)}
+.sbtn.active{background:var(--gold-d);border-color:var(--gold);color:var(--gold)}
+.vtog{display:flex;border:1px solid var(--b2);border-radius:8px;overflow:hidden}
+.vbtn{padding:0.6rem 0.85rem;background:var(--card);border:none;color:var(--tx3);cursor:pointer;transition:all 0.2s;font-size:0.78rem}
+.vbtn:hover{color:var(--tx);background:var(--bg-3)}
+.vbtn.active{background:var(--teal-d);color:var(--teal)}
+.rinfo{font-family:var(--mono);font-size:0.65rem;color:var(--tx3);padding:0.6rem 0;margin-left:auto}
+.rinfo span{color:var(--teal)}
+
+/* ── table ── */
+.twrap{border:1px solid var(--b1);border-radius:10px;overflow:hidden;background:var(--card)}
+.ctable{width:100%;border-collapse:collapse}
+.ctable thead tr{border-bottom:1px solid var(--b2);background:rgba(255,255,255,0.02)}
+.ctable thead th{font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.12em;
+  color:var(--tx3);font-weight:500;padding:0.85rem 1rem;text-align:left;
+  white-space:nowrap;cursor:pointer;user-select:none;transition:color 0.2s}
+.ctable thead th:hover{color:var(--tx2)}
+.ctable thead th.asc::after{content:' ↑';color:var(--teal)}
+.ctable thead th.desc::after{content:' ↓';color:var(--teal)}
+.ctable tbody tr{border-bottom:1px solid var(--b1);transition:background 0.15s}
+.ctable tbody tr:last-child{border-bottom:none}
+.ctable tbody tr:hover{background:rgba(255,255,255,0.03)}
+.ctable td{padding:0.9rem 1rem;vertical-align:middle}
+.rc{text-align:center}
+.rbadge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;font-family:var(--mono);font-size:0.7rem;font-weight:600}
+.r1{background:rgba(240,180,41,0.2);color:var(--gold);border:1px solid rgba(240,180,41,0.35)}
+.r2{background:rgba(148,163,184,0.15);color:#94a3b8;border:1px solid rgba(148,163,184,0.25)}
+.r3{background:rgba(251,146,60,0.15);color:var(--orange);border:1px solid rgba(251,146,60,0.25)}
+.rn{background:rgba(255,255,255,0.04);color:var(--tx3);border:1px solid var(--b1)}
+.vc{min-width:140px}
+.vname{font-family:var(--mono);font-size:0.82rem;font-weight:600;letter-spacing:0.04em}
+.vfull{font-size:0.72rem;color:var(--tx3);margin-top:2px;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dtag{display:inline-flex;align-items:center;font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.09em;padding:0.25rem 0.6rem;border-radius:4px;white-space:nowrap}
+.ifc{min-width:110px}
+.ifbar-w{display:flex;align-items:center;gap:0.6rem}
+.ifv{font-family:var(--mono);font-size:0.8rem;font-weight:500;min-width:32px}
+.ifbar{flex:1;height:4px;background:var(--b2);border-radius:2px;overflow:hidden;max-width:80px}
+.iffill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--teal),var(--violet))}
+.tbadge{font-family:var(--mono);font-size:0.6rem;padding:0.15rem 0.45rem;border-radius:3px;text-transform:uppercase;letter-spacing:0.1em;font-weight:600}
+.ta{background:rgba(240,180,41,0.18);color:var(--gold);border:1px solid rgba(240,180,41,0.3)}
+.tb{background:rgba(34,211,238,0.12);color:var(--teal);border:1px solid rgba(34,211,238,0.25)}
+.tc{background:rgba(167,139,250,0.12);color:var(--violet);border:1px solid rgba(167,139,250,0.25)}
+.td{background:rgba(255,255,255,0.05);color:var(--tx3);border:1px solid var(--b1)}
+.dlc{min-width:140px}
+.dldate{font-family:var(--mono);font-size:0.78rem}
+.dlcd{font-family:var(--mono);font-size:0.62rem;margin-top:3px;display:flex;align-items:center;gap:0.35rem}
+.dlcd.urgent{color:var(--red)}
+.dlcd.soon{color:var(--orange)}
+.dlcd.ok{color:var(--green)}
+.dlcd.past{color:var(--tx3)}
+.dldot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.urgent .dldot{background:var(--red);animation:blink 1.2s ease infinite}
+.soon .dldot{background:var(--orange)}
+.ok .dldot{background:var(--green)}
+.past .dldot{background:var(--tx3)}
+.ndate{font-family:var(--mono);font-size:0.78rem;color:var(--tx2)}
+.clink{font-family:var(--mono);font-size:0.65rem;color:var(--tx3);text-decoration:none;
+  display:inline-flex;align-items:center;gap:0.3rem;padding:0.3rem 0.55rem;
+  border-radius:4px;border:1px solid var(--b1);transition:all 0.2s}
+.clink:hover{border-color:var(--teal);color:var(--teal);text-decoration:none}
+
+/* ── cards ── */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:1rem}
+.ccard{background:var(--card);border:1px solid var(--b1);border-radius:12px;
+  overflow:hidden;transition:border-color 0.25s,transform 0.2s,box-shadow 0.25s;
+  display:flex;flex-direction:column}
+.ccard:hover{border-color:var(--b2);transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,0.5)}
+.ctbar{height:3px}
+.cbody{padding:1.25rem;flex:1}
+.chr{display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;margin-bottom:0.85rem}
+.crv{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.3rem}
+.crank{font-family:var(--mono);font-size:0.62rem;padding:0.15rem 0.45rem;border-radius:3px;background:var(--gold-d);border:1px solid rgba(240,180,41,0.25);color:var(--gold)}
+.cabbr{font-family:var(--mono);font-size:1.05rem;font-weight:600;letter-spacing:0.04em}
+.cfull{font-size:0.75rem;color:var(--tx3);line-height:1.4;max-width:220px}
+.crm{display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem}
+.cifn{font-family:var(--serif);font-size:1.5rem;font-weight:500;line-height:1}
+.cifl{font-family:var(--mono);font-size:0.55rem;color:var(--tx3);text-transform:uppercase;letter-spacing:0.1em}
+.cdiv{height:1px;background:var(--b1);margin:1rem 0}
+.cdlg{display:grid;grid-template-columns:1fr 1fr;gap:0.85rem}
+.cdlt{font-family:var(--mono);font-size:0.58rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--tx3);margin-bottom:0.25rem}
+.cdld{font-family:var(--mono);font-size:0.82rem}
+.cfoot{padding:0.85rem 1.25rem;border-top:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;gap:0.5rem}
+
+/* no results */
+.nores{text-align:center;padding:4rem 2rem;font-family:var(--mono);font-size:0.78rem;color:var(--tx3)}
+.nores .ico{font-size:2.5rem;margin-bottom:1rem;opacity:0.4}
+
+/* animations */
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ccard,.ctable tbody tr{animation:fadein 0.3s ease both}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+
+/* responsive */
+@media(max-width:1100px){.stats{grid-template-columns:repeat(3,1fr)};.major-tabs{display:none}}
+@media(max-width:768px){.page{padding:1rem};.stats{grid-template-columns:repeat(2,1fr)};.ctrl{flex-direction:column};.rinfo{margin-left:0};.cgrid{grid-template-columns:1fr};.vfull{display:none}}
+@media(max-width:480px){.sg{display:none}}
+</style>
+</head>
+<body>
+<div class="glow glow-a"></div>
+<div class="glow glow-b"></div>
+
+<header>
+  <div class="hdr">
+    <div style="display:flex;align-items:center;gap:0.85rem;flex-shrink:0">
+      <div class="brand-icon">CF</div>
+      <div>
+        <div class="brand-title">Conference Deadlines</div>
+        <div class="brand-sub" id="brand-sub">Impact Ranked · Multi-Field</div>
+      </div>
+    </div>
+    <div class="major-tabs" id="major-tabs"></div>
+    <div class="hdr-meta">
+      <div class="live-chip"><div class="ldot"></div>Live</div>
+      <div id="clock">--:--:--</div>
+      <div id="hdr-count">-- conferences</div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+
+  <div class="major-bar">
+    <div id="major-icon">💻</div>
+    <div class="major-info">
+      <div id="major-label">—</div>
+      <div id="major-sub">—</div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stile"><div class="sval" id="st-total">—</div><div class="slabel">Conferences</div><div class="ssub">tracked this cycle</div></div>
+    <div class="stile"><div class="sval"><span class="a" id="st-urgent">—</span></div><div class="slabel">Deadlines Soon</div><div class="ssub">within 30 days</div></div>
+    <div class="stile"><div class="sval" id="st-astar">—</div><div class="slabel">A* Venues</div><div class="ssub">CORE ranked</div></div>
+    <div class="stile"><div class="sval" id="st-dom">—</div><div class="slabel">Domains</div><div class="ssub">in this field</div></div>
+    <div class="stile"><div class="sval" id="st-next">—</div><div class="slabel">Next Deadline</div><div class="ssub" id="st-next-name">—</div></div>
+  </div>
+
+  <div class="ticker" id="ticker" style="display:none">
+    <div class="ticker-lbl">Urgent</div>
+    <div class="ticker-txt" id="ticker-txt"></div>
+  </div>
+
+  <div class="dpills" id="dpills"></div>
+
+  <div class="ctrl">
+    <div class="sw">
+      <svg class="si" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search" placeholder="Search venue, domain…">
+    </div>
+    <div class="fg">
+      <select class="fsel" id="fy"><option value="">All Years</option></select>
+      <select class="fsel" id="ft"><option value="">All Tiers</option><option value="A*">A*</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select>
+      <select class="fsel" id="fs"><option value="">All Status</option><option value="open">Open</option><option value="closed">Closed</option></select>
+    </div>
+    <div class="sg">
+      <button class="sbtn active" data-sort="impact">↓ Impact</button>
+      <button class="sbtn" data-sort="deadline">⏱ Deadline</button>
+      <button class="sbtn" data-sort="name">A–Z</button>
+    </div>
+    <div class="vtog">
+      <button class="vbtn active" id="vt" title="Table view">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+      </button>
+      <button class="vbtn" id="vc" title="Card view">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </button>
+    </div>
+    <div class="rinfo"><span id="rcount">—</span> results</div>
+  </div>
+
+  <div id="tv"><div class="twrap"><table class="ctable"><thead><tr>
+    <th data-col="rank">Rank</th>
+    <th data-col="venue">Venue</th>
+    <th data-col="domain">Domain</th>
+    <th data-col="year">Year</th>
+    <th data-col="impact">Impact</th>
+    <th data-col="tier">Tier</th>
+    <th data-col="sub_dl">Submission</th>
+    <th data-col="notif_dl">Notification</th>
+    <th>Link</th>
+  </tr></thead><tbody id="tbody"></tbody></table></div></div>
+
+  <div id="cv" style="display:none"><div class="cgrid" id="cgrid"></div></div>
+  <div class="nores" id="nores" style="display:none"><div class="ico">🔍</div>No conferences match your filters.</div>
+
+</div><!-- /page -->
+
+<!-- Load data file first, then the dashboard logic -->
+<script src="conferences.js"></script>
+<script>
+/* ════════════════════════════════════════════════════════════════
+   STATE  — reads entirely from DASHBOARD_DATA in conferences.js
+════════════════════════════════════════════════════════════════ */
+const S = {
+  majorKey : Object.keys(DASHBOARD_DATA)[0], // default to first major
+  domain   : 'All',
+  search   : '',
+  year     : '',
+  tier     : '',
+  status   : '',
+  sortCol  : 'impact',
+  sortDir  : 'desc',
+  view     : 'table',
+  data     : [],   // flat list for active major (with .rank assigned)
+  filtered : [],
+};
+
+/* ════════════════════════════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════════════════════════════ */
+const days  = ds  => Math.ceil((new Date(ds+'T23:59:00') - new Date()) / 864e5);
+const fmt   = ds  => ds ? new Date(ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+const isOpen= ds  => days(ds) >= 0;
+const urgCls= ds  => { const d=days(ds); return d<0?'past':d<=7?'urgent':d<=30?'soon':'ok'; };
+const urgLbl= ds  => { const d=days(ds); return d<0?'Closed':`${d}d left`; };
+
+function domainStyle(domain) {
+  const m = DASHBOARD_DATA[S.majorKey];
+  const d = m && m.domains && m.domains[domain];
+  return d
+    ? `background:${d.bg};color:${d.color};border:1px solid ${d.border}`
+    : 'background:rgba(255,255,255,0.05);color:#8892aa;border:1px solid rgba(255,255,255,0.1)';
+}
+function domainColor(domain) {
+  const m = DASHBOARD_DATA[S.majorKey];
+  return m?.domains?.[domain]?.color || '#8892aa';
+}
+function tierBadge(t) {
+  const map = {'A*':'ta','A':'tb','B':'tc','C':'td'};
+  return `<span class="tbadge ${map[t]||'td'}">${t}</span>`;
+}
+function rankBadge(r) {
+  const c = r===1?'r1':r===2?'r2':r===3?'r3':'rn';
+  return `<div class="rbadge ${c}">#${r}</div>`;
+}
+function ifBar(v) {
+  const pct = Math.min(100,(v/20)*100);
+  return `<div class="ifbar-w"><span class="ifv">${v.toFixed(1)}</span><div class="ifbar"><div class="iffill" style="width:${pct}%"></div></div></div>`;
+}
+const SVG_LINK = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
+
+/* ════════════════════════════════════════════════════════════════
+   LOAD MAJOR DATA
+════════════════════════════════════════════════════════════════ */
+function loadMajor() {
+  const m = DASHBOARD_DATA[S.majorKey];
+  if (!m) return;
+
+  // stamp rank by impact factor (global ranking within major)
+  const sorted = [...(m.conferences || [])].sort((a,b) => b.if - a.if);
+  S.data = sorted.map((c,i) => ({ ...c, rank: i+1 }));
+
+  // update major title bar
+  document.getElementById('major-icon').textContent  = m.icon  || '📚';
+  document.getElementById('major-label').textContent = m.label || S.majorKey;
+  document.getElementById('major-sub').textContent   = `${S.data.length} conferences · ${Object.keys(m.domains||{}).length} domains`;
+  document.getElementById('brand-sub').textContent   = `${m.label} · Impact Ranked`;
+  document.getElementById('hdr-count').textContent   = `${S.data.length} conferences`;
+
+  // rebuild year filter
+  const years = [...new Set(S.data.map(c=>c.year))].sort();
+  const fy = document.getElementById('fy');
+  const cur = fy.value;
+  fy.innerHTML = '<option value="">All Years</option>' + years.map(y=>`<option value="${y}"${y==cur?' selected':''}>${y}</option>`).join('');
+
+  // reset domain filter
+  S.domain = 'All';
+  buildDomainPills();
+  updateStats();
+  render();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MAJOR TABS
+════════════════════════════════════════════════════════════════ */
+function buildMajorTabs() {
+  const el = document.getElementById('major-tabs');
+  el.innerHTML = Object.entries(DASHBOARD_DATA).map(([key,m]) =>
+    `<button class="mtab${key===S.majorKey?' active':''}" data-key="${key}">${m.icon} ${key}</button>`
+  ).join('');
+  el.querySelectorAll('.mtab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      S.majorKey = btn.dataset.key;
+      el.querySelectorAll('.mtab').forEach(b => b.classList.toggle('active', b===btn));
+      loadMajor();
+    });
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DOMAIN PILLS
+════════════════════════════════════════════════════════════════ */
+function buildDomainPills() {
+  const m = DASHBOARD_DATA[S.majorKey];
+  const domains = Object.keys(m?.domains || {});
+  const el = document.getElementById('dpills');
+
+  const all = `<button class="dpill${S.domain==='All'?' active':''}" data-d="All" style="${S.domain==='All'?'background:var(--tx2);color:#080b14':''}">All</button>`;
+  const pills = domains.map(name => {
+    const active = S.domain === name;
+    const col = m.domains[name]?.color || '#8892aa';
+    return `<button class="dpill${active?' active':''}" data-d="${name}" style="${active?`background:${col};border-color:${col}`:''}">${name}</button>`;
+  }).join('');
+
+  el.innerHTML = all + pills;
+  el.querySelectorAll('.dpill').forEach(p => {
+    p.addEventListener('click', () => {
+      S.domain = p.dataset.d;
+      buildDomainPills();
+      render();
+    });
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════
+   STATS + TICKER
+════════════════════════════════════════════════════════════════ */
+function updateStats() {
+  const all = S.data;
+  const urgent  = all.filter(c => { const d=days(c.sub_dl); return d>=0 && d<=30; });
+  const astar   = all.filter(c => c.tier==='A*');
+  const upcoming = all.filter(c => isOpen(c.sub_dl)).sort((a,b) => new Date(a.sub_dl)-new Date(b.sub_dl));
+  const m = DASHBOARD_DATA[S.majorKey];
+
+  document.getElementById('st-total').textContent = all.length;
+  document.getElementById('st-urgent').textContent = urgent.length;
+  document.getElementById('st-astar').textContent  = astar.length;
+  document.getElementById('st-dom').textContent    = Object.keys(m?.domains||{}).length;
+
+  if (upcoming.length) {
+    document.getElementById('st-next').textContent      = upcoming[0].abbr;
+    document.getElementById('st-next-name').textContent = `in ${days(upcoming[0].sub_dl)}d`;
+  } else {
+    document.getElementById('st-next').textContent      = '—';
+    document.getElementById('st-next-name').textContent = 'none open';
+  }
+
+  const ticker = document.getElementById('ticker');
+  if (urgent.length) {
+    document.getElementById('ticker-txt').innerHTML =
+      urgent.slice(0,8).map(c =>
+        `<span class="ti"><span class="cn">${c.abbr}</span> — <span class="dy">${days(c.sub_dl)}d</span></span>`
+      ).join('  ·  ');
+    ticker.style.display = 'flex';
+  } else {
+    ticker.style.display = 'none';
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FILTER + SORT
+════════════════════════════════════════════════════════════════ */
+function applyFilters() {
+  let d = [...S.data];
+  const q = S.search.toLowerCase();
+  if (q) d = d.filter(c => c.abbr.toLowerCase().includes(q) || c.full.toLowerCase().includes(q) || c.domain.toLowerCase().includes(q));
+  if (S.domain !== 'All') d = d.filter(c => c.domain === S.domain);
+  if (S.year)   d = d.filter(c => c.year === parseInt(S.year));
+  if (S.tier)   d = d.filter(c => c.tier === S.tier);
+  if (S.status === 'open')   d = d.filter(c => isOpen(c.sub_dl));
+  if (S.status === 'closed') d = d.filter(c => !isOpen(c.sub_dl));
+
+  d.sort((a,b) => {
+    let va, vb;
+    switch(S.sortCol) {
+      case 'impact':   va=a.if;               vb=b.if;               break;
+      case 'deadline': va=new Date(a.sub_dl); vb=new Date(b.sub_dl); break;
+      case 'name':     va=a.abbr;             vb=b.abbr;             break;
+      default:         va=a.rank;             vb=b.rank;
+    }
+    return S.sortDir==='asc' ? (va<vb?-1:va>vb?1:0) : (va>vb?-1:va<vb?1:0);
+  });
+  S.filtered = d;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   RENDER — TABLE
+════════════════════════════════════════════════════════════════ */
+function renderTable() {
+  document.getElementById('tbody').innerHTML = S.filtered.map((c,i) => `
+    <tr style="animation-delay:${i*0.022}s">
+      <td class="rc">${rankBadge(c.rank)}</td>
+      <td class="vc"><div class="vname">${c.abbr}</div><div class="vfull" title="${c.full}">${c.full}</div></td>
+      <td><span class="dtag" style="${domainStyle(c.domain)}">${c.domain}</span></td>
+      <td><span style="font-family:var(--mono);font-size:0.78rem;color:var(--tx2)">${c.year}</span></td>
+      <td class="ifc">${ifBar(c.if)}</td>
+      <td>${tierBadge(c.tier)}</td>
+      <td class="dlc"><div class="dldate">${fmt(c.sub_dl)}</div><div class="dlcd ${urgCls(c.sub_dl)}"><div class="dldot"></div>${urgLbl(c.sub_dl)}</div></td>
+      <td class="dlc"><div class="ndate">${fmt(c.notif_dl)}</div></td>
+      <td><a href="${c.url}" target="_blank" class="clink">${SVG_LINK} Site</a></td>
+    </tr>`).join('');
+}
+
+/* ════════════════════════════════════════════════════════════════
+   RENDER — CARDS
+════════════════════════════════════════════════════════════════ */
+function renderCards() {
+  document.getElementById('cgrid').innerHTML = S.filtered.map((c,i) => {
+    const uc = urgCls(c.sub_dl);
+    return `
+    <div class="ccard" style="animation-delay:${i*0.032}s">
+      <div class="ctbar" style="background:${domainColor(c.domain)}"></div>
+      <div class="cbody">
+        <div class="chr">
+          <div>
+            <div class="crv"><span class="crank">#${c.rank}</span><span class="cabbr">${c.abbr}</span></div>
+            <div class="cfull">${c.full}</div>
+          </div>
+          <div class="crm">
+            <div><div class="cifn">${c.if.toFixed(1)}</div><div class="cifl">Impact</div></div>
+            ${tierBadge(c.tier)}
+          </div>
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.85rem">
+          <span class="dtag" style="${domainStyle(c.domain)}">${c.domain}</span>
+          <span style="font-family:var(--mono);font-size:0.65rem;color:var(--tx3)">${c.year}</span>
+        </div>
+        <div class="cdiv"></div>
+        <div class="cdlg">
+          <div>
+            <div class="cdlt">Submission</div>
+            <div class="cdld">${fmt(c.sub_dl)}</div>
+            <div class="dlcd ${uc}" style="margin-top:3px;font-family:var(--mono);font-size:0.65rem"><div class="dldot"></div>${urgLbl(c.sub_dl)}</div>
+          </div>
+          <div>
+            <div class="cdlt">Notification</div>
+            <div class="cdld">${fmt(c.notif_dl)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="cfoot">
+        <a href="${c.url}" target="_blank" class="clink">${SVG_LINK} Visit Site</a>
+        <span style="font-family:var(--mono);font-size:0.6rem;color:var(--tx3)">${c.abbr} ${c.year}</span>
+      </div>
+    </div>`; }).join('');
+}
+
+/* ════════════════════════════════════════════════════════════════
+   RENDER — DISPATCH
+════════════════════════════════════════════════════════════════ */
+function render() {
+  applyFilters();
+  document.getElementById('rcount').textContent = S.filtered.length;
+  const nores = document.getElementById('nores');
+  const tv = document.getElementById('tv');
+  const cv = document.getElementById('cv');
+
+  if (!S.filtered.length) { nores.style.display='block'; tv.style.display='none'; cv.style.display='none'; return; }
+  nores.style.display='none';
+  if (S.view==='table') { tv.style.display='block'; cv.style.display='none'; renderTable(); }
+  else                  { tv.style.display='none';  cv.style.display='block'; renderCards(); }
+
+  // sort indicators on table headers
+  document.querySelectorAll('.ctable thead th[data-col]').forEach(th => {
+    th.classList.remove('asc','desc');
+    const map = {impact:'impact',sub_dl:'deadline',venue:'name',rank:'rank'};
+    if ((map[th.dataset.col]||th.dataset.col) === S.sortCol)
+      th.classList.add(S.sortDir==='asc'?'asc':'desc');
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════
+   EVENT WIRING
+════════════════════════════════════════════════════════════════ */
+document.getElementById('search').addEventListener('input', e => { S.search=e.target.value; render(); });
+document.getElementById('fy').addEventListener('change', e => { S.year=e.target.value; render(); });
+document.getElementById('ft').addEventListener('change', e => { S.tier=e.target.value; render(); });
+document.getElementById('fs').addEventListener('change', e => { S.status=e.target.value; render(); });
+
+document.querySelectorAll('.sbtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const col = btn.dataset.sort;
+    S.sortDir = S.sortCol===col ? (S.sortDir==='asc'?'desc':'asc') : (col==='deadline'?'asc':'desc');
+    S.sortCol = col;
+    document.querySelectorAll('.sbtn').forEach(b=>b.classList.toggle('active',b===btn));
+    render();
+  });
+});
+
+document.querySelectorAll('.ctable thead th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const map = {impact:'impact',sub_dl:'deadline',venue:'name',rank:'rank'};
+    const col = map[th.dataset.col] || th.dataset.col;
+    S.sortDir = S.sortCol===col ? (S.sortDir==='asc'?'desc':'asc') : 'desc';
+    S.sortCol = col;
+    render();
+  });
+});
+
+document.getElementById('vt').addEventListener('click', () => {
+  S.view='table';
+  document.getElementById('vt').classList.add('active');
+  document.getElementById('vc').classList.remove('active');
+  render();
+});
+document.getElementById('vc').addEventListener('click', () => {
+  S.view='cards';
+  document.getElementById('vc').classList.add('active');
+  document.getElementById('vt').classList.remove('active');
+  render();
+});
+
+/* ════════════════════════════════════════════════════════════════
+   CLOCK
+════════════════════════════════════════════════════════════════ */
+(function tick() {
+  document.getElementById('clock').textContent = new Date().toUTCString().slice(17,25)+' UTC';
+  setTimeout(tick, 1000);
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════════════════════ */
+buildMajorTabs();
+loadMajor();
+</script>
+</body>
+</html>
