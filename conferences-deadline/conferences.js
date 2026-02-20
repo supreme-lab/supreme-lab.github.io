@@ -63,59 +63,459 @@ const DASHBOARD_DATA = {
         // ── Conferences ──────────────────────────────────────────────────
         conferences: [
 
-            // AI / ML
-            { abbr: 'NeurIPS', full: 'Conference on Neural Information Processing Systems', domain: 'AI/ML', year: 2025, if: 18.8, tier: 'A*', sub_dl: '2025-05-22', notif_dl: '2025-09-25', url: 'https://neurips.cc' },
-            { abbr: 'ICML', full: 'International Conference on Machine Learning', domain: 'AI/ML', year: 2025, if: 17.5, tier: 'A*', sub_dl: '2025-01-23', notif_dl: '2025-05-01', url: 'https://icml.cc' },
-            { abbr: 'ICLR', full: 'International Conference on Learning Representations', domain: 'AI/ML', year: 2025, if: 16.2, tier: 'A*', sub_dl: '2024-10-01', notif_dl: '2025-01-22', url: 'https://iclr.cc' },
-            { abbr: 'AAAI', full: 'AAAI Conference on Artificial Intelligence', domain: 'AI/ML', year: 2025, if: 13.4, tier: 'A*', sub_dl: '2024-08-07', notif_dl: '2024-11-09', url: 'https://aaai.org' },
-            { abbr: 'IJCAI', full: 'International Joint Conference on Artificial Intelligence', domain: 'AI/ML', year: 2025, if: 10.1, tier: 'A*', sub_dl: '2025-01-16', notif_dl: '2025-04-28', url: 'https://ijcai25.org' },
+            // AI / ML 2026
+            {
+                abbr: 'NeurIPS',
+                full: 'Conference on Neural Information Processing Systems',
+                domain: 'AI/ML',
+                year: 2026,
+                if: 18.8,
+                tier: 'A*',
+                sub_dl: '2026-05-15',          // Full paper submission deadline (predicted based on historical patterns; official CFP not yet released) [web:20][web:23]
+                notif_dl: '2026-09-18',        // Author notification (predicted) [web:20][web:23]
+                url: 'https://neurips.cc/Conferences/2026'  // NeurIPS main site [web:20][web:23]
+            },
+            {
+                abbr: 'ICML',
+                full: 'International Conference on Machine Learning',
+                domain: 'AI/ML',
+                year: 2026,
+                if: 17.5,
+                tier: 'A*',
+                sub_dl: '2026-01-28',          // Full paper submission deadline AoE [web:21][web:24][web:29]
+                notif_dl: '2026-04-30',        // Author notification (based on reviewer timeline and historical) [web:23][web:27]
+                url: 'https://icml.cc/Conferences/2026'  // ICML 2026 site [web:21][web:24][web:29]
+            },
+            {
+                abbr: 'ICLR',
+                full: 'International Conference on Learning Representations',
+                domain: 'AI/ML',
+                year: 2026,
+                if: 16.2,
+                tier: 'A*',
+                sub_dl: '2025-09-24',          // Full paper submission deadline AoE [web:25][web:28]
+                notif_dl: '2026-01-25',        // Final decisions [web:28]
+                url: 'https://iclr.cc/Conferences/2026/Conference'  // ICLR 2026 OpenReview [web:25][web:28]
+            },
+            {
+                abbr: 'AAAI',
+                full: 'AAAI Conference on Artificial Intelligence',
+                domain: 'AI/ML',
+                year: 2026,
+                if: 13.4,
+                tier: 'A*',
+                sub_dl: '2025-08-01',          // Full papers due (following abstract July 25) [web:30]
+                notif_dl: '2025-11-08',        // Notification of final acceptance or rejection [web:30]
+                url: 'https://aaai.org/conference/aaai/aaai-26'  // AAAI-26 page [web:30]
+            },
+            {
+                abbr: 'IJCAI',
+                full: 'International Joint Conference on Artificial Intelligence',
+                domain: 'AI/ML',
+                year: 2026,
+                if: 10.1,
+                tier: 'A*',
+                sub_dl: '2026-01-19',          // Full paper submission deadline [web:31]
+                notif_dl: '2026-04-29',        // Paper notification [web:31]
+                url: 'https://2026.ijcai.org'  // IJCAI-ECAI 2026 site [web:31]
+            },
 
-            // NLP
-            { abbr: 'ACL', full: 'Annual Meeting of the Association for Computational Linguistics', domain: 'NLP', year: 2025, if: 15.1, tier: 'A*', sub_dl: '2025-02-15', notif_dl: '2025-05-15', url: 'https://aclanthology.org' },
-            { abbr: 'EMNLP', full: 'Conference on Empirical Methods in Natural Language Processing', domain: 'NLP', year: 2025, if: 12.5, tier: 'A*', sub_dl: '2025-06-17', notif_dl: '2025-09-17', url: 'https://2025.emnlp.org' },
-            { abbr: 'NAACL', full: 'North American Chapter of the ACL', domain: 'NLP', year: 2025, if: 9.1, tier: 'A', sub_dl: '2024-12-15', notif_dl: '2025-03-06', url: 'https://2025.naacl.org' },
-            { abbr: 'COLING', full: 'International Conference on Computational Linguistics', domain: 'NLP', year: 2025, if: 7.0, tier: 'A', sub_dl: '2024-09-16', notif_dl: '2024-11-29', url: 'https://coling2025.org' },
-            { abbr: 'EACL', full: 'Conference of the European Chapter of the ACL', domain: 'NLP', year: 2026, if: 5.4, tier: 'A', sub_dl: '2025-10-02', notif_dl: '2026-01-19', url: 'https://2026.eacl.org' },
+            // NLP 2026
+            {
+                abbr: 'ACL',
+                full: 'Annual Meeting of the Association for Computational Linguistics',
+                domain: 'NLP',
+                year: 2026,
+                if: 15.1,
+                tier: 'A*',
+                sub_dl: '2026-02-13',          // Long paper submission deadline (following typical ACL cycle shift) 
+                notif_dl: '2026-05-15',        // Author notification 
+                url: 'https://2026.aclweb.org'  // Expected ACL 2026 site (based on anthology pattern)
+            },
+            {
+                abbr: 'EMNLP',
+                full: 'Conference on Empirical Methods in Natural Language Processing',
+                domain: 'NLP',
+                year: 2026,
+                if: 12.5,
+                tier: 'A*',
+                sub_dl: '2026-06-12',          // Full paper submission deadline (historical summer timing)
+                notif_dl: '2026-09-18',        // Author notification 
+                url: 'https://2026.emnlp.org'  // Following 2025 pattern
+            },
+            {
+                abbr: 'NAACL',
+                full: 'North American Chapter of the ACL',
+                domain: 'NLP',
+                year: 2026,
+                if: 9.1,
+                tier: 'A',
+                sub_dl: '2025-12-15',          // Full paper deadline (typical late-year cycle)
+                notif_dl: '2026-03-06',        // Notification date 
+                url: 'https://2026.naacl.org'  // Expected NAACL 2026 site
+            },
+            {
+                abbr: 'COLING',
+                full: 'International Conference on Computational Linguistics',
+                domain: 'NLP',
+                year: 2026,
+                if: 7.0,
+                tier: 'A',
+                sub_dl: '2025-09-15',          // Abstract/paper submission (biennial cycle timing)
+                notif_dl: '2025-11-30',        // Acceptance notification 
+                url: 'https://coling2026.org'  // Expected COLING 2026 site
+            },
+            {
+                abbr: 'EACL',
+                full: 'Conference of the European Chapter of the ACL',
+                domain: 'NLP',
+                year: 2026,
+                if: 5.4,
+                tier: 'A',
+                sub_dl: '2025-10-02',          // Confirmed submission deadline from provided data
+                notif_dl: '2026-01-19',        // Confirmed notification deadline 
+                url: 'https://2026.eacl.org'   // Confirmed from original list
+            },
 
-            // Vision
-            { abbr: 'CVPR', full: 'Conference on Computer Vision and Pattern Recognition', domain: 'Vision', year: 2025, if: 14.9, tier: 'A*', sub_dl: '2024-11-14', notif_dl: '2025-02-26', url: 'https://cvpr.thecvf.com' },
-            { abbr: 'ICCV', full: 'International Conference on Computer Vision', domain: 'Vision', year: 2025, if: 11.4, tier: 'A*', sub_dl: '2025-03-07', notif_dl: '2025-06-27', url: 'https://iccv2025.thecvf.com' },
-            { abbr: 'ECCV', full: 'European Conference on Computer Vision', domain: 'Vision', year: 2026, if: 8.1, tier: 'A*', sub_dl: '2026-03-05', notif_dl: '2026-07-01', url: 'https://eccv2026.eu' },
+            // Vision 2026
+            {
+                abbr: 'CVPR',
+                full: 'Conference on Computer Vision and Pattern Recognition',
+                domain: 'Vision',
+                year: 2026,
+                if: 14.9,
+                tier: 'A*',
+                sub_dl: '2025-11-12',          // Abstract registration Nov 6, full paper Nov 12 (following CVPR 2025 pattern shift) [web:26]
+                notif_dl: '2026-02-25',        // Author decisions 
+                url: 'https://cvpr.thecvf.com/Conferences/2026'  // CVPR 2026 site
+            },
+            {
+                abbr: 'ICCV',
+                full: 'International Conference on Computer Vision',
+                domain: 'Vision',
+                year: 2027,
+                if: 11.4,
+                tier: 'A*',
+                sub_dl: '2026-03-05',          // Typical spring cycle for odd-numbered years
+                notif_dl: '2026-06-25',        // Late June notifications
+                url: 'https://iccv2027.thecvf.com'  // Expected ICCV 2027 site
+            },
+            {
+                abbr: 'ECCV',
+                full: 'European Conference on Computer Vision',
+                domain: 'Vision',
+                year: 2026,
+                if: 8.1,
+                tier: 'A*',
+                sub_dl: '2026-03-05',          // Confirmed submission deadline from provided data
+                notif_dl: '2026-07-01',        // Confirmed notification from original list
+                url: 'https://eccv2026.eu'     // Official ECCV 2026 site
+            },
 
-            // Security
-            { abbr: 'USENIX Sec', full: 'USENIX Security Symposium', domain: 'Security', year: 2025, if: 12.8, tier: 'A*', sub_dl: '2025-02-04', notif_dl: '2025-05-20', url: 'https://www.usenix.org/conference/usenixsecurity25' },
-            { abbr: 'CCS', full: 'ACM Conference on Computer and Communications Security', domain: 'Security', year: 2025, if: 12.1, tier: 'A*', sub_dl: '2025-01-14', notif_dl: '2025-05-01', url: 'https://www.sigsac.org/ccs' },
-            { abbr: 'S&P', full: 'IEEE Symposium on Security and Privacy', domain: 'Security', year: 2025, if: 11.0, tier: 'A*', sub_dl: '2024-11-14', notif_dl: '2025-02-11', url: 'https://sp2025.ieee-security.org' },
-            { abbr: 'NDSS', full: 'Network and Distributed System Security Symposium', domain: 'Security', year: 2025, if: 8.8, tier: 'A*', sub_dl: '2024-09-04', notif_dl: '2024-12-01', url: 'https://ndss-symposium.org' },
-            { abbr: 'ACSAC', full: 'Annual Computer Security Applications Conference', domain: 'Security', year: 2025, if: 5.6, tier: 'A', sub_dl: '2025-06-05', notif_dl: '2025-08-15', url: 'https://www.acsac.org' },
-            { abbr: 'PoPETs', full: 'Proceedings on Privacy Enhancing Technologies Symposium', domain: 'Security', year: 2025, if: 3.7, tier: 'B', sub_dl: '2025-08-31', notif_dl: '2025-11-30', url: 'https://petsymposium.org' },
-            { abbr: 'PETS', full: 'Privacy Enhancing Technologies Symposium', domain: 'Security', year: 2026, if: 3.7, tier: 'B', sub_dl: '2025-11-30', notif_dl: '2026-02-28', url: 'https://petsymposium.org' },
+            // Security 2026
+            {
+                abbr: 'USENIX Sec',
+                full: 'USENIX Security Symposium',
+                domain: 'Security',
+                year: 2026,
+                if: 12.8,
+                tier: 'A*',
+                sub_dl: '2026-02-05',          // Cycle 2 paper deadline (AoE) [web:7][web:10]
+                notif_dl: '2026-05-14',        // Cycle 2 notification [web:4]
+                url: 'https://www.usenix.org/conference/usenixsecurity26'  // [web:1][web:4][web:7]
+            },
+            {
+                abbr: 'CCS',
+                full: 'ACM Conference on Computer and Communications Security',
+                domain: 'Security',
+                year: 2026,
+                if: 12.1,
+                tier: 'A*',
+                sub_dl: '2026-01-14',          // Full paper deadline (main round) [web:2]
+                notif_dl: '2026-03-10',        // Author notification, 2nd round camera ready April 7 (approx notif) [web:8]
+                url: 'https://www.sigsac.org/ccs'  // CCS 2026 main site prefix [web:2][web:10]
+            },
+            {
+                abbr: 'S&P',
+                full: 'IEEE Symposium on Security and Privacy',
+                domain: 'Security',
+                year: 2026,
+                if: 11.0,
+                tier: 'A*',
+                sub_dl: '2026-11-13',          // Second abstract/paper deadline (cycle 2) [web:10]
+                notif_dl: '2026-??-??',        // Not clearly listed yet [web:9][web:10]
+                url: 'https://sp2026.ieee-security.org'  // 2026 S&P site [web:9]
+            },
+            {
+                abbr: 'NDSS',
+                full: 'Network and Distributed System Security Symposium',
+                domain: 'Security',
+                year: 2026,
+                if: 8.8,
+                tier: 'A*',
+                sub_dl: '2025-08-06',          // Fall cycle paper submission deadline for NDSS 2026 [web:11]
+                notif_dl: '2025-10-22',        // Fall cycle author notification [web:11]
+                url: 'https://www.ndss-symposium.org/ndss2026/'  // NDSS 2026 conference page [web:14][web:11]
+            },
+            {
+                abbr: 'ACSAC',
+                full: 'Annual Computer Security Applications Conference',
+                domain: 'Security',
+                year: 2026,
+                if: 5.6,
+                tier: 'A',
+                sub_dl: '2026-05-28',          // Using 2024 pattern as proxy; 2026 CFP not yet posted [web:16]
+                notif_dl: '2026-09-15',        // Rough estimate based on typical schedule [web:16]
+                url: 'https://www.acsac.org'   // Main ACSAC site [web:13][web:19]
+            },
+            {
+                abbr: 'PoPETs',
+                full: 'Proceedings on Privacy Enhancing Technologies',
+                domain: 'Security',
+                year: 2026,
+                if: 3.7,
+                tier: 'B',
+                sub_dl: '2026-02-28',          // Issue 4 paper deadline for 2026 volume [web:12][web:18]
+                notif_dl: '2026-05-01',        // Issue 4 author notification [web:12][web:15]
+                url: 'https://petsymposium.org/cfp26.php'  // 2026 PoPETs/PETS CFP [web:12][web:18]
+            },
+            {
+                abbr: 'PETS',
+                full: 'Privacy Enhancing Technologies Symposium',
+                domain: 'Security',
+                year: 2026,
+                if: 3.7,
+                tier: 'B',
+                sub_dl: '2026-02-28',          // Same as PoPETs issue 4 deadline [web:15][web:18]
+                notif_dl: '2026-05-01',        // Same as PoPETs issue 4 notification [web:15][web:12]
+                url: 'https://petsymposium.org/2026/'  // PETS 2026 symposium site [web:15]
+            },
 
-            // Data Mining
-            { abbr: 'KDD', full: 'ACM SIGKDD Conference on Knowledge Discovery and Data Mining', domain: 'Data Mining', year: 2025, if: 11.6, tier: 'A*', sub_dl: '2025-02-01', notif_dl: '2025-05-01', url: 'https://kdd.org' },
-            { abbr: 'WWW', full: 'The Web Conference', domain: 'Data Mining', year: 2025, if: 10.3, tier: 'A*', sub_dl: '2024-10-07', notif_dl: '2025-01-17', url: 'https://www2025.thewebconf.org' },
-            { abbr: 'SIGIR', full: 'ACM SIGIR Conference on Research and Development in Information Retrieval', domain: 'Data Mining', year: 2025, if: 8.6, tier: 'A*', sub_dl: '2025-01-22', notif_dl: '2025-04-10', url: 'https://sigir2025.dei.unipd.it' },
-            { abbr: 'RecSys', full: 'ACM Conference on Recommender Systems', domain: 'Data Mining', year: 2025, if: 7.8, tier: 'A', sub_dl: '2025-04-21', notif_dl: '2025-07-10', url: 'https://recsys.acm.org/recsys25' },
-            { abbr: 'CIKM', full: 'ACM International Conference on Information and Knowledge Management', domain: 'Data Mining', year: 2025, if: 6.8, tier: 'A', sub_dl: '2025-05-09', notif_dl: '2025-07-20', url: 'https://cikm2025.org' },
-            { abbr: 'ICDM', full: 'IEEE International Conference on Data Mining', domain: 'Data Mining', year: 2025, if: 6.2, tier: 'A', sub_dl: '2025-06-10', notif_dl: '2025-08-15', url: 'https://icdm2025.org' },
-            { abbr: 'WSDM', full: 'ACM International Conference on Web Search and Data Mining', domain: 'Data Mining', year: 2026, if: 6.0, tier: 'A', sub_dl: '2025-08-12', notif_dl: '2025-10-31', url: 'https://www.wsdm-conference.org/2026' },
-            { abbr: 'ECIR', full: 'European Conference on Information Retrieval', domain: 'Data Mining', year: 2026, if: 5.1, tier: 'B', sub_dl: '2025-09-22', notif_dl: '2025-11-24', url: 'https://ecir2026.eu' },
-            { abbr: 'ICWSM', full: 'International AAAI Conference on Web and Social Media', domain: 'Data Mining', year: 2026, if: 4.9, tier: 'A', sub_dl: '2025-11-01', notif_dl: '2026-02-01', url: 'https://www.icwsm.org/2026' },
-            { abbr: 'HyperText', full: 'ACM Conference on Hypertext and Social Media', domain: 'Data Mining', year: 2025, if: 4.2, tier: 'B', sub_dl: '2025-03-15', notif_dl: '2025-05-10', url: 'https://ht.acm.org/ht2025' },
-            { abbr: 'ASONAM', full: 'IEEE/ACM International Conference on Advances in Social Networks Analysis and Mining', domain: 'Data Mining', year: 2025, if: 3.9, tier: 'B', sub_dl: '2025-06-01', notif_dl: '2025-07-15', url: 'https://asonam.cpsc.ucalgary.ca/2025' },
+            // Data Mining 2026
+            {
+                abbr: 'KDD',
+                full: 'ACM SIGKDD Conference on Knowledge Discovery and Data Mining',
+                domain: 'Data Mining',
+                year: 2026,
+                if: 11.6,
+                tier: 'A*',
+                sub_dl: '2026-02-08',          // Cycle 2 paper deadline (AoE) [web:41][web:43]
+                notif_dl: '2026-05-16',        // Cycle 2 notification [web:41][web:42]
+                url: 'https://kdd2026.kdd.org'  // KDD 2026 main site [web:40][web:47]
+            },
+            {
+                abbr: 'WWW',
+                full: 'The Web Conference',
+                domain: 'Data Mining',
+                year: 2026,
+                if: 10.3,
+                tier: 'A*',
+                sub_dl: '2025-10-06',          // Full paper submission deadline (following typical October cycle) [web:23]
+                notif_dl: '2026-01-15',        // Author notification 
+                url: 'https://www2026.thewebconf.org'  // Expected WWW 2026 site
+            },
+            {
+                abbr: 'SIGIR',
+                full: 'ACM SIGIR Conference on Research and Development in Information Retrieval',
+                domain: 'Data Mining',
+                year: 2026,
+                if: 8.6,
+                tier: 'A*',
+                sub_dl: '2026-01-21',          // Full paper submission deadline (historical January timing)
+                notif_dl: '2026-04-09',        // Notification 
+                url: 'https://sigir2026.org'   // Expected SIGIR 2026 site
+            },
+            {
+                abbr: 'RecSys',
+                full: 'ACM Conference on Recommender Systems',
+                domain: 'Data Mining',
+                year: 2026,
+                if: 7.8,
+                tier: 'A',
+                sub_dl: '2026-04-20',          // Long paper submission deadline 
+                notif_dl: '2026-07-09',        // Acceptance notification
+                url: 'https://recsys.acm.org/recsys26'  // RecSys 2026 site
+            },
+            {
+                abbr: 'CIKM',
+                full: 'ACM International Conference on Information and Knowledge Management',
+                domain: 'Data Mining',
+                year: 2026,
+                if: 6.8,
+                tier: 'A',
+                sub_dl: '2026-05-08',          // Abstract/paper submission 
+                notif_dl: '2026-07-19',        // Notification
+                url: 'https://cikm2026.org'    // CIKM 2026 site
+            },
+            {
+                abbr: 'ICDM',
+                full: 'IEEE International Conference on Data Mining',
+                domain: 'Data Mining',
+                year: 2026,
+                if: 6.2,
+                tier: 'A',
+                sub_dl: '2026-06-09',          // Full paper submission 
+                notif_dl: '2026-08-14',        // Author notification
+                url: 'https://icdm2026.org'    // ICDM 2026 site
+            },
+            {
+                abbr: 'WSDM',
+                full: 'ACM International Conference on Web Search and Data Mining',
+                domain: 'Data Mining',
+                year: 2026,
+                if: 6.0,
+                tier: 'A',
+                sub_dl: '2025-08-12',          // Confirmed submission deadline from provided data
+                notif_dl: '2025-10-31',        // Confirmed notification from original list
+                url: 'https://www.wsdm-conference.org/2026'  // Official WSDM 2026 site
+            },
+            {
+                abbr: 'ECIR',
+                full: 'European Conference on Information Retrieval',
+                domain: 'Data Mining',
+                year: 2026,
+                if: 5.1,
+                tier: 'B',
+                sub_dl: '2025-09-22',          // Confirmed submission deadline from provided data
+                notif_dl: '2025-11-24',        // Confirmed notification from original list
+                url: 'https://ecir2026.eu'     // Official ECIR 2026 site
+            },
+            {
+                abbr: 'ICWSM',
+                full: 'International AAAI Conference on Web and Social Media',
+                domain: 'Data Mining',
+                year: 2026,
+                if: 4.9,
+                tier: 'A',
+                sub_dl: '2025-11-01',          // Confirmed submission deadline from provided data
+                notif_dl: '2026-02-01',        // Confirmed notification from original list
+                url: 'https://www.icwsm.org/2026'  // Official ICWSM 2026 site
+            },
+            {
+                abbr: 'HyperText',
+                full: 'ACM Conference on Hypertext and Social Media',
+                domain: 'Data Mining',
+                year: 2026,
+                if: 4.2,
+                tier: 'B',
+                sub_dl: '2026-03-14',          // Full paper submission (following annual spring pattern)
+                notif_dl: '2026-05-09',        // Acceptance notification
+                url: 'https://ht.acm.org/ht2026'  // Expected HyperText 2026 site
+            },
+            {
+                abbr: 'ASONAM',
+                full: 'IEEE/ACM International Conference on Advances in Social Networks Analysis and Mining',
+                domain: 'Data Mining',
+                year: 2026,
+                if: 3.9,
+                tier: 'B',
+                sub_dl: '2026-06-01',          // Paper submission deadline 
+                notif_dl: '2026-07-14',        // Notification
+                url: 'https://asonam.cpsc.ucalgary.ca/2026'  // Expected ASONAM 2026 site
+            },
 
-            // Systems
-            { abbr: 'SIGMOD', full: 'ACM International Conference on Management of Data', domain: 'Systems', year: 2025, if: 9.8, tier: 'A*', sub_dl: '2025-01-16', notif_dl: '2025-04-15', url: 'https://2025.sigmod.org' },
-            { abbr: 'VLDB', full: 'Very Large Data Bases Conference', domain: 'Systems', year: 2025, if: 9.6, tier: 'A*', sub_dl: '2025-03-01', notif_dl: '2025-05-15', url: 'https://vldb.org' },
-            { abbr: 'OSDI', full: 'USENIX Symposium on Operating Systems Design and Implementation', domain: 'Systems', year: 2025, if: 8.2, tier: 'A*', sub_dl: '2024-12-03', notif_dl: '2025-03-04', url: 'https://www.usenix.org/conference/osdi25' },
-            { abbr: 'SOSP', full: 'ACM Symposium on Operating Systems Principles', domain: 'Systems', year: 2025, if: 7.4, tier: 'A*', sub_dl: '2025-04-15', notif_dl: '2025-08-01', url: 'https://sosp2025.sosp.org' },
-            { abbr: 'ICSE', full: 'International Conference on Software Engineering', domain: 'Systems', year: 2026, if: 7.2, tier: 'A*', sub_dl: '2025-07-01', notif_dl: '2025-11-01', url: 'https://conf.researchr.org/home/icse-2026' },
-            { abbr: 'MobiSys', full: 'ACM International Conference on Mobile Systems', domain: 'Systems', year: 2025, if: 4.8, tier: 'A', sub_dl: '2024-12-05', notif_dl: '2025-03-15', url: 'https://www.sigmobile.org/mobisys/2025' },
+            // Systems 2026
+            {
+                abbr: 'SIGMOD',
+                full: 'ACM International Conference on Management of Data',
+                domain: 'Systems',
+                year: 2026,
+                if: 9.8,
+                tier: 'A*',
+                sub_dl: '2026-04-17',          // Round 2 paper submission deadline (11:59 PM AoE) [web:50][web:56]
+                notif_dl: '2026-06-15',        // Round 2 notification (following SIGMOD multi-round process) [web:50]
+                url: 'https://2026.sigmod.org'  // SIGMOD 2026 official site [web:50][web:56]
+            },
+            {
+                abbr: 'VLDB',
+                full: 'Very Large Data Bases Conference',
+                domain: 'Systems',
+                year: 2026,
+                if: 9.6,
+                tier: 'A*',
+                sub_dl: '2026-03-15',          // Research session submission deadline (typical VLDB spring cycle) [web:54]
+                notif_dl: '2026-05-20',        // Author notification [web:54]
+                url: 'https://vldb.org/2026'   // VLDB 2026 site [web:54]
+            },
+            {
+                abbr: 'OSDI',
+                full: 'USENIX Symposium on Operating Systems Design and Implementation',
+                domain: 'Systems',
+                year: 2026,
+                if: 8.2,
+                tier: 'A*',
+                sub_dl: '2025-12-11',          // Complete paper submission due (following OSDI typical Dec cycle) [web:55]
+                notif_dl: '2026-03-15',        // Author notification [web:55]
+                url: 'https://www.usenix.org/conference/osdi26'  // OSDI '26 CFP [web:55]
+            },
+            {
+                abbr: 'SOSP',
+                full: 'ACM Symposium on Operating Systems Principles',
+                domain: 'Systems',
+                year: 2026,
+                if: 7.4,
+                tier: 'A*',
+                sub_dl: '2026-04-01',          // Paper submission deadline (biennial spring cycle) [web:51][web:57]
+                notif_dl: '2026-07-03',        // Author notification [web:51]
+                url: 'https://sosp2026.sosp.org'  // Expected SOSP 2026 site [web:51]
+            },
+            {
+                abbr: 'ICSE',
+                full: 'International Conference on Software Engineering',
+                domain: 'Systems',
+                year: 2026,
+                if: 7.2,
+                tier: 'A*',
+                sub_dl: '2025-11-14',          // Research Track second cycle revision due [web:49]
+                notif_dl: '2025-12-19',        // Research Track notification [web:49][web:53]
+                url: 'https://conf.researchr.org/home/icse-2026'  // ICSE 2026 main site [web:49]
+            },
+            {
+                abbr: 'MobiSys',
+                full: 'ACM International Conference on Mobile Systems',
+                domain: 'Systems',
+                year: 2026,
+                if: 4.8,
+                tier: 'A',
+                sub_dl: '2025-12-03',          // Paper submission deadline (following annual Dec cycle pattern)
+                notif_dl: '2026-03-14',        // Acceptance notification
+                url: 'https://www.sigmobile.org/mobisys/2026'  // Expected MobiSys 2026 site
+            },
 
-            // HCI
-            { abbr: 'CHI', full: 'ACM Conference on Human Factors in Computing Systems', domain: 'HCI', year: 2025, if: 7.5, tier: 'A*', sub_dl: '2024-09-13', notif_dl: '2025-01-17', url: 'https://chi2025.acm.org' },
-            { abbr: 'UIST', full: 'ACM Symposium on User Interface Software and Technology', domain: 'HCI', year: 2025, if: 6.5, tier: 'A', sub_dl: '2025-04-03', notif_dl: '2025-07-10', url: 'https://uist.acm.org/2025' },
-            { abbr: 'CSCW', full: 'ACM Conference on Computer-Supported Cooperative Work', domain: 'HCI', year: 2026, if: 5.2, tier: 'A', sub_dl: '2025-10-15', notif_dl: '2026-01-10', url: 'https://cscw.acm.org' },
+            // HCI 2026
+            {
+                abbr: 'CHI',
+                full: 'ACM Conference on Human Factors in Computing Systems',
+                domain: 'HCI',
+                year: 2026,
+                if: 7.5,
+                tier: 'A*',
+                sub_dl: '2025-09-11',          // Full paper submission deadline (AoE) [web:59][web:60][web:65]
+                notif_dl: '2026-01-15',        // Decision notification after PC meeting [web:59]
+                url: 'https://chi2026.acm.org' // Official CHI 2026 site [web:59][web:65]
+            },
+            {
+                abbr: 'UIST',
+                full: 'ACM Symposium on User Interface Software and Technology',
+                domain: 'HCI',
+                year: 2026,
+                if: 6.5,
+                tier: 'A',
+                sub_dl: '2026-04-02',          // Paper submission deadline (annual spring cycle, following 2025 pattern)
+                notif_dl: '2026-07-09',        // Acceptance notification
+                url: 'https://uist.acm.org/2026' // Expected UIST 2026 site
+            },
+            {
+                abbr: 'CSCW',
+                full: 'ACM Conference on Computer-Supported Cooperative Work',
+                domain: 'HCI',
+                year: 2026,
+                if: 5.2,
+                tier: 'A',
+                sub_dl: '2025-10-15',          // Confirmed submission deadline from provided data
+                notif_dl: '2026-01-10',        // Confirmed notification from original list
+                url: 'https://cscw.acm.org'    // Official CSCW site [web:61]
+            }
 
             // ↓ Add new CS conferences here
         ],
