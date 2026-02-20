@@ -143,9 +143,3 @@ Ready for review! 🚀
 ```
 
 **Questions?** Open an issue or comment on your PR. Thanks for contributing! 🎉
-<span style="display:none">[^1]</span>
-
-<div align="center">⁂</div>
-
-[^1]: paste.txt
-
