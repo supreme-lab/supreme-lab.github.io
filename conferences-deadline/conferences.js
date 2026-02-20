@@ -58,6 +58,7 @@ const DASHBOARD_DATA = {
             'HCI': { color: '#f472b6', bg: 'rgba(244,114,182,0.1)', border: 'rgba(244,114,182,0.22)' },
             'Vision': { color: '#4ade80', bg: 'rgba(74,222,128,0.1)', border: 'rgba(74,222,128,0.22)' },
             // ↓ Add new CS domains here
+            'Quantum Computing': { color: '#c084fc', bg: 'rgba(192,132,252,0.1)', border: 'rgba(192,132,252,0.22)' },
         },
 
         // ── Conferences ──────────────────────────────────────────────────
