@@ -74,7 +74,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2026-05-15',          // Full paper submission deadline (predicted based on historical patterns; official CFP not yet released) [web:20][web:23]
                 notif_dl: '2026-09-18',        // Author notification (predicted) [web:20][web:23]
-                url: 'https://neurips.cc/Conferences/2026'  // NeurIPS main site [web:20][web:23]
+                url: 'https://neurips.cc/Conferences/YYYY/CallForPapers'  // NeurIPS main site [web:20][web:23]
             },
             {
                 abbr: 'ICML',
@@ -85,7 +85,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2026-01-28',          // Full paper submission deadline AoE [web:21][web:24][web:29]
                 notif_dl: '2026-04-30',        // Author notification (based on reviewer timeline and historical) [web:23][web:27]
-                url: 'https://icml.cc/Conferences/2026'  // ICML 2026 site [web:21][web:24][web:29]
+                url: 'https://icml.cc/Conferences/YYYY/CallForPapers'  // ICML 2026 site [web:21][web:24][web:29]
             },
             {
                 abbr: 'ICLR',
@@ -96,7 +96,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2025-09-24',          // Full paper submission deadline AoE [web:25][web:28]
                 notif_dl: '2026-01-25',        // Final decisions [web:28]
-                url: 'https://iclr.cc/Conferences/2026/Conference'  // ICLR 2026 OpenReview [web:25][web:28]
+                url: 'https://iclr.cc/Conferences/YYYY/CallForPapers'  // ICLR 2026 OpenReview [web:25][web:28]
             },
             {
                 abbr: 'AAAI',
@@ -107,7 +107,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2025-08-01',          // Full papers due (following abstract July 25) [web:30]
                 notif_dl: '2025-11-08',        // Notification of final acceptance or rejection [web:30]
-                url: 'https://aaai.org/conference/aaai/aaai-26'  // AAAI-26 page [web:30]
+                url: 'https://aaai.org/conference/aaai/aaai-YY/'  // AAAI-26 page [web:30]
             },
             {
                 abbr: 'IJCAI',
@@ -118,7 +118,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2026-01-19',          // Full paper submission deadline [web:31]
                 notif_dl: '2026-04-29',        // Paper notification [web:31]
-                url: 'https://2026.ijcai.org'  // IJCAI-ECAI 2026 site [web:31]
+                url: 'https://YYYY.ijcai.org/ijcai-ecai-2026-call-for-papers-main-track/'  // IJCAI-ECAI 2026 site [web:31]
             },
 
             // NLP 2026
@@ -131,7 +131,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2026-02-13',          // Long paper submission deadline (following typical ACL cycle shift) 
                 notif_dl: '2026-05-15',        // Author notification 
-                url: 'https://2026.aclweb.org'  // Expected ACL 2026 site (based on anthology pattern)
+                url: 'https://YYYY.aclweb.org/calls/main_conference_papers/'  // Expected ACL 2026 site (based on anthology pattern)
             },
             {
                 abbr: 'EMNLP',
@@ -142,7 +142,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2026-06-12',          // Full paper submission deadline (historical summer timing)
                 notif_dl: '2026-09-18',        // Author notification 
-                url: 'https://2026.emnlp.org'  // Following 2025 pattern
+                url: 'https://YYYY.emnlp.org/calls/main_conference_papers/'  // Following 2025 pattern
             },
             {
                 abbr: 'NAACL',
@@ -153,7 +153,7 @@ const DASHBOARD_DATA = {
                 tier: 'A',
                 sub_dl: '2025-12-15',          // Full paper deadline (typical late-year cycle)
                 notif_dl: '2026-03-06',        // Notification date 
-                url: 'https://2026.naacl.org'  // Expected NAACL 2026 site
+                url: 'https://YYYY.naacl.org/calls/papers/'  // Expected NAACL 2026 site
             },
             {
                 abbr: 'COLING',
@@ -164,7 +164,7 @@ const DASHBOARD_DATA = {
                 tier: 'A',
                 sub_dl: '2025-09-15',          // Abstract/paper submission (biennial cycle timing)
                 notif_dl: '2025-11-30',        // Acceptance notification 
-                url: 'https://coling2026.org'  // Expected COLING 2026 site
+                url: 'https://colingYYYY.org/calls/main_conference_papers/'  // Expected COLING 2026 site
             },
             {
                 abbr: 'EACL',
@@ -175,7 +175,7 @@ const DASHBOARD_DATA = {
                 tier: 'A',
                 sub_dl: '2025-10-02',          // Confirmed submission deadline from provided data
                 notif_dl: '2026-01-19',        // Confirmed notification deadline 
-                url: 'https://2026.eacl.org'   // Confirmed from original list
+                url: 'https://YYYY.eacl.org/calls/papers/'   // Confirmed from original list
             },
 
             // Vision 2026
@@ -188,7 +188,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2025-11-12',          // Abstract registration Nov 6, full paper Nov 12 (following CVPR 2025 pattern shift) [web:26]
                 notif_dl: '2026-02-25',        // Author decisions 
-                url: 'https://cvpr.thecvf.com/Conferences/2026'  // CVPR 2026 site
+                url: 'https://cvpr.thecvf.com/Conferences/YYYY/CallForPapers'  // CVPR 2026 site
             },
             {
                 abbr: 'ICCV',
@@ -199,7 +199,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2026-03-05',          // Typical spring cycle for odd-numbered years
                 notif_dl: '2026-06-25',        // Late June notifications
-                url: 'https://iccv2027.thecvf.com'  // Expected ICCV 2027 site
+                url: 'https://iccv.thecvf.com/Conferences/YYYY/CallForPapers'  // Expected ICCV 2027 site
             },
             {
                 abbr: 'ECCV',
@@ -223,7 +223,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2026-02-05',          // Cycle 2 paper deadline (AoE) [web:7][web:10]
                 notif_dl: '2026-05-14',        // Cycle 2 notification [web:4]
-                url: 'https://www.usenix.org/conference/usenixsecurity26'  // [web:1][web:4][web:7]
+                url: 'https://www.usenix.org/conference/usenixsecurityYY/call-for-papers'  // [web:1][web:4][web:7]
             },
             {
                 abbr: 'CCS',
@@ -234,7 +234,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2026-01-14',          // Full paper deadline (main round) [web:2]
                 notif_dl: '2026-03-10',        // Author notification, 2nd round camera ready April 7 (approx notif) [web:8]
-                url: 'https://www.sigsac.org/ccs'  // CCS 2026 main site prefix [web:2][web:10]
+                url: 'https://www.sigsac.org/ccs/CCSYYYY/call-for/call-for-papers.html'  // CCS 2026 main site prefix [web:2][web:10]
             },
             {
                 abbr: 'S&P',
@@ -245,7 +245,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2026-11-13',          // Second abstract/paper deadline (cycle 2) [web:10]
                 notif_dl: '2026-??-??',        // Not clearly listed yet [web:9][web:10]
-                url: 'https://sp2026.ieee-security.org'  // 2026 S&P site [web:9]
+                url: 'https://spYYYY.ieee-security.org/cfpapers.html'  // 2026 S&P site [web:9]
             },
             {
                 abbr: 'NDSS',
@@ -256,7 +256,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2025-08-06',          // Fall cycle paper submission deadline for NDSS 2026 [web:11]
                 notif_dl: '2025-10-22',        // Fall cycle author notification [web:11]
-                url: 'https://www.ndss-symposium.org/ndss2026/'  // NDSS 2026 conference page [web:14][web:11]
+                url: 'https://www.ndss-symposium.org/ndssYYYY/'  // NDSS 2026 conference page [web:14][web:11]
             },
             {
                 abbr: 'ACSAC',
@@ -278,18 +278,7 @@ const DASHBOARD_DATA = {
                 tier: 'B',
                 sub_dl: '2026-02-28',          // Issue 4 paper deadline for 2026 volume [web:12][web:18]
                 notif_dl: '2026-05-01',        // Issue 4 author notification [web:12][web:15]
-                url: 'https://petsymposium.org/cfp26.php'  // 2026 PoPETs/PETS CFP [web:12][web:18]
-            },
-            {
-                abbr: 'PETS',
-                full: 'Privacy Enhancing Technologies Symposium',
-                domain: 'Security',
-                year: 2026,
-                if: 3.7,
-                tier: 'B',
-                sub_dl: '2026-02-28',          // Same as PoPETs issue 4 deadline [web:15][web:18]
-                notif_dl: '2026-05-01',        // Same as PoPETs issue 4 notification [web:15][web:12]
-                url: 'https://petsymposium.org/2026/'  // PETS 2026 symposium site [web:15]
+                url: 'https://petsymposium.org/cfpYY.php'  // 2026 PoPETs/PETS CFP [web:12][web:18]
             },
 
             // Data Mining 2026
@@ -302,7 +291,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2026-02-08',          // Cycle 2 paper deadline (AoE) [web:41][web:43]
                 notif_dl: '2026-05-16',        // Cycle 2 notification [web:41][web:42]
-                url: 'https://kdd2026.kdd.org'  // KDD 2026 main site [web:40][web:47]
+                url: 'https://kddYYYY.kdd.org/research-track-call-for-papers/'  // KDD 2026 main site [web:40][web:47]
             },
             {
                 abbr: 'WWW',
@@ -313,7 +302,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2025-10-06',          // Full paper submission deadline (following typical October cycle) [web:23]
                 notif_dl: '2026-01-15',        // Author notification 
-                url: 'https://www2026.thewebconf.org'  // Expected WWW 2026 site
+                url: 'https://wwwYYYY.thewebconf.org/calls/research-tracks.html'  // Expected WWW 2026 site
             },
             {
                 abbr: 'SIGIR',
@@ -324,7 +313,7 @@ const DASHBOARD_DATA = {
                 tier: 'A*',
                 sub_dl: '2026-01-21',          // Full paper submission deadline (historical January timing)
                 notif_dl: '2026-04-09',        // Notification 
-                url: 'https://sigir2026.org'   // Expected SIGIR 2026 site
+                url: 'https://sigirYYYY.org/en-AU/pages/submissions/full-papers-track'   // Expected SIGIR 2026 site
             },
             {
                 abbr: 'RecSys',
@@ -335,7 +324,7 @@ const DASHBOARD_DATA = {
                 tier: 'A',
                 sub_dl: '2026-04-20',          // Long paper submission deadline 
                 notif_dl: '2026-07-09',        // Acceptance notification
-                url: 'https://recsys.acm.org/recsys26'  // RecSys 2026 site
+                url: 'https://recsys.acm.org/recsysYY/'  // RecSys 2026 site
             },
             {
                 abbr: 'CIKM',
@@ -346,7 +335,7 @@ const DASHBOARD_DATA = {
                 tier: 'A',
                 sub_dl: '2026-05-08',          // Abstract/paper submission 
                 notif_dl: '2026-07-19',        // Notification
-                url: 'https://cikm2026.org'    // CIKM 2026 site
+                url: 'https://cikmYYYY.org/calls/full-research-papers'    // CIKM 2026 site
             },
             {
                 abbr: 'ICDM',
@@ -357,7 +346,7 @@ const DASHBOARD_DATA = {
                 tier: 'A',
                 sub_dl: '2026-06-09',          // Full paper submission 
                 notif_dl: '2026-08-14',        // Author notification
-                url: 'https://icdm2026.org'    // ICDM 2026 site
+                url: 'https://www3.cs.stonybrook.edu/~icdmYYYY/cfp.html'    // ICDM 2026 site
             },
             {
                 abbr: 'WSDM',
@@ -368,18 +357,7 @@ const DASHBOARD_DATA = {
                 tier: 'A',
                 sub_dl: '2025-08-12',          // Confirmed submission deadline from provided data
                 notif_dl: '2025-10-31',        // Confirmed notification from original list
-                url: 'https://www.wsdm-conference.org/2026'  // Official WSDM 2026 site
-            },
-            {
-                abbr: 'ECIR',
-                full: 'European Conference on Information Retrieval',
-                domain: 'Data Mining',
-                year: 2026,
-                if: 5.1,
-                tier: 'B',
-                sub_dl: '2025-09-22',          // Confirmed submission deadline from provided data
-                notif_dl: '2025-11-24',        // Confirmed notification from original list
-                url: 'https://ecir2026.eu'     // Official ECIR 2026 site
+                url: 'https://wsdm-conference.org/YYYY/index.php/call-for-papers/'  // Official WSDM 2026 site
             },
             {
                 abbr: 'ICWSM',
@@ -390,7 +368,7 @@ const DASHBOARD_DATA = {
                 tier: 'A',
                 sub_dl: '2025-11-01',          // Confirmed submission deadline from provided data
                 notif_dl: '2026-02-01',        // Confirmed notification from original list
-                url: 'https://www.icwsm.org/2026'  // Official ICWSM 2026 site
+                url: 'https://www.icwsm.org/YYYY/index.html'  // Official ICWSM 2026 site
             },
             {
                 abbr: 'HyperText',
@@ -401,7 +379,7 @@ const DASHBOARD_DATA = {
                 tier: 'B',
                 sub_dl: '2026-03-14',          // Full paper submission (following annual spring pattern)
                 notif_dl: '2026-05-09',        // Acceptance notification
-                url: 'https://ht.acm.org/ht2026'  // Expected HyperText 2026 site
+                url: 'https://ht.acm.org/htYYYY/call-for-research-papers/'  // Expected HyperText 2026 site
             },
             {
                 abbr: 'ASONAM',
@@ -412,7 +390,7 @@ const DASHBOARD_DATA = {
                 tier: 'B',
                 sub_dl: '2026-06-01',          // Paper submission deadline 
                 notif_dl: '2026-07-14',        // Notification
-                url: 'https://asonam.cpsc.ucalgary.ca/2026'  // Expected ASONAM 2026 site
+                url: 'https://asonam.cpsc.ucalgary.ca/YYYY/CFP.php'  // Expected ASONAM 2026 site
             },
 
             // Systems 2026

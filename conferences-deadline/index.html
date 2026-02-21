@@ -520,7 +520,9 @@ function renderTable() {
       <td>${tierBadge(c.tier)}</td>
       <td class="dlc"><div class="dldate">${fmt(c.sub_dl)}</div><div class="dlcd ${urgCls(c.sub_dl)}"><div class="dldot"></div>${urgLbl(c.sub_dl)}</div></td>
       <td class="dlc"><div class="ndate">${fmt(c.notif_dl)}</div></td>
-      <td><a href="${c.url}" target="_blank" class="clink">${SVG_LINK} Site</a></td>
+      <td>
+        <a href="${c.url.includes('YYYY') ? c.url.replace(/YYYY/g, c.year) : c.url.includes('YY') ? c.url.replace(/YY/g, String(c.year).slice(-2)) : c.url}" target="_blank" class="clink">${SVG_LINK} Site</a>
+      </td>
     </tr>`).join('');
 }
 
