@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgentFence — Mapping Security Vulnerabilities Across Deep Research Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,300;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+/* ─── RESET & TOKENS ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+
+:root {
+  --white:     #ffffff;
+  --bg:        #fafaf8;
+  --bg2:       #f3f2ef;
+  --ink:       #1a1a1a;
+  --ink2:      #3d3d3d;
+  --muted:     #767676;
+  --line:      #e2e0db;
+  --red:       #c0392b;
+  --red-pale:  #fdf1f0;
+  --navy:      #1a2744;
+  --navy-pale: #eef1f8;
+  --amber:     #b45309;
+  --amber-pale:#fdf6ec;
+  --green:     #166534;
+  --green-pale:#f0fdf4;
+  --ff-display:'Playfair Display', Georgia, serif;
+  --ff-body:   'Source Serif 4', Georgia, serif;
+  --ff-mono:   'JetBrains Mono', 'Courier New', monospace;
+  --max-w: 1120px;
+  --gap: clamp(1rem, 4vw, 2rem);
+}
+
+body {
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--ff-body);
+  font-size: 1rem;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── UTILITIES ─────────────────────────────────────────────── */
+.container { width:100%; max-width:var(--max-w); margin:0 auto; padding:0 var(--gap); }
+.section   { padding: clamp(3rem,8vw,6rem) 0; }
+.section + .section { border-top: 1px solid var(--line); }
+
+.eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 0.75rem;
+}
+.section-heading {
+  font-family: var(--ff-display);
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+  margin-bottom: 2rem;
+}
+.section-heading em { font-style: italic; color: var(--red); }
+.rule { width:2.5rem; height:3px; background:var(--red); margin-bottom:2rem; }
+
+/* ─── NAV ────────────────────────────────────────────────────── */
+.topnav {
+  position: sticky; top:0; z-index:200;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.topnav-inner {
+  max-width:var(--max-w); margin:0 auto; padding:0 var(--gap);
+  height:56px; display:flex; align-items:center; justify-content:space-between; gap:1rem;
+}
+.nav-brand {
+  font-family: var(--ff-display); font-size:1.05rem; font-weight:700;
+  color:var(--ink); text-decoration:none; white-space:nowrap;
+}
+.nav-brand em { font-style:italic; color:var(--red); }
+.nav-links { display:flex; gap:0; list-style:none; }
+.nav-links a {
+  font-family:var(--ff-mono); font-size:0.68rem; font-weight:500;
+  letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);
+  text-decoration:none; padding:0.4rem 0.8rem; border-radius:3px;
+  transition:color 0.2s, background 0.2s;
+}
+.nav-links a:hover { color:var(--red); background:var(--red-pale); }
+.nav-badge {
+  font-family:var(--ff-mono); font-size:0.65rem; color:var(--navy);
+  background:var(--navy-pale); border:1px solid #c5cde8;
+  padding:0.25rem 0.65rem; border-radius:4px; text-decoration:none; white-space:nowrap;
+  transition:background 0.2s;
+}
+.nav-badge:hover { background:#dde4f4; color:var(--navy); }
+.nav-toggle {
+  display:none; flex-direction:column; gap:5px;
+  cursor:pointer; padding:6px; background:none; border:none;
+}
+.nav-toggle span { display:block; width:22px; height:2px; background:var(--ink); border-radius:2px; }
+
+/* ─── HERO ───────────────────────────────────────────────────── */
+.hero {
+  background:var(--white);
+  padding:clamp(4rem,10vw,7rem) 0 clamp(3rem,6vw,5rem);
+  border-bottom:1px solid var(--line);
+}
+.hero-layout {
+  display:grid; grid-template-columns:1fr 320px; gap:3.5rem; align-items:start;
+}
+.hero-venue {
+  display:inline-flex; align-items:center; gap:0.5rem;
+  font-family:var(--ff-mono); font-size:0.68rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--red);
+  margin-bottom:1.5rem;
+}
+.hero-venue::before { content:''; display:inline-block; width:18px; height:2px; background:var(--red); }
+.hero h1 {
+  font-family:var(--ff-display); font-size:clamp(2rem,5vw,3.8rem);
+  font-weight:900; line-height:1.1; color:var(--ink); letter-spacing:-0.01em; margin-bottom:1.5rem;
+}
+.hero h1 em { font-style:italic; color:var(--red); }
+.hero-authors { font-size:0.92rem; color:var(--ink2); line-height:1.8; margin-bottom:0.4rem; }
+.hero-authors .me { font-weight:600; color:var(--navy); }
+.hero-affils { font-family:var(--ff-mono); font-size:0.65rem; color:var(--muted); letter-spacing:0.05em; margin-bottom:2rem; line-height:1.8; }
+.hero-buttons { display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:2rem; }
+.btn-primary {
+  font-family:var(--ff-mono); font-size:0.7rem; font-weight:500;
+  letter-spacing:0.1em; text-transform:uppercase;
+  background:var(--red); color:#fff; padding:0.65rem 1.4rem;
+  border-radius:4px; text-decoration:none; border:2px solid var(--red);
+  transition:background 0.2s; display:inline-block;
+}
+.btn-primary:hover { background:#a93226; border-color:#a93226; color:#fff; }
+.btn-secondary {
+  font-family:var(--ff-mono); font-size:0.7rem; font-weight:500;
+  letter-spacing:0.1em; text-transform:uppercase;
+  background:transparent; color:var(--ink); padding:0.65rem 1.4rem;
+  border-radius:4px; text-decoration:none; border:2px solid var(--line);
+  transition:border-color 0.2s; display:inline-block;
+}
+.btn-secondary:hover { border-color:var(--ink2); }
+.arxiv-chip {
+  display:inline-flex; align-items:center; gap:0.4rem;
+  font-family:var(--ff-mono); font-size:0.65rem; color:var(--muted);
+  background:var(--bg2); border:1px solid var(--line); padding:0.3rem 0.7rem; border-radius:4px;
+}
+/* sidebar stats */
+.stat-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:1px; background:var(--line); border:1px solid var(--line); border-radius:8px; overflow:hidden;
+}
+.stat-cell { background:var(--white); padding:1.2rem 1rem; text-align:center; }
+.stat-num { font-family:var(--ff-display); font-size:2.1rem; font-weight:900; color:var(--ink); line-height:1; display:block; }
+.stat-num.danger { color:var(--red); }
+.stat-num.safe   { color:var(--green); }
+.stat-lbl { font-family:var(--ff-mono); font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-top:0.3rem; display:block; }
+
+/* ─── ABSTRACT ───────────────────────────────────────────────── */
+.abstract-text { font-size:1.04rem; line-height:1.85; color:var(--ink2); max-width:78ch; }
+.abstract-text strong { color:var(--ink); font-weight:600; }
+.abstract-text em { font-style:italic; }
+
+/* ─── CONTRIBUTIONS ──────────────────────────────────────────── */
+.contrib-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:1.5rem; }
+.contrib-item {
+  background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:1.75rem;
+  transition:box-shadow 0.2s, border-color 0.2s;
+}
+.contrib-item:hover { box-shadow:0 4px 20px rgba(0,0,0,0.07); border-color:#ccc; }
+.contrib-n { font-family:var(--ff-mono); font-size:0.62rem; letter-spacing:0.12em; color:var(--red); text-transform:uppercase; margin-bottom:0.6rem; display:block; }
+.contrib-item h4 { font-family:var(--ff-display); font-size:1rem; font-weight:700; color:var(--ink); margin-bottom:0.5rem; }
+.contrib-item p  { font-size:0.88rem; color:var(--muted); line-height:1.65; }
+
+/* ─── TAXONOMY ───────────────────────────────────────────────── */
+.legend-row { display:flex; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; }
+.legend-item { display:flex; align-items:center; gap:0.4rem; font-family:var(--ff-mono); font-size:0.68rem; color:var(--muted); }
+.legend-dot  { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.taxonomy-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(265px,1fr)); gap:1rem; }
+.atk-card {
+  border:1px solid var(--line); border-radius:8px; padding:1.1rem 1.2rem;
+  display:flex; gap:0.85rem; align-items:flex-start; background:var(--white);
+  transition:box-shadow 0.2s, border-color 0.2s;
+}
+.atk-card:hover { box-shadow:0 2px 14px rgba(0,0,0,0.07); border-color:#bbb; }
+.atk-badge {
+  font-family:var(--ff-mono); font-size:0.6rem; font-weight:500;
+  padding:0.2rem 0.4rem; border-radius:4px; white-space:nowrap; flex-shrink:0; margin-top:0.1rem; letter-spacing:0.04em;
+}
+.lvl-critical { background:var(--red-pale);   color:var(--red);   border:1px solid #f5c6c3; }
+.lvl-high     { background:var(--amber-pale); color:var(--amber); border:1px solid #f5deb0; }
+.lvl-moderate { background:var(--green-pale); color:var(--green); border:1px solid #bbf7d0; }
+.atk-name { font-size:0.9rem; font-weight:600; color:var(--ink); line-height:1.35; margin-bottom:0.2rem; }
+.atk-note { font-family:var(--ff-mono); font-size:0.65rem; color:var(--muted); }
+
+/* ─── EXPOSURE TABLE ─────────────────────────────────────────── */
+.table-scroll { overflow-x:auto; border:1px solid var(--line); border-radius:8px; margin-top:1.5rem; }
+.exp-table { width:100%; border-collapse:collapse; font-size:0.78rem; min-width:680px; }
+.exp-table thead th {
+  background:var(--bg2); padding:0.65rem 0.75rem;
+  font-family:var(--ff-mono); font-size:0.6rem; letter-spacing:0.09em; text-transform:uppercase;
+  color:var(--muted); border-bottom:1px solid var(--line); text-align:center; white-space:nowrap;
+}
+.exp-table thead th:first-child { text-align:left; }
+.exp-table tbody td { padding:0.5rem 0.75rem; text-align:center; border-bottom:1px solid var(--bg2); }
+.exp-table tbody td:first-child { text-align:left; color:var(--ink2); }
+.exp-table tbody tr:last-child td { border-bottom:none; }
+.exp-table tbody tr:hover td { background:var(--bg); }
+.cell-yes  { color:var(--red); font-weight:700; font-family:var(--ff-mono); }
+.cell-part { color:var(--muted); font-family:var(--ff-mono); }
+.cell-no   { color:#ccc; font-family:var(--ff-mono); }
+.atk-id-col { font-family:var(--ff-mono); font-size:0.68rem; color:var(--muted); margin-right:0.4rem; }
+
+/* ─── METHODOLOGY ────────────────────────────────────────────── */
+.method-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(275px,1fr)); gap:1.5rem; }
+.method-card {
+  padding:1.75rem; border:1px solid var(--line); border-radius:8px; background:var(--white);
+  transition:box-shadow 0.2s;
+}
+.method-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.06); }
+.method-icon { font-size:1.4rem; margin-bottom:0.7rem; display:block; }
+.method-card h4 { font-family:var(--ff-display); font-size:1rem; font-weight:700; color:var(--ink); margin-bottom:0.45rem; }
+.method-card p  { font-size:0.87rem; color:var(--muted); line-height:1.65; }
+.method-card code {
+  font-family:var(--ff-mono); font-size:0.76rem; background:var(--bg2);
+  padding:0.1rem 0.35rem; border-radius:3px; color:var(--navy);
+}
+
+/* ─── RESULTS ────────────────────────────────────────────────── */
+.results-top { display:grid; grid-template-columns:repeat(auto-fill,minmax(175px,1fr)); gap:1rem; margin-bottom:2.5rem; }
+.rate-card { border:1px solid var(--line); border-radius:8px; padding:1.25rem 1rem; text-align:center; background:var(--white); }
+.rate-val { font-family:var(--ff-display); font-size:2.3rem; font-weight:900; line-height:1; display:block; margin-bottom:0.35rem; }
+.rate-val.c1 { color:var(--red); }
+.rate-val.c2 { color:var(--amber); }
+.rate-val.c3 { color:var(--green); }
+.rate-name { font-family:var(--ff-mono); font-size:0.62rem; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); }
+
+.charts-row { display:grid; grid-template-columns:1fr 1fr; gap:2rem; }
+.chart-box { border:1px solid var(--line); border-radius:8px; padding:1.75rem; background:var(--white); }
+.chart-box h4 { font-family:var(--ff-display); font-size:1rem; font-weight:700; color:var(--ink); margin-bottom:0.2rem; }
+.chart-sub { font-family:var(--ff-mono); font-size:0.63rem; letter-spacing:0.05em; color:var(--muted); margin-bottom:1.25rem; display:block; }
+
+.msbr-rows { display:flex; flex-direction:column; gap:0.75rem; }
+.msbr-row  { display:grid; grid-template-columns:140px 1fr 58px; align-items:center; gap:0.75rem; }
+.msbr-lbl  { font-family:var(--ff-mono); font-size:0.7rem; color:var(--ink2); text-align:right; }
+.bar-bg    { height:7px; background:var(--bg2); border-radius:99px; overflow:hidden; }
+.bar-fill  { height:7px; border-radius:99px; width:0; transition:width 1.2s cubic-bezier(.22,1,.36,1); }
+.msbr-num  { font-family:var(--ff-mono); font-size:0.7rem; color:var(--muted); text-align:right; }
+
+.donut-layout { display:flex; align-items:center; gap:2rem; flex-wrap:wrap; }
+.donut-canvas  { flex-shrink:0; }
+.donut-legend  { flex:1; min-width:160px; }
+.dleg-row { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.6rem; font-size:0.83rem; color:var(--ink2); }
+.dleg-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.dleg-pct { margin-left:auto; font-family:var(--ff-mono); font-size:0.72rem; color:var(--muted); }
+
+/* ─── FINDINGS ───────────────────────────────────────────────── */
+.findings-list { display:flex; flex-direction:column; gap:1.25rem; }
+.finding {
+  border:1px solid var(--line); border-left:4px solid var(--red);
+  border-radius:0 8px 8px 0; padding:1.5rem 1.75rem; background:var(--white);
+  transition:box-shadow 0.2s;
+}
+.finding:hover { box-shadow:0 3px 16px rgba(0,0,0,0.06); }
+.finding h4 { font-family:var(--ff-display); font-size:1rem; font-weight:700; color:var(--ink); margin-bottom:0.45rem; }
+.finding p  { font-size:0.9rem; color:var(--ink2); line-height:1.72; }
+.finding code {
+  font-family:var(--ff-mono); font-size:0.78rem; background:var(--bg2);
+  padding:0.1rem 0.35rem; border-radius:3px; color:var(--navy);
+}
+
+/* ─── CALLOUT ────────────────────────────────────────────────── */
+.callout {
+  background:var(--navy-pale); border:1px solid #c5cde8; border-left:4px solid var(--navy);
+  border-radius:0 8px 8px 0; padding:1.25rem 1.5rem;
+  font-size:0.9rem; color:var(--ink2); line-height:1.7;
+}
+.callout strong { color:var(--navy); font-weight:600; }
+
+/* ─── FOOTER ─────────────────────────────────────────────────── */
+.site-footer { background:var(--bg2); border-top:1px solid var(--line); padding:3rem 0; }
+.footer-inner { max-width:var(--max-w); margin:0 auto; padding:0 var(--gap); }
+.footer-title { font-family:var(--ff-display); font-size:1.3rem; font-weight:900; color:var(--ink); margin-bottom:0.25rem; }
+.footer-title em { font-style:italic; color:var(--red); }
+.footer-sub { font-family:var(--ff-mono); font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:1.5rem; }
+.authors-chips { display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:1.5rem; }
+.chip {
+  font-family:var(--ff-mono); font-size:0.65rem; color:var(--ink2);
+  background:var(--white); border:1px solid var(--line); padding:0.25rem 0.65rem; border-radius:99px;
+}
+.chip.me { color:var(--navy); border-color:#c5cde8; background:var(--navy-pale); font-weight:500; }
+.footer-copy { font-family:var(--ff-mono); font-size:0.62rem; color:var(--muted); line-height:1.9; }
+
+/* ─── SCROLL REVEAL ──────────────────────────────────────────── */
+.reveal { opacity:0; transform:translateY(20px); transition:opacity 0.6s ease,transform 0.6s ease; }
+.reveal.in { opacity:1; transform:none; }
+.reveal[data-delay="1"] { transition-delay:0.1s; }
+.reveal[data-delay="2"] { transition-delay:0.2s; }
+.reveal[data-delay="3"] { transition-delay:0.3s; }
+.reveal[data-delay="4"] { transition-delay:0.4s; }
+
+/* ─── RESPONSIVE ─────────────────────────────────────────────── */
+@media (max-width: 920px) {
+  .hero-layout { grid-template-columns:1fr; gap:2.5rem; }
+  .hero-sidebar { order:-1; }
+  .stat-grid { max-width:380px; }
+  .charts-row { grid-template-columns:1fr; }
+}
+@media (max-width: 680px) {
+  .nav-links { display:none; flex-direction:column; position:absolute; top:56px; left:0; right:0; background:#fff; border-bottom:1px solid var(--line); padding:0.75rem 1rem; gap:0; z-index:100; }
+  .nav-links.open { display:flex; }
+  .nav-toggle { display:flex; }
+  .topnav-inner { position:relative; }
+  .msbr-row { grid-template-columns:95px 1fr 50px; }
+  .donut-layout { flex-direction:column; align-items:flex-start; }
+  .hero-affils { font-size:0.6rem; }
+}
+@media (max-width: 460px) {
+  .stat-grid { grid-template-columns:1fr 1fr; max-width:100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ──────────────────────────────────────────────────── -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="#" class="nav-brand"><em>Agent</em>Fence</a>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="#abstract">Abstract</a></li>
+      <li><a href="#contributions">Contributions</a></li>
+      <li><a href="#taxonomy">Taxonomy</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#findings">Findings</a></li>
+    </ul>
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <a href="https://arxiv.org/abs/2602.07652" target="_blank" class="nav-badge">arXiv 2602.07652</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ── HERO ─────────────────────────────────────────────────── -->
+<header class="hero">
+  <div class="container">
+    <div class="hero-layout">
+      <!-- Left -->
+      <div>
+        <span class="hero-venue">Computer Security · arXiv 2026</span>
+        <h1><em>AgentFence</em><br>Mapping Security Vulnerabilities Across Deep Research Agents</h1>
+
+        <p class="hero-authors">
+          Sai Puppala ·
+          <span class="me">Ismail Hossain</span> ·
+          Md Jahangir Alam · Yoonpyo Lee ·
+          Jay Yoo · Tanzim Ahad ·
+          Syed Bahauddin Alam · Sajedul Talukder
+        </p>
+        <p class="hero-affils">
+          ¹ Southern Illinois University Carbondale &nbsp;·&nbsp; ² University of Texas at El Paso<br>
+          ³ Hanyang University &nbsp;·&nbsp; ⁴ University of Illinois Urbana-Champaign
+        </p>
+
+        <div class="hero-buttons">
+          <a href="https://arxiv.org/abs/2602.07652" target="_blank" class="btn-primary">Read on arXiv →</a>
+          <a href="#abstract" class="btn-secondary">Explore paper ↓</a>
+        </div>
+        <span class="arxiv-chip">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="2" stroke="#999" stroke-width="1.2"/><path d="M4 7h6M4 4.5h6M4 9.5h4" stroke="#999" stroke-width="1.2" stroke-linecap="round"/></svg>
+          arXiv:2602.07652v1 [cs.CR] · 7 Feb 2026
+        </span>
+      </div>
+
+      <!-- Right: stats -->
+      <div>
+        <div class="stat-grid">
+          <div class="stat-cell">
+            <span class="stat-num">14</span>
+            <span class="stat-lbl">Attack classes</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-num">8</span>
+            <span class="stat-lbl">Agent archetypes</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-num">91</span>
+            <span class="stat-lbl">HotpotQA tasks</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-num danger">0.62</span>
+            <span class="stat-lbl">Peak break rate</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-num danger">0.51</span>
+            <span class="stat-lbl">AutoGPT MSBR</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-num safe">0.29</span>
+            <span class="stat-lbl">LangGraph MSBR</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── ABSTRACT ─────────────────────────────────────────────── -->
+<section class="section" id="abstract">
+  <div class="container">
+    <span class="eyebrow">01 — Abstract</span>
+    <h2 class="section-heading">Overview</h2>
+    <div class="rule"></div>
+    <p class="abstract-text reveal">
+      Large language models are becoming <strong>deep agents</strong> that plan, persist state, and invoke tools —
+      shifting safety failures from unsafe text to <em>unsafe trajectories</em>. We introduce
+      <strong>AgentFence</strong>, an architecture-centric security evaluation that defines
+      <strong>14 trust-boundary attack classes</strong> across planning, memory, retrieval, tool use, and delegation,
+      and detects failure via trace-auditable <em>conversation breaks</em>: unauthorized/unsafe tool use,
+      wrong-principal actions, state/objective integrity violations, and attack-linked deviations.
+    </p>
+    <br>
+    <p class="abstract-text reveal" data-delay="1">
+      Holding the base model fixed, we evaluate <strong>eight agent archetypes</strong> under persistent multi-turn
+      interaction and find substantial architectural variation in mean security break rate (MSBR), from
+      <strong>0.29 ± 0.04 (LangGraph)</strong> to <strong>0.51 ± 0.07 (AutoGPT)</strong>. The highest-risk classes
+      are operational: Denial-of-Wallet <strong>0.62 ± 0.08</strong>, Authorization Confusion
+      <strong>0.54 ± 0.10</strong>, Retrieval Poisoning <strong>0.47 ± 0.09</strong>, and Planning Manipulation
+      <strong>0.44 ± 0.11</strong>, while prompt-centric classes remain &lt;0.20 under standard settings.
+      AgentFence reframes agent security around what matters operationally: whether an agent stays within
+      its goal and authority envelope over time.
+    </p>
+  </div>
+</section>
+
+<!-- ── CONTRIBUTIONS ────────────────────────────────────────── -->
+<section class="section" id="contributions">
+  <div class="container">
+    <span class="eyebrow">02 — Contributions</span>
+    <h2 class="section-heading">What We <em>Contribute</em></h2>
+    <div class="rule"></div>
+    <div class="contrib-list">
+      <div class="contrib-item reveal">
+        <span class="contrib-n">C1</span>
+        <h4>Unified Attack Taxonomy</h4>
+        <p>14 classes (A1–A14) pinpointing trust-boundary violations across prompt/state injection, planning manipulation, tool-use hijacking, retrieval poisoning, delegation abuse, authorization confusion, and denial-of-wallet.</p>
+      </div>
+      <div class="contrib-item reveal" data-delay="1">
+        <span class="contrib-n">C2</span>
+        <h4>Architecture Isolation Protocol</h4>
+        <p>Isolates agent vulnerabilities by fixing the base model and systematically varying control flow, memory handling, tool permissions, and delegation semantics across representative agent archetypes.</p>
+      </div>
+      <div class="contrib-item reveal" data-delay="2">
+        <span class="contrib-n">C3</span>
+        <h4>Conversation Break Formalism</h4>
+        <p>Objective, evidence-backed criteria certifying when an agent is no longer pursuing the correct goal within its authorized capability envelope — enabling outcome-based security evaluation beyond text-only judgments.</p>
+      </div>
+      <div class="contrib-item reveal" data-delay="3">
+        <span class="contrib-n">C4</span>
+        <h4>First Comparative Security Map</h4>
+        <p>Using AgentFence on eight widely used archetypes, delivers the first comparative map of structurally exposed attack classes, surfacing near-universal failure modes that persist despite prompt-level safeguards.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TAXONOMY ──────────────────────────────────────────────── -->
+<section class="section" id="taxonomy">
+  <div class="container">
+    <span class="eyebrow">03 — Attack Taxonomy</span>
+    <h2 class="section-heading">14 Trust-Boundary <em>Attack Classes</em></h2>
+    <div class="rule"></div>
+
+    <div class="legend-row reveal">
+      <div class="legend-item"><div class="legend-dot" style="background:#c0392b"></div>Critical (&gt;0.40 MSBR)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#b45309"></div>High (0.20–0.40)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#166534"></div>Moderate (&lt;0.20)</div>
+    </div>
+
+    <div class="taxonomy-grid reveal">
+      <div class="atk-card"><span class="atk-badge lvl-high">A1</span><div><div class="atk-name">Direct Prompt Injection</div><div class="atk-note">All archetypes exposed</div></div></div>
+      <div class="atk-card"><span class="atk-badge lvl-high">A2</span><div><div class="atk-name">Indirect Prompt Injection</div><div class="atk-note">Via retrieved content</div></div></div>
+      <div class="atk-card"><span class="atk-badge lvl-high">A3</span><div><div class="atk-name">State Injection</div><div class="atk-note">Corrupts persistent memory</div></div></div>
+      <div class="atk-card"><span class="atk-badge lvl-critical">A4</span><div><div class="atk-name">Tool-Use Hijack</div><div class="atk-note">Unauthorized invocations</div></div></div>
+      <div class="atk-card"><span class="atk-badge lvl-critical">A5</span><div><div class="atk-name">Planning-Layer Manipulation</div><div class="atk-note">MSBR 0.44 ± 0.11</div></div></div>
+      <div class="atk-card"><span class="atk-badge lvl-critical">A6</span><div><div class="atk-name">Retrieval Poisoning</div><div class="atk-note">MSBR 0.47 ± 0.09</div></div></div>
+      <div class="atk-card"><span class="atk-badge lvl-high">A7</span><div><div class="atk-name">Web Search Result Poisoning</div><div class="atk-note">Steers beliefs &amp; decisions</div></div></div>
+      <div class="atk-card"><span class="atk-badge lvl-high">A8</span><div><div class="atk-name">Multi-Agent Role Confusion</div><div class="atk-note">Delegation boundary attacks</div></div></div>
+      <div class="atk-card"><span class="atk-badge lvl-high">A9</span><div><div class="atk-name">Delegation Attacks</div><div class="atk-note">2.6× amplification (permissive)</div></div></div>
+      <div class="atk-card"><span class="atk-badge lvl-moderate">A10</span><div><div class="atk-name">Code-Execution Abuse</div><div class="atk-note">2.2× under permissive config</div></div></div>
+      <div class="atk-card"><span class="atk-badge lvl-moderate">A11</span><div><div class="atk-name">Chain-of-Thought Leakage</div><div class="atk-note">Reasoning exposure</div></div></div>
+      <div class="atk-card"><span class="atk-badge lvl-high">A12</span><div><div class="atk-name">Objective Hijacking</div><div class="atk-note">Goal replacement attacks</div></div></div>
+      <div class="atk-card" style="border-color:#f5c6c3;"><span class="atk-badge lvl-critical">A13</span><div><div class="atk-name">Denial-of-Wallet</div><div class="atk-note">Highest MSBR: 0.62 ± 0.08</div></div></div>
+      <div class="atk-card" style="border-color:#f5c6c3;"><span class="atk-badge lvl-critical">A14</span><div><div class="atk-name">Authorization Confusion</div><div class="atk-note">MSBR 0.54 ± 0.10</div></div></div>
+    </div>
+
+    <!-- Exposure table -->
+    <div style="margin-top:3.5rem;" class="reveal">
+      <span class="eyebrow">Exposure Matrix</span>
+      <h3 style="font-family:var(--ff-display);font-size:1.3rem;font-weight:700;color:var(--ink);margin-bottom:0.4rem;">Attack Class × Agent Archetype</h3>
+      <p style="font-size:0.83rem;color:var(--muted);">
+        <strong style="font-family:var(--ff-mono);color:var(--red);">✓</strong> Materially exposed &nbsp;·&nbsp;
+        <strong style="font-family:var(--ff-mono);color:var(--muted);">–</strong> Partially exposed &nbsp;·&nbsp;
+        <strong style="font-family:var(--ff-mono);color:#ccc;">×</strong> Largely mitigated
+      </p>
+    </div>
+    <div class="table-scroll reveal" data-delay="1">
+      <table class="exp-table">
+        <thead>
+          <tr>
+            <th>Attack Class</th>
+            <th>Deep-R</th><th>Open-R</th><th>OpenDevin</th>
+            <th>AutoGPT</th><th>BabyAGI</th><th>CrewAI</th>
+            <th>LangGraph</th><th>LlamaIndex</th>
+          </tr>
+        </thead>
+        <tbody id="exp-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── METHODOLOGY ───────────────────────────────────────────── -->
+<section class="section" id="methodology" style="background:var(--bg);">
+  <div class="container">
+    <span class="eyebrow">04 — Methodology</span>
+    <h2 class="section-heading">Threat Model &amp; <em>Evaluation Protocol</em></h2>
+    <div class="rule"></div>
+    <div class="method-grid">
+      <div class="method-card reveal">
+        <span class="method-icon">🎯</span>
+        <h4>Post-Deployment Adversary</h4>
+        <p>Interface-only adversary with no access to model weights or infrastructure. Influence only through intended channels: user prompts, retrieved content, tool outputs, shared memory, and inter-agent messages.</p>
+      </div>
+      <div class="method-card reveal" data-delay="1">
+        <span class="method-icon">🔬</span>
+        <h4>Fixed Model, Varying Architecture</h4>
+        <p>All experiments use <code>Qwen2.5-32B-Instruct</code> to isolate architectural effects. 91 HotpotQA instances with stable entities and unambiguous ground truth, converted into multi-turn research workloads.</p>
+      </div>
+      <div class="method-card reveal" data-delay="2">
+        <span class="method-icon">↺</span>
+        <h4>Multi-Turn Adversarial Stressing</h4>
+        <p>Attacks applied gradually across turns without agent state resets, interleaved with task-consistent queries. Measures whether adversarial influence propagates into long-horizon failures.</p>
+      </div>
+      <div class="method-card reveal" data-delay="3">
+        <span class="method-icon">📋</span>
+        <h4>Trace-Auditable Breaks</h4>
+        <p>Each run yields an immutable trace with transcript, tool calls, and planner/state events. Security breaks certified via five predicates: <code>UTI</code>, <code>UTA</code>, <code>WPA</code>, <code>SIV</code>, <code>ATD</code>.</p>
+      </div>
+      <div class="method-card reveal" data-delay="4">
+        <span class="method-icon">🏷️</span>
+        <h4>Attack-Link Attribution</h4>
+        <p>Explicit <code>AL</code> flag prevents conflating baseline task errors with security vulnerabilities. AL=1 only when trace evidences non-authoritative content crossing a trust boundary. Annotator agreement κ=0.81.</p>
+      </div>
+      <div class="method-card reveal" data-delay="4">
+        <span class="method-icon">⚙️</span>
+        <h4>Three-Dimension Payloads</h4>
+        <p>Payload strength controlled along <strong>explicitness</strong> (directive vs. implicit), <strong>persistence</strong> (single-turn vs. repeated), and <strong>scope</strong> (local vs. cross-task).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── RESULTS ───────────────────────────────────────────────── -->
+<section class="section" id="results">
+  <div class="container">
+    <span class="eyebrow">05 — Results</span>
+    <h2 class="section-heading">Security Evaluation <em>Results</em></h2>
+    <div class="rule"></div>
+
+    <p class="reveal" style="font-family:var(--ff-mono);font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:1.25rem;">
+      Mean Security Break Rate — Highest-Risk Attack Classes
+    </p>
+    <div class="results-top reveal">
+      <div class="rate-card" style="border-color:#f5c6c3;">
+        <span class="rate-val c1">0.62</span>
+        <span class="rate-name">A13 · Denial-of-Wallet<br><small>± 0.08</small></span>
+      </div>
+      <div class="rate-card" style="border-color:#f5c6c3;">
+        <span class="rate-val c1">0.54</span>
+        <span class="rate-name">A14 · Auth. Confusion<br><small>± 0.10</small></span>
+      </div>
+      <div class="rate-card">
+        <span class="rate-val c2">0.47</span>
+        <span class="rate-name">A6 · Retrieval Poisoning<br><small>± 0.09</small></span>
+      </div>
+      <div class="rate-card">
+        <span class="rate-val c2">0.44</span>
+        <span class="rate-name">A5 · Planning Manip.<br><small>± 0.11</small></span>
+      </div>
+      <div class="rate-card">
+        <span class="rate-val c3">&lt;0.20</span>
+        <span class="rate-name">A1–A2 · Prompt-centric<br><small>Standard Config</small></span>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <!-- MSBR -->
+      <div class="chart-box reveal">
+        <h4>MSBR by Agent Architecture</h4>
+        <span class="chart-sub">Fixed base model · Standard Config · Lower = more secure</span>
+        <div class="msbr-rows" id="msbr-rows"></div>
+      </div>
+      <!-- Donut -->
+      <div class="chart-box reveal" data-delay="1">
+        <h4>Security Break Composition</h4>
+        <span class="chart-sub">Aggregated across all agents &amp; attack classes</span>
+        <div class="donut-layout">
+          <canvas id="donut" width="170" height="170" class="donut-canvas"></canvas>
+          <div class="donut-legend">
+            <div class="dleg-row"><div class="dleg-dot" style="background:#c0392b"></div>State/Obj. Integrity (SIV)<span class="dleg-pct">31%</span></div>
+            <div class="dleg-row"><div class="dleg-dot" style="background:#b45309"></div>Wrong-Principal Action (WPA)<span class="dleg-pct">27%</span></div>
+            <div class="dleg-row"><div class="dleg-dot" style="background:#1a2744"></div>Unauth. Tool Invoke/Args<span class="dleg-pct">24%</span></div>
+            <div class="dleg-row"><div class="dleg-dot" style="background:#aaa"></div>Attack-Linked Deviation (ATD)<span class="dleg-pct">18%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bar chart -->
+    <div class="chart-box reveal" style="margin-top:2rem;">
+      <h4>Standard vs. Permissive Configuration — Break Rate Amplification</h4>
+      <span class="chart-sub">Selected attack classes · One-dimension permissive relaxation</span>
+      <canvas id="barchart" height="100"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ── KEY FINDINGS ──────────────────────────────────────────── -->
+<section class="section" id="findings" style="background:var(--bg);">
+  <div class="container">
+    <span class="eyebrow">06 — Key Findings</span>
+    <h2 class="section-heading">What AgentFence <em>Reveals</em></h2>
+    <div class="rule"></div>
+    <div class="findings-list">
+      <div class="finding reveal">
+        <h4>Operational risks dominate prompt-centric ones</h4>
+        <p>The four highest-break-rate classes (<code>A13</code>, <code>A14</code>, <code>A6</code>, <code>A5</code>) are all trajectory-level stateful failures. Prompt-centric classes (<code>A1</code>, <code>A2</code>) remain below 0.20 under standard configuration — confirming that token-level safeguards do not address dominant operational risks.</p>
+      </div>
+      <div class="finding reveal" data-delay="1">
+        <h4>Architecture matters more than prompts</h4>
+        <p>MSBR spans a 76% relative range (<code>LangGraph: 0.29</code> → <code>AutoGPT: 0.51</code>) while holding base model and tasks fixed. Architectures with broader tool scope, higher retry budgets, or weaker planner/memory/tool authority separation exhibit systematically higher break rates.</p>
+      </div>
+      <div class="finding reveal" data-delay="2">
+        <h4>Authorization confusion is the upstream root cause</h4>
+        <p>Exposure to <code>A14 (Authorization Confusion)</code> correlates with downstream failures in Objective Hijacking (ρ ≈ 0.63) and Tool-Use Hijacking (ρ ≈ 0.58). Ambiguous trust boundaries between planner, memory, and tool authority create a shared root from which failures compound across layers.</p>
+      </div>
+      <div class="finding reveal" data-delay="3">
+        <h4>82% of breaks are boundary or authority violations</h4>
+        <p>SIV (31%) + WPA (27%) + UTI/UTA (24%) = 82% of all security breaks. AgentFence failures are dominated by <em>who acted with what authority and what state was corrupted</em>, not merely wrong answers. Attack-linked task deviation (ATD) contributes only 18%.</p>
+      </div>
+      <div class="finding reveal" data-delay="4">
+        <h4>Two separable classes of fixable risk</h4>
+        <p>Configuration elasticity separates risk types: <code>A13 (DoW)</code> jumps 0.58→0.81 and <code>A9 (Delegation)</code> more than doubles under permissive settings — "knob-fixable" by tightening budgets/scope. In contrast, <code>A6</code> and <code>A5</code> change &lt;0.10, revealing deeper trust-boundary failures inelastic to any configuration control.</p>
+      </div>
+      <div class="finding reveal" data-delay="4">
+        <h4>Persistent memory amplifies all stateful attacks</h4>
+        <p>Ablation studies show that disabling persistent memory writes reduces Retrieval Poisoning and Planning Manipulation breaks by up to 35%. Removing retry loops significantly lowers Denial-of-Wallet exposure. Long-horizon state propagation and unbounded retries are the two primary structural risk factors.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CONCLUSION ────────────────────────────────────────────── -->
+<section class="section" id="conclusion">
+  <div class="container">
+    <span class="eyebrow">07 — Conclusion</span>
+    <h2 class="section-heading">The Path Forward</h2>
+    <div class="rule"></div>
+    <p class="abstract-text reveal">
+      Deep agents convert language into <strong>privileged, time-dependent actions</strong>. As autonomy,
+      persistence, and delegation become standard, dominant security failures shift from unsafe text to
+      <em>unsafe trajectories</em> — actions executed under the wrong goal, with the wrong authority,
+      with consequences that compound across steps. AgentFence addresses this shift by evaluating security
+      at the level of <strong>architecture</strong>, using a taxonomy of deep-agent attack classes and
+      trace-auditable conversation-break predicates to expose structural vulnerabilities across archetypes.
+    </p>
+    <br>
+    <p class="abstract-text reveal" data-delay="1">
+      Securing autonomous AI systems will require more than better prompts or filters — it demands
+      understanding <em>where agents trust too much, how that trust propagates across time, and which
+      design choices systematically amplify risk.</em> AgentFence provides a foundation for that diagnosis
+      and comparison before deployment at scale.
+    </p>
+    <div class="callout reveal" style="margin-top:2rem;" data-delay="2">
+      <strong>Reproducibility:</strong> Upon acceptance, a versioned AgentFence artifact will be released
+      including agent implementations, the attack harness (per-class payload families, injection points,
+      strength controls), and the semi-automatic labeling protocol — to enable independent reproduction and audit.
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ────────────────────────────────────────────────── -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-title"><em>Agent</em>Fence</div>
+    <div class="footer-sub">Mapping Security Vulnerabilities Across Deep Research Agents</div>
+    <div class="authors-chips">
+      <span class="chip">Sai Puppala · SIU</span>
+      <span class="chip me">Ismail Hossain · UTEP</span>
+      <span class="chip">Md Jahangir Alam · UTEP</span>
+      <span class="chip">Yoonpyo Lee · Hanyang</span>
+      <span class="chip">Jay Yoo · UIUC</span>
+      <span class="chip">Tanzim Ahad · UTEP</span>
+      <span class="chip">Syed Bahauddin Alam · UIUC</span>
+      <span class="chip">Sajedul Talukder · UTEP</span>
+    </div>
+    <p class="footer-copy">
+      arXiv:2602.07652v1 [cs.CR] · 7 February 2026<br>
+      © 2026 The Authors · University of Texas at El Paso · Southern Illinois University ·
+      Hanyang University · University of Illinois Urbana-Champaign
+    </p>
+  </div>
+</footer>
+
+<script>
+/* Nav toggle */
+document.getElementById('nav-toggle').addEventListener('click',function(){
+  document.getElementById('nav-links').classList.toggle('open');
+});
+
+/* Exposure table */
+const atks=[
+  ['A01','Direct Prompt Injection',  ['✓','✓','✓','✓','✓','✓','✓','✓']],
+  ['A02','Indirect Prompt Injection', ['✓','✓','–','✓','✓','–','–','–']],
+  ['A03','State Injection',           ['✓','✓','–','–','–','–','–','–']],
+  ['A04','Tool-Use Hijack',           ['✓','✓','✓','✓','–','–','–','–']],
+  ['A05','Planning-Layer Manip.',     ['✓','✓','–','–','–','–','–','–']],
+  ['A06','Retrieval Poisoning',       ['✓','–','✓','✓','–','✓','–','–']],
+  ['A07','Web Search Poisoning',      ['✓','–','✓','✓','–','✓','–','–']],
+  ['A08','Multi-Agent Role Confusion',['✓','✓','✓','–','–','–','✓','✓']],
+  ['A09','Delegation Attacks',        ['✓','✓','–','–','–','–','–','✓']],
+  ['A10','Code-Execution Abuse',      ['–','–','–','✓','–','✓','–','–']],
+  ['A11','CoT Leakage',               ['✓','×','×','×','✓','–','–','×']],
+  ['A12','Objective Hijacking',       ['×','✓','✓','–','–','–','–','–']],
+  ['A13','Denial-of-Wallet',          ['–','✓','–','✓','–','✓','–','–']],
+  ['A14','Authorization Confusion',   ['–','–','–','–','–','✓','–','–']],
+];
+const tbody=document.getElementById('exp-tbody');
+atks.forEach(([id,name,cells])=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><span class="atk-id-col">${id}</span>${name}</td>`+
+    cells.map(v=>v==='✓'?`<td class="cell-yes">✓</td>`:v==='×'?`<td class="cell-no">×</td>`:`<td class="cell-part">–</td>`).join('');
+  tbody.appendChild(tr);
+});
+
+/* MSBR bars */
+const msbrData=[
+  {name:'AutoGPT',        val:0.51,color:'#c0392b'},
+  {name:'CrewAI',         val:0.48,color:'#c0392b'},
+  {name:'BabyAGI',        val:0.45,color:'#b45309'},
+  {name:'OpenDevin',      val:0.42,color:'#b45309'},
+  {name:'Deep-Researcher',val:0.39,color:'#b45309'},
+  {name:'Open-Researcher',val:0.36,color:'#888'},
+  {name:'LlamaIndex',     val:0.34,color:'#888'},
+  {name:'LangGraph',      val:0.29,color:'#166534'},
+];
+const msbrRows=document.getElementById('msbr-rows');
+msbrData.forEach(d=>{
+  const r=document.createElement('div');
+  r.className='msbr-row';
+  r.innerHTML=`<div class="msbr-lbl">${d.name}</div><div class="bar-bg"><div class="bar-fill" data-w="${(d.val/0.6*100).toFixed(1)}" style="background:${d.color}"></div></div><div class="msbr-num">${d.val.toFixed(2)}</div>`;
+  msbrRows.appendChild(r);
+});
+
+/* Donut */
+new Chart(document.getElementById('donut'),{
+  type:'doughnut',
+  data:{
+    labels:['SIV','WPA','UTI+UTA','ATD'],
+    datasets:[{data:[31,27,24,18],backgroundColor:['#c0392b','#b45309','#1a2744','#aaa'],borderColor:'#ffffff',borderWidth:3,hoverOffset:5}]
+  },
+  options:{cutout:'63%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${c.raw}%`}}},animation:{duration:900}}
+});
+
+/* Bar chart */
+new Chart(document.getElementById('barchart'),{
+  type:'bar',
+  data:{
+    labels:['A13 (DoW)','A10 (Code)','A9 (Deleg.)','A6 (Retrieval)','A5 (Planning)'],
+    datasets:[
+      {label:'Standard Config',data:[0.58,0.22,0.18,0.47,0.44],backgroundColor:'rgba(26,39,68,0.1)',borderColor:'rgba(26,39,68,0.5)',borderWidth:1.5,borderRadius:3},
+      {label:'Permissive Config',data:[0.81,0.49,0.46,0.53,0.50],backgroundColor:'rgba(192,57,43,0.1)',borderColor:'rgba(192,57,43,0.65)',borderWidth:1.5,borderRadius:3}
+    ]
+  },
+  options:{
+    responsive:true,
+    plugins:{legend:{labels:{color:'#767676',font:{family:'JetBrains Mono',size:11},boxWidth:12,padding:14}}},
+    scales:{
+      x:{ticks:{color:'#767676',font:{family:'JetBrains Mono',size:10}},grid:{color:'rgba(0,0,0,0.04)'}},
+      y:{min:0,max:1,ticks:{color:'#767676',font:{family:'JetBrains Mono',size:10}},grid:{color:'rgba(0,0,0,0.04)'}}
+    }
+  }
+});
+
+/* Scroll reveal */
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in');});
+},{threshold:0.08,rootMargin:'0px 0px -30px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+/* Animate MSBR bars */
+const bObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      document.querySelectorAll('.bar-fill').forEach(b=>{ b.style.width=b.dataset.w+'%'; });
+    }
+  });
+},{threshold:0.25});
+if(msbrRows) bObs.observe(msbrRows);
+</script>
+</body>
+</html>
