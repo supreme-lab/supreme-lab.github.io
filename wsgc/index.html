@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>When Safety Geometry Collapses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f5f5f8;
+    --surface2: #eeeeef;
+    --border: rgba(0,0,0,0.08);
+    --text: #1a1a1a;
+    --text-muted: #666666;
+    --text-dim: #999999;
+    --accent: #ff4d6d;
+    --accent2: #7c6fff;
+    --accent3: #00d4aa;
+    --warn: #ff9f00;
+    --safe: #00c853;
+    --danger: #ff4d6d;
+    --glow: rgba(124,111,255,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 18px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-brand {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.05em;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--text); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 120px 0 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 50%, rgba(255,77,109,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 80% 30%, rgba(124,111,255,0.1) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 60% 80%, rgba(0,212,170,0.06) 0%, transparent 60%);
+  }
+
+  .hero-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 48px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(124,111,255,0.12);
+    border: 1px solid rgba(124,111,255,0.3);
+    border-radius: 100px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent2);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent2);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    animation: fadeUp 0.8s 0.1s ease both;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    letter-spacing: 0.04em;
+    animation: fadeUp 0.8s 0.2s ease both;
+  }
+
+  .authors {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    line-height: 1.8;
+    animation: fadeUp 0.8s 0.25s ease both;
+  }
+
+  .affiliations {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 40px;
+    animation: fadeUp 0.8s 0.3s ease both;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    animation: fadeUp 0.8s 0.35s ease both;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: 0.03em;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: #ff3358;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(255,77,109,0.35);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover {
+    border-color: rgba(0,0,0,0.15);
+    background: rgba(0,0,0,0.02);
+  }
+
+  .btn-ghost {
+    background: rgba(124,111,255,0.1);
+    color: var(--accent2);
+    border: 1px solid rgba(124,111,255,0.25);
+  }
+
+  .btn-ghost:hover {
+    background: rgba(124,111,255,0.2);
+    transform: translateY(-1px);
+  }
+
+  /* ── SECTIONS ── */
+  section { position: relative; z-index: 1; }
+
+  .section-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 80px 48px;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent2);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--border), transparent);
+    max-width: 120px;
+  }
+
+  h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    line-height: 1.2;
+    margin-bottom: 28px;
+    letter-spacing: -0.02em;
+  }
+
+  /* ── STATS STRIP ── */
+  .stats-strip {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    divide-x: 1px solid var(--border);
+  }
+
+  .stat-item {
+    padding: 40px 32px;
+    border-right: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-item:last-child { border-right: none; }
+
+  .stat-item::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .stat-item.danger::before { background: linear-gradient(to right, var(--danger), transparent); }
+  .stat-item.safe::before { background: linear-gradient(to right, var(--safe), transparent); }
+  .stat-item.warn::before { background: linear-gradient(to right, var(--warn), transparent); }
+  .stat-item.purple::before { background: linear-gradient(to right, var(--accent2), transparent); }
+
+  .stat-number {
+    font-family: 'DM Serif Display', serif;
+    font-size: 3rem;
+    line-height: 1;
+    margin-bottom: 8px;
+    letter-spacing: -0.03em;
+  }
+
+  .stat-item.danger .stat-number { color: var(--danger); }
+  .stat-item.safe .stat-number { color: var(--safe); }
+  .stat-item.warn .stat-number { color: var(--warn); }
+  .stat-item.purple .stat-number { color: var(--accent2); }
+
+  .stat-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .stat-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── ANIMATED THREAT MODEL ── */
+  .threat-section {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .threat-diagram {
+    background: linear-gradient(135deg, #fafafa, #f5f5f8);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .threat-diagram::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(124,111,255,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .diagram-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 36px;
+    text-align: center;
+  }
+
+  /* Pipeline Row */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 48px;
+    position: relative;
+  }
+
+  .pipe-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .pipe-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    position: relative;
+    transition: transform 0.3s;
+  }
+
+  .pipe-icon.harmful {
+    background: rgba(255,77,109,0.15);
+    border: 2px solid rgba(255,77,109,0.5);
+    animation: threatPulse 2s infinite;
+  }
+
+  .pipe-icon.guard {
+    background: rgba(124,111,255,0.15);
+    border: 2px solid rgba(124,111,255,0.5);
+    position: relative;
+  }
+
+  .pipe-icon.guard.compromised {
+    background: rgba(255,77,109,0.15);
+    border-color: rgba(255,77,109,0.5);
+    animation: compromisedShake 0.5s ease infinite;
+  }
+
+  .pipe-icon.agent {
+    background: rgba(0,212,170,0.1);
+    border: 2px solid rgba(0,212,170,0.3);
+  }
+
+  .pipe-icon.agent.exposed {
+    background: rgba(255,77,109,0.1);
+    border-color: rgba(255,77,109,0.4);
+    animation: exposedPulse 1.5s infinite;
+  }
+
+  @keyframes threatPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,77,109,0.3); }
+    50% { box-shadow: 0 0 0 12px rgba(255,77,109,0); }
+  }
+
+  @keyframes compromisedShake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-1.5deg); }
+    75% { transform: rotate(1.5deg); }
+  }
+
+  @keyframes exposedPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,77,109,0.4); }
+    50% { box-shadow: 0 0 0 10px rgba(255,77,109,0); }
+  }
+
+  .pipe-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-align: center;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    max-width: 80px;
+  }
+
+  .pipe-label.danger { color: var(--danger); }
+  .pipe-label.warn { color: var(--warn); }
+
+  /* Arrow */
+  .pipe-arrow {
+    display: flex;
+    align-items: center;
+    width: 60px;
+    position: relative;
+    flex-shrink: 0;
+    margin-top: -20px;
+  }
+
+  .pipe-arrow svg {
+    width: 100%;
+  }
+
+  /* Benign finetune arrow (top) */
+  .finetune-arrow {
+    position: absolute;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    z-index: 3;
+  }
+
+  .finetune-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--warn);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: rgba(255,179,71,0.1);
+    border: 1px solid rgba(255,179,71,0.3);
+    padding: 3px 10px;
+    border-radius: 100px;
+    white-space: nowrap;
+    animation: labelFloat 3s ease-in-out infinite;
+  }
+
+  @keyframes labelFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  /* Data flow particle */
+  .flow-line {
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    height: 2px;
+    background: linear-gradient(to right, var(--danger), rgba(255,77,109,0));
+    width: 60px;
+    margin-top: -1px;
+    overflow: visible;
+  }
+
+  .flow-particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--danger);
+    top: -2px;
+    animation: flowRight 1.8s linear infinite;
+    box-shadow: 0 0 8px var(--danger);
+  }
+
+  @keyframes flowRight {
+    0% { left: 0; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { left: 100%; opacity: 0; }
+  }
+
+  /* Info panels below pipeline */
+  .info-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 8px;
+  }
+
+  .info-panel {
+    border-radius: 12px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .info-panel.before {
+    background: rgba(0,212,170,0.06);
+    border: 1px solid rgba(0,212,170,0.2);
+  }
+
+  .info-panel.after {
+    background: rgba(255,77,109,0.06);
+    border: 1px solid rgba(255,77,109,0.2);
+  }
+
+  .info-panel.hypothesis {
+    background: rgba(255,179,71,0.05);
+    border: 1px solid rgba(255,179,71,0.2);
+  }
+
+  .panel-icon {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  .panel-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+
+  .info-panel.before .panel-title { color: var(--safe); }
+  .info-panel.after .panel-title { color: var(--danger); }
+  .info-panel.hypothesis .panel-title { color: var(--warn); }
+
+  .panel-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    font-size: 13px;
+  }
+
+  .panel-metric:last-child { border-bottom: none; }
+
+  .metric-key { color: var(--text-muted); }
+
+  .metric-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .metric-val.good { color: var(--safe); }
+  .metric-val.bad { color: var(--danger); }
+  .metric-val.warn { color: var(--warn); }
+
+  /* Animated counter */
+  .count-anim {
+    display: inline-block;
+  }
+
+  /* CKA bar animation */
+  .cka-bar-wrap {
+    margin-top: 8px;
+  }
+
+  .cka-bar-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .cka-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.06);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .cka-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .cka-fill.good { background: linear-gradient(to right, var(--safe), rgba(0,212,170,0.5)); }
+  .cka-fill.bad { background: linear-gradient(to right, var(--danger), rgba(255,77,109,0.5)); }
+  .cka-fill.recover { background: linear-gradient(to right, var(--accent2), rgba(124,111,255,0.5)); }
+
+  /* ── ABSTRACT ── */
+  .abstract-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .abstract-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--accent), var(--accent2), var(--accent3));
+  }
+
+  .abstract-text {
+    font-size: 15px;
+    line-height: 1.85;
+    color: rgb(0, 0, 0);
+  }
+
+  .abstract-text strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ── CONTRIBUTIONS ── */
+  .contributions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 8px;
+  }
+
+  .contrib-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 24px;
+    position: relative;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .contrib-card:hover {
+    border-color: rgba(124,111,255,0.3);
+    transform: translateY(-2px);
+  }
+
+  .contrib-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 3rem;
+    line-height: 1;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    letter-spacing: -0.04em;
+  }
+
+  .contrib-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  .contrib-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.65;
+  }
+
+  /* ── RESULTS TABLE ── */
+  .results-section { }
+
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    margin-top: 8px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead th {
+    background: var(--surface2);
+    padding: 14px 16px;
+    text-align: right;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+    white-space: nowrap;
+  }
+
+  thead th:first-child { text-align: left; }
+
+  thead tr.model-header th {
+    background: rgba(124,111,255,0.05);
+    color: var(--text-dim);
+    font-size: 10px;
+    padding: 8px 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+  tbody td {
+    padding: 12px 16px;
+    text-align: right;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  tbody td:first-child {
+    text-align: left;
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 13px;
+  }
+
+  .td-best { color: var(--safe) !important; font-weight: 500; }
+  .td-worst { color: var(--danger) !important; }
+  .td-mid { color: var(--warn) !important; }
+
+  .thead-group {
+    background: var(--surface);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent2);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── METHODOLOGY ── */
+  .method-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 8px;
+  }
+
+  .method-step {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(124,111,255,0.12);
+    border: 1px solid rgba(124,111,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--accent2);
+    margin-top: 2px;
+  }
+
+  .step-content { flex: 1; }
+
+  .step-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .step-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.65;
+  }
+
+  .code-inline {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    background: rgba(124,111,255,0.1);
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 48px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.5rem;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .footer-links a {
+    font-size: 13px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--text-muted); }
+
+  .footer-copy {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    .hero-inner, .section-inner { padding: 0 24px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .contributions-grid { grid-template-columns: 1fr; }
+    .info-panels { grid-template-columns: 1fr; }
+    footer { padding: 40px 24px; }
+  }
+
+  /* Guard X overlay */
+  .guard-x {
+    position: absolute;
+    top: -6px; right: -6px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--danger);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    animation: xPop 0.3s 1s both;
+  }
+
+  @keyframes xPop {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+  }
+
+  /* Flow animation state */
+  .pipeline-wrapper { position: relative; }
+
+  /* Threat flow path */
+  .threat-path {
+    position: absolute;
+    top: 36px;
+    left: 80px;
+    right: 80px;
+    height: 2px;
+    background: transparent;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .threat-particle {
+    position: absolute;
+    top: -4px;
+    left: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--danger);
+    box-shadow: 0 0 12px var(--danger), 0 0 24px rgba(255,77,109,0.5);
+    animation: particleTravel 3s linear infinite;
+  }
+
+  @keyframes particleTravel {
+    0% { left: 0%; opacity: 0; }
+    5% { opacity: 1; }
+    95% { opacity: 1; }
+    100% { left: 100%; opacity: 0; }
+  }
+
+  /* Section divider */
+  .divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+    margin: 0 48px;
+  }
+
+  /* Tag chips */
+  .tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+  }
+
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 4px 12px;
+    border-radius: 100px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-brand">Safety Geometry Collapse · AAAI 2026</span>
+  <ul class="nav-links">
+    <li><a href="#threat">Threat Model</a></li>
+    <li><a href="#abstract">Abstract</a></li>
+    <li><a href="#method">Method</a></li>
+    <li><a href="#results">Results</a></li>
+    <li><a href="https://supreme-lab.github.io/ai-in-the-loop/">Website ↗</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-inner">
+    <div class="badge">AAAI 2026 Summer Symposium Series</div>
+    <h1>When <em>Safety Geometry</em> Collapses: Fine-Tuning Vulnerabilities in Agentic Guard Models</h1>
+    <div class="hero-meta">PRIME AI · 2026</div>
+    <p class="authors">
+      Ismail Hossain<sup>1</sup>, Sai Puppala<sup>2</sup>, Jannatul Ferdaus<sup>1</sup>, Md Jahangir Alam<sup>1</sup>,
+      Yoonpyo Lee<sup>3</sup>, Syed Bahauddin Alam<sup>4</sup>, Sajedul Talukder<sup>1</sup>
+    </p>
+    <p class="affiliations">
+      <sup>1</sup>UT El Paso &nbsp;·&nbsp; <sup>2</sup>Southern Illinois University Carbondale &nbsp;·&nbsp;
+      <sup>3</sup>Hanyang University &nbsp;·&nbsp; <sup>4</sup>UIUC
+    </p>
+    <div class="hero-actions">
+      <a href="https://supreme-lab.github.io/ai-in-the-loop/" class="btn btn-primary" target="_blank">🌐 Project Website</a>
+      <a href="#abstract" class="btn btn-ghost">📄 Read Paper</a>
+      <a href="#results" class="btn btn-secondary">📊 Results</a>
+    </div>
+    <div class="tags">
+      <span class="tag">AI Safety</span>
+      <span class="tag">Agentic AI</span>
+      <span class="tag">Fine-tuning</span>
+      <span class="tag">Guard Models</span>
+      <span class="tag">Latent Geometry</span>
+      <span class="tag">Fisher Information</span>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-strip">
+  <div class="stats-grid">
+    <div class="stat-item danger">
+      <div class="stat-number" data-target="85" data-suffix="%">0%</div>
+      <div class="stat-label">Refusal Rate Drop</div>
+      <div class="stat-sub">Granite Guardian collapse</div>
+    </div>
+    <div class="stat-item safe">
+      <div class="stat-number" data-target="75" data-suffix="%">0%</div>
+      <div class="stat-label">Refusal Recovered</div>
+      <div class="stat-sub">via FW-SSR mitigation</div>
+    </div>
+    <div class="stat-item warn">
+      <div class="stat-number" data-target="3.6" data-suffix="%" data-decimal="1">0%</div>
+      <div class="stat-label">Attack Success Rate</div>
+      <div class="stat-sub">WildGuard w/ FW-SSR</div>
+    </div>
+    <div class="stat-item purple">
+      <div class="stat-number" data-target="0.983" data-suffix="" data-decimal="3">0</div>
+      <div class="stat-label">CKA Recovery</div>
+      <div class="stat-sub">Granite Guardian restored</div>
+    </div>
+  </div>
+</div>
+
+<!-- ANIMATED THREAT MODEL -->
+<section class="threat-section" id="threat">
+  <div class="section-inner">
+    <div class="section-label reveal">Figure 1 — Animated</div>
+    <h2 class="reveal">Benign Fine-Tuning Destroys Safety Alignment</h2>
+    <p class="reveal" style="color:var(--text-muted);margin-bottom:32px;font-size:14px;">
+      A guard model fine-tuned on entirely benign data can lose all safety alignment — not through adversarial manipulation, but through standard domain specialization.
+    </p>
+
+    <div class="threat-diagram reveal">
+      <div class="diagram-title">Threat Model — Agentic Pipeline Under Benign Fine-Tuning Attack</div>
+
+      <!-- Pipeline -->
+      <div class="pipeline-wrapper">
+        <div class="pipeline" id="pipeline">
+
+          <!-- Harmful Prompt -->
+          <div class="pipe-node">
+            <div class="pipe-icon harmful">☠️</div>
+            <div class="pipe-label danger">Harmful<br>Prompt</div>
+          </div>
+
+          <!-- Arrow 1 -->
+          <div class="pipe-arrow">
+            <svg viewBox="0 0 60 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="0" y1="10" x2="50" y2="10" stroke="rgba(255,77,109,0.6)" stroke-width="1.5" stroke-dasharray="4 3">
+                <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="0.8s" repeatCount="indefinite"/>
+              </line>
+              <polygon points="50,6 60,10 50,14" fill="rgba(255,77,109,0.8)"/>
+            </svg>
+          </div>
+
+          <!-- Guard (compromised) -->
+          <div class="pipe-node" style="position:relative;">
+            <div class="finetune-arrow">
+              <div class="finetune-label">⬇ Benign Fine-tuning</div>
+            </div>
+            <div class="pipe-icon guard compromised" id="guardIcon">🛡️
+              <div class="guard-x" id="guardX">✕</div>
+            </div>
+            <div class="pipe-label warn">Guard<br><span style="color:var(--danger)">Compromised</span></div>
+          </div>
+
+          <!-- Arrow 2 (now red — threat passes through) -->
+          <div class="pipe-arrow">
+            <svg viewBox="0 0 60 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="0" y1="10" x2="50" y2="10" stroke="rgba(255,77,109,0.7)" stroke-width="1.5" stroke-dasharray="4 3">
+                <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="0.8s" repeatCount="indefinite"/>
+              </line>
+              <polygon points="50,6 60,10 50,14" fill="rgba(255,77,109,0.8)"/>
+            </svg>
+          </div>
+
+          <!-- Agent 1 (exposed) -->
+          <div class="pipe-node">
+            <div class="pipe-icon agent exposed">🤖</div>
+            <div class="pipe-label danger">Agent 1<br>EXPOSED</div>
+          </div>
+
+          <!-- Arrow 3 -->
+          <div class="pipe-arrow">
+            <svg viewBox="0 0 60 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="0" y1="10" x2="50" y2="10" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+              <polygon points="50,6 60,10 50,14" fill="rgba(255,255,255,0.25)"/>
+            </svg>
+          </div>
+
+          <!-- Agent 2 -->
+          <div class="pipe-node">
+            <div class="pipe-icon agent" style="opacity:0.6">🤖</div>
+            <div class="pipe-label" style="color:var(--text-dim)">Agent 2</div>
+          </div>
+
+          <!-- Arrow 4 -->
+          <div class="pipe-arrow">
+            <svg viewBox="0 0 60 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="0" y1="10" x2="50" y2="10" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+              <polygon points="50,6 60,10 50,14" fill="rgba(255,255,255,0.25)"/>
+            </svg>
+          </div>
+
+          <!-- Agent 3 -->
+          <div class="pipe-node">
+            <div class="pipe-icon agent" style="opacity:0.4">🤖</div>
+            <div class="pipe-label" style="color:var(--text-dim)">Agent 3</div>
+          </div>
+
+        </div><!-- /pipeline -->
+
+        <!-- Travelling threat particle -->
+        <div class="threat-path">
+          <div class="threat-particle"></div>
+        </div>
+
+      </div><!-- /pipeline-wrapper -->
+
+      <!-- Info Panels -->
+      <div class="info-panels">
+        <div class="info-panel before">
+          <div class="panel-icon">✅</div>
+          <div class="panel-title">Before Fine-Tuning</div>
+          <div class="panel-metric">
+            <span class="metric-key">Refusal Rate</span>
+            <span class="metric-val good">85%</span>
+          </div>
+          <div class="panel-metric">
+            <span class="metric-key">CKA Score</span>
+            <span class="metric-val good">1.00</span>
+          </div>
+          <div class="panel-metric">
+            <span class="metric-key">Fisher Score</span>
+            <span class="metric-val good">0.68</span>
+          </div>
+          <div class="cka-bar-wrap">
+            <div class="cka-bar-label"><span>Safety Boundary Integrity</span><span style="color:var(--safe)">100%</span></div>
+            <div class="cka-bar"><div class="cka-fill good" id="bar-before" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <div class="info-panel after">
+          <div class="panel-icon">❌</div>
+          <div class="panel-title">After Fine-Tuning (No Defense)</div>
+          <div class="panel-metric">
+            <span class="metric-key">Refusal Rate</span>
+            <span class="metric-val bad">0%</span>
+          </div>
+          <div class="panel-metric">
+            <span class="metric-key">CKA Score</span>
+            <span class="metric-val bad">0.00</span>
+          </div>
+          <div class="panel-metric">
+            <span class="metric-key">Drift Ratio</span>
+            <span class="metric-val bad">0.77</span>
+          </div>
+          <div class="cka-bar-wrap">
+            <div class="cka-bar-label"><span>Safety Boundary Integrity</span><span style="color:var(--danger)">0%</span></div>
+            <div class="cka-bar"><div class="cka-fill bad" id="bar-after" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <div class="info-panel hypothesis" style="grid-column:1/-1">
+          <div class="panel-icon">⚠️</div>
+          <div class="panel-title">Specialisation Hypothesis</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center">
+            <div>
+              <p style="font-size:13px;color:var(--text-muted);line-height:1.7;">
+                Safety representations <strong style="color:var(--text)">concentrate into few discriminative directions</strong>.
+                Fine-tuning targets exactly those directions — causing <strong style="color:var(--warn)">77% drift within the safety subspace</strong>.
+                Concentrated representations are efficient but <em>catastrophically brittle</em>.
+              </p>
+            </div>
+            <div>
+              <div class="panel-metric">
+                <span class="metric-key">Subspace drift</span>
+                <span class="metric-val warn">77%</span>
+              </div>
+              <div class="panel-metric">
+                <span class="metric-key">vs. general LLMs</span>
+                <span class="metric-val bad">+30pp worse</span>
+              </div>
+              <div class="panel-metric">
+                <span class="metric-key">FW-SSR Recovery</span>
+                <span class="metric-val good">75% refusal</span>
+              </div>
+              <div class="cka-bar-wrap" style="margin-top:12px">
+                <div class="cka-bar-label"><span>FW-SSR Recovered CKA</span><span style="color:var(--accent2)">98.3%</span></div>
+                <div class="cka-bar"><div class="cka-fill recover" id="bar-recover" style="width:0%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /threat-diagram -->
+  </div>
+</section>
+
+<!-- ABSTRACT -->
+<section id="abstract">
+  <div class="section-inner">
+    <div class="section-label reveal">Abstract</div>
+    <div class="abstract-card reveal">
+      <p class="abstract-text">
+        A guard model fine-tuned on <strong>entirely benign data</strong> can lose all safety alignment — not through adversarial manipulation, but through standard domain specialization. We demonstrate this failure across three purpose-built safety classifiers — <strong>LlamaGuard, WildGuard, and Granite Guardian</strong> — deployed as protection layers in agentic AI pipelines, and show that it originates in the destruction of <strong>latent safety geometry</strong>: the structured harmful–benign representational boundary that guides classification.
+      </p>
+      <br>
+      <p class="abstract-text">
+        We extract per-layer safety subspaces via SVD on class-conditional activation differences and track how this boundary evolves under benign fine-tuning. <strong>Granite Guardian undergoes complete collapse</strong> — refusal rate drops from 85% to 0%, CKA falls to zero, and 100% of outputs become ambiguous — a severity exceeding prior findings on general-purpose LLMs.
+      </p>
+      <br>
+      <p class="abstract-text">
+        To mitigate this, we propose <strong>Fisher-Weighted Safety Subspace Regularization (FW-SSR)</strong>, a training-time penalty combining curvature-aware direction weights derived from diagonal Fisher information with an adaptive λ<sub>t</sub> that scales with task–safety gradient conflict. FW-SSR recovers <strong>75% refusal on Granite Guardian</strong> (CKA = 0.983) and reduces WildGuard's Attack Success Rate to <strong>3.6%</strong> — below the unmodified baseline.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- CONTRIBUTIONS -->
+<section>
+  <div class="section-inner" style="padding-top:0">
+    <div class="section-label reveal">Contributions</div>
+    <h2 class="reveal">What We Contribute</h2>
+    <div class="contributions-grid">
+      <div class="contrib-card reveal">
+        <div class="contrib-num">01</div>
+        <div class="contrib-title">Threat Characterization</div>
+        <div class="contrib-desc">Identify benign fine-tuning during agent specialization as a systematic threat, introducing a latent geometry analysis protocol revealing complete safety collapse more severe than general-purpose LLMs.</div>
+      </div>
+      <div class="contrib-card reveal" style="transition-delay:0.1s">
+        <div class="contrib-num">02</div>
+        <div class="contrib-title">FW-SSR Algorithm</div>
+        <div class="contrib-desc">A novel training-time penalty weighting each safety direction by diagonal Fisher information, with adaptive λ<sub>t</sub> scaled by task–safety gradient conflict. Enables safe specialization without sacrificing domain performance.</div>
+      </div>
+      <div class="contrib-card reveal" style="transition-delay:0.2s">
+        <div class="contrib-num">03</div>
+        <div class="contrib-title">Evaluation Protocol</div>
+        <div class="contrib-desc">Comprehensive evaluation showing FW-SSR recovers 75% refusal (CKA = 0.983) on Granite Guardian, with ablations isolating each component. Establishes geometry-based monitoring as necessary for guard model evaluation.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- METHOD -->
+<section id="method" style="background:var(--surface)">
+  <div class="section-inner">
+    <div class="section-label reveal">Methodology</div>
+    <h2 class="reveal">Fisher-Weighted Safety Subspace Regularization</h2>
+    <p class="reveal" style="color:var(--text-muted);margin-bottom:40px;font-size:14px;">
+      FW-SSR replaces the uniform penalty with a curvature-aware adaptive variant that protects exactly the directions most critical to safety classification.
+    </p>
+    <div class="method-steps">
+      <div class="method-step reveal">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <div class="step-title">Safety Subspace Extraction</div>
+          <div class="step-desc">Extract per-layer safety subspaces via SVD on class-conditional activation differences. For each transformer layer ℓ, compute augmented activation matrix stacking centered harmful/benign activations with scaled mean differences. Top-k right singular vectors <span class="code-inline">U_ℓ ∈ ℝ^{k×d}</span> span the most discriminative directions — fixed throughout fine-tuning.</div>
+        </div>
+      </div>
+      <div class="method-step reveal">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <div class="step-title">Fisher Weight Estimation</div>
+          <div class="step-desc">Curvature weights estimate per-direction sensitivity via diagonal approximation of projected Fisher information: <span class="code-inline">F_ℓ ≈ E[(U_ℓ^T h_ℓ(x;θ))²]</span>. Mean-normalized weights are updated via EMA every τ=50 steps (β=0.9), ensuring consistent penalty scale across layers and initializing to uniform regularization before estimates stabilize.</div>
+        </div>
+      </div>
+      <div class="method-step reveal">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <div class="step-title">Adaptive λ Scheduling</div>
+          <div class="step-desc">Gradient conflict measured every 20 steps via cosine similarity between task and safety gradients: <span class="code-inline">s_t = cos(∇L_task, ∇L_FW-SSR)</span>. When objectives conflict (s_t ≈ −1), λ increases by factor ≈1.5 providing strongest protection exactly when needed. When aligned (s_t ≈ +1), λ decreases to avoid over-regularization.</div>
+        </div>
+      </div>
+      <div class="method-step reveal">
+        <div class="step-num">04</div>
+        <div class="step-content">
+          <div class="step-title">QLoRA-Compatible Training</div>
+          <div class="step-desc">Unlike EWC (parameter-level, incompatible with LoRA's frozen base), FW-SSR applies Fisher weighting at the <em>activation level</em> within the safety subspace. Gradients flow only through the fine-tuned model's activations; original model activations serve as frozen anchors. Compatible with 4-bit NF4 QLoRA, rank r=8, applied to all attention and MLP matrices.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results">
+  <div class="section-inner">
+    <div class="section-label reveal">Results</div>
+    <h2 class="reveal">Safety Geometry & Behavioral Evaluation</h2>
+    <p class="reveal" style="color:var(--text-muted);margin-bottom:32px;font-size:14px;">
+      O = original aligned model · FT = baseline fine-tuned (no defense) · Mit = FW-SSR mitigated.
+      Bold = best among {FT, Mit} per metric per model.
+    </p>
+
+    <div class="table-wrap reveal">
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th colspan="3">Granite Guardian 3.0-2B</th>
+            <th colspan="3">LlamaGuard-3-8B</th>
+            <th colspan="3">WildGuard</th>
+          </tr>
+          <tr class="model-header">
+            <th></th>
+            <th>Original</th><th>Fine-tuned</th><th>FW-SSR</th>
+            <th>Original</th><th>Fine-tuned</th><th>FW-SSR</th>
+            <th>Original</th><th>Fine-tuned</th><th>FW-SSR</th>
+          </tr>
+          <tr>
+            <th colspan="10" class="thead-group" style="padding:8px 16px;text-align:left">Safety Behavior (20 harmful prompts)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Refusal Rate ↑</td>
+            <td>85.0%</td><td class="td-worst">0.0%</td><td class="td-best">75.0%</td>
+            <td>5.0%</td><td class="td-worst">15.0%</td><td class="td-best">25.0%</td>
+            <td>35.0%</td><td class="td-worst">5.0%</td><td class="td-best">20.0%</td>
+          </tr>
+          <tr>
+            <td>Compliance Rate ↓</td>
+            <td>0.0%</td><td>0.0%</td><td class="td-mid">5.0%</td>
+            <td>5.0%</td><td class="td-worst">10.0%</td><td class="td-worst">10.0%</td>
+            <td>0.0%</td><td class="td-worst">5.0%</td><td class="td-best">0.0%</td>
+          </tr>
+          <tr>
+            <td>Ambiguous Rate</td>
+            <td>15.0%</td><td class="td-worst">100.0%</td><td class="td-best">20.0%</td>
+            <td>90.0%</td><td>75.0%</td><td class="td-best">65.0%</td>
+            <td>65.0%</td><td class="td-worst">90.0%</td><td>80.0%</td>
+          </tr>
+        </tbody>
+        <thead>
+          <tr>
+            <th colspan="10" class="thead-group" style="padding:8px 16px;text-align:left">Latent Safety Geometry (final probed layer)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Safety Drift ↓</td>
+            <td>0.00</td><td class="td-worst">48.64</td><td class="td-best">30.44</td>
+            <td>0.00</td><td class="td-worst">45.99</td><td class="td-best">38.00</td>
+            <td>0.00</td><td class="td-worst">17.21</td><td class="td-best">17.17</td>
+          </tr>
+          <tr>
+            <td>Drift Ratio ↓</td>
+            <td>0.00</td><td class="td-worst">0.77</td><td class="td-best">0.56</td>
+            <td>0.00</td><td class="td-worst">0.51</td><td class="td-best">0.44</td>
+            <td>0.00</td><td class="td-worst">0.65</td><td class="td-best">0.64</td>
+          </tr>
+          <tr>
+            <td>Fisher Score ↑</td>
+            <td>0.68</td><td class="td-worst">0.00</td><td class="td-best">0.55</td>
+            <td>0.62</td><td class="td-worst">0.47</td><td class="td-best">0.54</td>
+            <td>0.97</td><td>1.01</td><td class="td-best">1.08</td>
+          </tr>
+          <tr>
+            <td>Inter-Class Dist. ↑</td>
+            <td>12.19</td><td class="td-worst">0.00</td><td class="td-best">11.36</td>
+            <td>12.34</td><td class="td-worst">9.97</td><td class="td-best">11.25</td>
+            <td>11.03</td><td class="td-worst">7.94</td><td class="td-best">8.64</td>
+          </tr>
+          <tr>
+            <td>CKA vs. Original ↑</td>
+            <td>1.00</td><td class="td-worst">0.00</td><td class="td-best">0.98</td>
+            <td>1.00</td><td>0.83</td><td>0.83</td>
+            <td>1.00</td><td>0.83</td><td class="td-best">0.86</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:32px;display:grid;grid-template-columns:1fr 1fr;gap:20px" class="reveal">
+      <div class="abstract-card" style="padding:28px">
+        <div class="section-label" style="margin-bottom:12px">Key Finding</div>
+        <p style="font-size:14px;color:var(--text-muted);line-height:1.7">
+          <strong style="color:var(--text)">Structural geometry predicts safety behavior more reliably than absolute displacement.</strong>
+          Granite Guardian's FW-SSR achieves CKA = 0.98 and 75% refusal recovery despite only 37% drift suppression — activations moved substantially but their <em>relational organization</em> is preserved.
+        </p>
+      </div>
+      <div class="abstract-card" style="padding:28px">
+        <div class="section-label" style="margin-bottom:12px">Attack Success Rate</div>
+        <div class="panel-metric" style="padding:8px 0;border-bottom:1px solid var(--border)">
+          <span class="metric-key" style="font-size:13px">Original WildGuard</span>
+          <span class="metric-val" style="color:var(--warn)">9.2%</span>
+        </div>
+        <div class="panel-metric" style="padding:8px 0;border-bottom:1px solid var(--border)">
+          <span class="metric-key" style="font-size:13px">After Fine-tuning</span>
+          <span class="metric-val bad">17.1%</span>
+        </div>
+        <div class="panel-metric" style="padding:8px 0">
+          <span class="metric-key" style="font-size:13px">FW-SSR (below original!)</span>
+          <span class="metric-val good">3.6%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">When Safety Geometry Collapses</div>
+  <div class="footer-links">
+    <a href="https://supreme-lab.github.io/ai-in-the-loop/" target="_blank">Project Website</a>
+    <a href="mailto:ihossain@miners.utep.edu">Contact Authors</a>
+    <a href="#abstract">Abstract</a>
+    <a href="#results">Results</a>
+    <a href="#method">Method</a>
+  </div>
+  <div class="footer-copy">
+    AAAI 2026 Summer Symposium Series · PRIME AI ·
+    University of Texas at El Paso · Southern Illinois University ·
+    Hanyang University · UIUC
+  </div>
+</footer>
+
+<script>
+  // ── SCROLL REVEAL ──
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  reveals.forEach(el => observer.observe(el));
+
+  // ── ANIMATED COUNTERS ──
+  function animateCounter(el) {
+    const target = parseFloat(el.dataset.target);
+    const suffix = el.dataset.suffix || '';
+    const decimal = parseInt(el.dataset.decimal || 0);
+    const duration = 1600;
+    const start = performance.now();
+
+    function update(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const val = target * ease;
+      el.textContent = val.toFixed(decimal) + suffix;
+      if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  }
+
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        animateCounter(e.target);
+        counterObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('[data-target]').forEach(el => counterObserver.observe(el));
+
+  // ── BAR ANIMATIONS ──
+  const barObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        setTimeout(() => {
+          if (id === 'bar-before') e.target.style.width = '100%';
+          if (id === 'bar-after') e.target.style.width = '2%';
+          if (id === 'bar-recover') e.target.style.width = '98.3%';
+        }, 300);
+        barObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  ['bar-before','bar-after','bar-recover'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) barObserver.observe(el);
+  });
+</script>
+</body>
+</html>
