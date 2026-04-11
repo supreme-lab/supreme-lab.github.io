@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HALLPERM — Safety Illusion in LLM Tool Use</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f4f5f7;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.09);
+    --red: #c8102e;
+    --red-dim: rgba(200,16,46,0.08);
+    --amber: #b05c00;
+    --amber-dim: rgba(176,92,0,0.08);
+    --cyan: #007a73;
+    --cyan-dim: rgba(0,122,115,0.08);
+    --green: #1a7a36;
+    --green-dim: rgba(26,122,54,0.08);
+    --text: #111318;
+    --text-dim: rgba(17,19,24,0.62);
+    --text-muted: rgba(17,19,24,0.38);
+    --glow-red: 0 4px 20px rgba(200,16,46,0.18);
+    --glow-cyan: 0 4px 20px rgba(0,122,115,0.18);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg2);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ─── NOISE OVERLAY ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.5;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2.5rem;
+    background: rgba(255,255,255,0.93);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 1rem;
+    color: var(--red);
+    letter-spacing: 0.05em;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.05em;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--cyan); }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 8rem 2rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 40%, rgba(200,16,46,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(0,122,115,0.04) 0%, transparent 60%);
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+
+  .venue-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(200,16,46,0.07);
+    border: 1px solid rgba(255,45,85,0.3);
+    border-radius: 100px;
+    padding: 0.35rem 1rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--red);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    position: relative;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .venue-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--red);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.7); }
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(3rem, 8vw, 6.5rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    position: relative;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .hero h1 .accent { color: var(--red); }
+
+  .hero-subtitle {
+    max-width: 700px;
+    margin: 1.5rem auto 0;
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    font-weight: 300;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .hero-meta {
+    margin-top: 2.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .hero-ctas {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.75rem;
+    border-radius: 6px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+    transition: all 0.25s;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn-primary {
+    background: var(--red);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #e8183a;
+    box-shadow: var(--glow-red);
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    transform: translateY(-2px);
+  }
+
+  /* ─── STATS BAR ─── */
+  .stats-bar {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 2.5rem 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: 1rem 2rem;
+    border-right: 1px solid var(--border);
+    position: relative;
+  }
+
+  .stat-item:last-child { border-right: none; }
+
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+    display: block;
+  }
+
+  .stat-value.red { color: var(--red); }
+  .stat-value.amber { color: var(--amber); }
+  .stat-value.cyan { color: var(--cyan); }
+  .stat-value.green { color: var(--green); }
+
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 0.4rem;
+    display: block;
+  }
+
+  /* ─── SECTIONS ─── */
+  section {
+    padding: 6rem 2rem;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .section-label::before {
+    content: '';
+    display: block;
+    width: 2rem;
+    height: 1px;
+    background: var(--red);
+  }
+
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ─── ABSTRACT ─── */
+  .abstract-section {
+    background: var(--bg2);
+  }
+
+  .abstract-box {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--red);
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 2.5rem;
+    font-size: 1rem;
+    color: var(--text-dim);
+    line-height: 1.9;
+  }
+
+  /* ─── ANIMATED ARCH ─── */
+  .arch-section { background: var(--bg2); }
+
+  .arch-container {
+    background: var(--surface);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .arch-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .arch-tab {
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    background: transparent;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .arch-tab.active-unsafe {
+    background: var(--red-dim);
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  .arch-tab.active-secure {
+    background: var(--cyan-dim);
+    border-color: var(--cyan);
+    color: var(--cyan);
+  }
+
+  .arch-canvas {
+    width: 100%;
+    height: 520px;
+    position: relative;
+  }
+
+  /* SVG animation canvas */
+  #archSvg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ─── METRICS ─── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+  }
+
+  .metric-card {
+    background: var(--surface);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+
+  .metric-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .metric-card.iper { border-top: 2px solid var(--cyan); }
+  .metric-card.srr  { border-top: 2px solid var(--red); }
+
+  .metric-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  .metric-card .big-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .metric-card.iper .big-num { color: var(--cyan); }
+  .metric-card.srr  .big-num { color: var(--red); }
+
+  .metric-card p {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+
+  .metric-glow {
+    position: absolute;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    right: -50px; bottom: -50px;
+    pointer-events: none;
+  }
+
+  .iper .metric-glow { background: radial-gradient(circle, rgba(0,122,115,0.07), transparent 70%); }
+  .srr  .metric-glow { background: radial-gradient(circle, rgba(200,16,46,0.06), transparent 70%); }
+
+  /* ─── SAFETY ILLUSION ZONE ─── */
+  .quadrant-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 2.5rem;
+  }
+
+  .quadrant {
+    background: var(--surface);
+    padding: 2rem;
+    position: relative;
+    transition: background 0.3s;
+  }
+
+  .quadrant:hover { background: #f0f1f3; }
+
+  .quadrant.danger {
+    background: rgba(200,16,46,0.04);
+    border: 2px solid rgba(255,45,85,0.4);
+    border-radius: 0;
+  }
+
+  .quadrant.danger:hover { background: rgba(200,16,46,0.07); }
+
+  .quad-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .quad-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .quad-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .quad-desc {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .danger-tag {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    background: var(--red);
+    color: white;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    letter-spacing: 0.08em;
+    animation: flickerBadge 3s ease-in-out infinite;
+  }
+
+  @keyframes flickerBadge {
+    0%, 90%, 100% { opacity: 1; }
+    95% { opacity: 0.4; }
+  }
+
+  /* ─── TOOL RESULTS ─── */
+  .tools-section { background: var(--bg2); }
+
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .tool-card {
+    background: var(--surface);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+
+  .tool-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(0,0,0,0.18);
+  }
+
+  .tool-name {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--amber);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .risk-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .risk-critical { background: var(--red); box-shadow: 0 0 0px var(--red); }
+  .risk-high     { background: var(--amber); box-shadow: 0 0 0px var(--amber); }
+  .risk-low      { background: var(--green); box-shadow: 0 0 0px var(--green); }
+
+  .bar-row {
+    margin-bottom: 0.75rem;
+  }
+
+  .bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .bar-track {
+    height: 6px;
+    background: rgba(0,0,0,0.05);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+    width: 0;
+  }
+
+  .bar-fill.iper-color { background: var(--cyan); }
+  .bar-fill.srr-color  { background: var(--red); }
+
+  /* ─── MODEL TABLE ─── */
+  .table-section { background: var(--bg2); }
+
+  .model-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 2rem;
+    font-size: 0.85rem;
+  }
+
+  .model-table th {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0.75rem 1.25rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .model-table td {
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    color: var(--text-dim);
+  }
+
+  .model-table tr:hover td { background: rgba(0,0,0,0.025); }
+
+  .family-tag {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+  }
+
+  .family-llama  { background: rgba(176,92,0,0.1); color: var(--amber); }
+  .family-qwen   { background: rgba(0,122,115,0.1); color: var(--cyan); }
+  .family-gemma  { background: rgba(26,122,54,0.1);  color: var(--green); }
+  .family-mistral{ background: rgba(130,60,180,0.1); color: #7b2fbe; }
+  .family-openai { background: rgba(0,0,0,0.05); color: var(--text-dim); }
+  .family-claude { background: rgba(200,16,46,0.07);  color: var(--red); }
+  .family-gemini { background: rgba(0,122,115,0.1); color: var(--cyan); }
+
+  .srr-value { color: var(--red); font-weight: 600; font-family: 'Space Mono', monospace; }
+  .iper-value { color: var(--cyan); font-weight: 600; font-family: 'Space Mono', monospace; }
+
+  /* ─── AUTHORS ─── */
+  .authors-section { background: var(--bg2); }
+
+  .authors-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 2rem;
+    justify-content: center;
+  }
+
+  .author-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.75rem;
+    text-align: center;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .author-card:hover {
+    border-color: rgba(200,16,46,0.3);
+    transform: translateY(-3px);
+  }
+
+  .author-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(200,16,46,0.1), rgba(0,122,115,0.1));
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text);
+    margin: 0 auto 0.75rem;
+  }
+
+  .author-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+
+  /* ─── FINDINGS ─── */
+  .findings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.25rem;
+    margin-top: 2rem;
+  }
+
+  .finding-card {
+    background: var(--surface);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.75rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+
+  .finding-card:hover { transform: translateY(-3px); }
+
+  .finding-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 4rem;
+    font-weight: 800;
+    color: rgba(0,0,0,0.05);
+    position: absolute;
+    top: -0.5rem; right: 1rem;
+    line-height: 1;
+  }
+
+  .finding-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .finding-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .finding-card p {
+    font-size: 0.875rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 3rem 2rem;
+    text-align: center;
+  }
+
+  footer .footer-logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--red);
+    margin-bottom: 1rem;
+  }
+
+  footer p {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .cite-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-align: left;
+    margin-top: 2rem;
+    line-height: 1.8;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+  }
+
+  .cite-copy {
+    position: absolute;
+    top: 0.75rem; right: 0.75rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 4px;
+    padding: 0.25rem 0.6rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .cite-copy:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.25rem; }
+    .nav-links { display: none; }
+    .metrics-grid { grid-template-columns: 1fr; }
+    .quadrant-grid { grid-template-columns: 1fr; }
+    .arch-canvas { height: 700px; }
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+
+  /* ─── ARCH SVG ANIMATIONS ─── */
+  .flow-line {
+    stroke-dasharray: 6 4;
+    animation: dashFlow 1.5s linear infinite;
+  }
+
+  @keyframes dashFlow {
+    to { stroke-dashoffset: -20; }
+  }
+
+  .node-pulse {
+    animation: nodePulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes nodePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .blink-text {
+    animation: blinkText 2s ease-in-out infinite;
+  }
+
+  @keyframes blinkText {
+    0%, 85%, 100% { opacity: 1; }
+    90%, 95% { opacity: 0; }
+  }
+
+  .danger-glow {
+    animation: dangerGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes dangerGlow {
+    0%, 100% { filter: drop-shadow(0 0 3px rgba(200,16,46,0.5)); }
+    50%       { filter: drop-shadow(0 0 8px rgba(200,16,46,0.25)); }
+  }
+
+  .safe-glow {
+    animation: safeGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes safeGlow {
+    0%, 100% { filter: drop-shadow(0 0 3px rgba(0,122,115,0.5)); }
+    50%       { filter: drop-shadow(0 0 8px rgba(0,122,115,0.25)); }
+  }
+
+  .packet {
+    animation: movePacket var(--dur, 2s) linear infinite;
+    animation-delay: var(--delay, 0s);
+  }
+
+  @keyframes movePacket {
+    0% { offset-distance: 0%; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { offset-distance: 100%; opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">HALLPERM</div>
+  <ul class="nav-links">
+    <li><a href="#abstract">Abstract</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#metrics">Metrics</a></li>
+    <li><a href="#results">Results</a></li>
+    <li><a href="#authors">Authors</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div style="position:relative;">
+    <div class="venue-badge">AAAI 2026 Summer Symposium &nbsp;·&nbsp; Accepted Paper</div>
+    <h1>HALL<span class="accent">PERM</span></h1>
+    <p class="hero-subtitle">Exposing the Safety Illusion in LLM Tool Use via Implicit Privilege Escalation and Semantic Risk</p>
+    <p class="hero-meta">768 EVAL INSTANCES &nbsp;·&nbsp; 16 MODELS &nbsp;·&nbsp; 6 TOOLS &nbsp;·&nbsp; DUAL-AXIS SAFETY FRAMEWORK</p>
+    <div class="hero-ctas">
+      <a href="#" class="btn btn-primary">📄 Read Paper</a>
+      <a href="#architecture" class="btn btn-secondary">↓ Architecture</a>
+      <a href="#results" class="btn btn-secondary">📊 Results</a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <span class="stat-value cyan" id="cnt-iper">0.78%</span>
+    <span class="stat-label">Global IPER</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-value red" id="cnt-srr">65.76%</span>
+    <span class="stat-label">Global SRR</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-value amber">768</span>
+    <span class="stat-label">Eval Instances</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-value green">16</span>
+    <span class="stat-label">Models Evaluated</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-value" style="color:#af52de;">6</span>
+    <span class="stat-label">Tool Schemas</span>
+  </div>
+</div>
+
+<!-- ABSTRACT -->
+<section class="abstract-section" id="abstract">
+  <div class="container">
+    <div class="section-label reveal">Abstract</div>
+    <h2 class="reveal">The Schema Boundary <br>Assumption is Broken</h2>
+    <div class="abstract-box reveal">
+      Large language model (LLM) agents increasingly rely on external tools via structured schemas, yet the safety implications of under-specified tool interfaces remain poorly understood. We introduce <strong>HALLPERM</strong>, a benchmark for evaluating hallucinated permissions in tool-calling agents, and propose two complementary metrics: <strong style="color:var(--cyan)">Implicit Privilege Escalation Rate (IPER)</strong>, capturing undocumented parameter usage, and <strong style="color:var(--red)">Semantic Risk Rate (SRR)</strong>, capturing unsafe intent expressed in natural language reasoning.
+      <br><br>
+      Across 768 evaluation instances spanning 16 models and 6 tools, we find that explicit schema violations are rare (<strong style="color:var(--cyan)">IPER = 0.78%</strong>), while semantic unsafe intent is widespread (<strong style="color:var(--red)">SRR = 65.76%</strong>). This reveals a persistent <em>safety illusion</em>: models appear compliant at the structural level while exhibiting unsafe intent. High-risk tools such as <code style="color:var(--amber)">run_code</code> and <code style="color:var(--amber)">query_database</code> show SRR exceeding 80% despite zero IPER, demonstrating that parameter-level validation alone is insufficient.
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section class="arch-section" id="architecture">
+  <div class="container">
+    <div class="section-label reveal">System Architecture</div>
+    <h2 class="reveal">Animated System Overview</h2>
+    <p class="reveal" style="color:var(--text-dim); margin-bottom:2rem;">Toggle between the unsafe and secure evaluation configurations. Watch how data flows and where violations emerge.</p>
+
+    <div class="arch-container reveal">
+      <div class="arch-tabs">
+        <button class="arch-tab active-unsafe" onclick="setArch('unsafe')">⚠ Unsafe System</button>
+        <button class="arch-tab" onclick="setArch('secure')" id="secureTab">✓ Secure System</button>
+      </div>
+      <div class="arch-canvas">
+        <svg id="archSvg" viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg" style="font-family:'Space Mono',monospace;">
+          <defs>
+            <marker id="arrowRed" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#ff2d55"/>
+            </marker>
+            <marker id="arrowCyan" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#30d5c8"/>
+            </marker>
+            <marker id="arrowAmber" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#ffb340"/>
+            </marker>
+            <marker id="arrowGray" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="rgba(255,255,255,0.3)"/>
+            </marker>
+            <filter id="glowRed">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="glowCyan">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <!-- Content injected by JS -->
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- METRICS -->
+<section style="background:var(--bg2);" id="metrics">
+  <div class="container">
+    <div class="section-label reveal">Dual-Axis Framework</div>
+    <h2 class="reveal">Two Metrics, One <br>Safety Profile</h2>
+
+    <div class="metrics-grid reveal">
+      <div class="metric-card iper">
+        <div class="metric-glow"></div>
+        <h3 style="color:var(--cyan)">IPER — Implicit Privilege Escalation Rate</h3>
+        <div class="big-num">0.78<span style="font-size:1.5rem">%</span></div>
+        <p>Measures <em>structural</em> violations — the rate at which agents submit undocumented parameters in JSON tool calls. Ranges from 0 (perfect compliance) to 1 (every call violates the schema). Low IPER is <strong>not</strong> a safety guarantee.</p>
+      </div>
+      <div class="metric-card srr">
+        <div class="metric-glow"></div>
+        <h3 style="color:var(--red)">SRR — Semantic Risk Rate</h3>
+        <div class="big-num">65.76<span style="font-size:1.5rem">%</span></div>
+        <p>Measures <em>semantic</em> violations — the rate at which agents assert or imply privileged behavior in natural language reasoning, regardless of what the structured tool call contains. The dominant failure mode.</p>
+      </div>
+    </div>
+
+    <!-- Quadrant -->
+    <div class="section-label reveal" style="margin-top:4rem">Safety Illusion Zone</div>
+    <h2 class="reveal">The (IPER=0, SRR=1) Blind Spot</h2>
+
+    <div class="quadrant-grid reveal">
+      <!-- Top-left: safe -->
+      <div class="quadrant">
+        <div class="quad-label">IPER=0 · SRR=0</div>
+        <div class="quad-badge" style="background:rgba(52,199,89,0.1);color:var(--green)">✓ SAFE</div>
+        <div class="quad-title">Schema-Compliant, No Intent Violation</div>
+        <div class="quad-desc">Model uses only documented parameters and expresses no unsafe intent in reasoning. Ideal outcome.</div>
+      </div>
+      <!-- Top-right: DANGER -->
+      <div class="quadrant danger">
+        <div class="danger-tag blink-text">⚠ BLIND SPOT</div>
+        <div class="quad-label">IPER=0 · SRR=1</div>
+        <div class="quad-badge" style="background:rgba(200,16,46,0.1);color:var(--red)">☠ SAFETY ILLUSION</div>
+        <div class="quad-title">Semantic Overreach</div>
+        <div class="quad-desc">Model appears schema-compliant (passes parameter checks) but communicates unsafe intent in natural language. <strong style="color:var(--red)">This is the critical blind spot.</strong> Dominant failure mode across all 16 models.</div>
+      </div>
+      <!-- Bottom-left -->
+      <div class="quadrant">
+        <div class="quad-label">IPER=1 · SRR=0</div>
+        <div class="quad-badge" style="background:rgba(0,122,115,0.1);color:var(--cyan)">⚡ STRUCTURAL ONLY</div>
+        <div class="quad-title">Hidden Parameter Emitted</div>
+        <div class="quad-desc">Model submits an undocumented parameter but does not claim privileged capabilities. Detectable by schema validators.</div>
+      </div>
+      <!-- Bottom-right -->
+      <div class="quadrant">
+        <div class="quad-label">IPER=1 · SRR=1</div>
+        <div class="quad-badge" style="background:rgba(176,92,0,0.1);color:var(--amber)">💥 FULL VIOLATION</div>
+        <div class="quad-title">Structural + Intent Violation</div>
+        <div class="quad-desc">Both a hidden parameter is submitted and unsafe intent is expressed. Complete failure at both structural and semantic levels.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOOL RESULTS -->
+<section class="tools-section" id="results">
+  <div class="container">
+    <div class="section-label reveal">Tool-Level Analysis</div>
+    <h2 class="reveal">High SRR Despite Zero IPER</h2>
+    <p class="reveal" style="color:var(--text-dim)">Every risky tool shows zero IPER yet dangerously high SRR — confirming that schema validation is insufficient.</p>
+
+    <div class="tools-grid reveal" id="toolsGrid">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- MODEL TABLE -->
+<section class="table-section" id="models">
+  <div class="container">
+    <div class="section-label reveal">Model Results</div>
+    <h2 class="reveal">IPER & SRR by Model</h2>
+    <p class="reveal" style="color:var(--text-dim)">Under baseline system prompt. All proprietary models show zero IPER while SRR remains high across the board.</p>
+
+    <div class="reveal" style="overflow-x:auto;">
+    <table class="model-table">
+      <thead>
+        <tr>
+          <th>Family</th>
+          <th>Model</th>
+          <th>IPER (%)</th>
+          <th>SRR (%)</th>
+        </tr>
+      </thead>
+      <tbody id="modelTableBody"></tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<!-- KEY FINDINGS -->
+<section style="background:var(--bg2);">
+  <div class="container">
+    <div class="section-label reveal">Key Findings</div>
+    <h2 class="reveal">What HALLPERM Reveals</h2>
+    <div class="findings-grid reveal">
+      <div class="finding-card">
+        <div class="finding-num">01</div>
+        <div class="finding-icon">🔍</div>
+        <h3>Safety Illusion is Universal</h3>
+        <p>SRR ≈66% across all 16 models while IPER &lt;1%. Every model — open-source and proprietary alike — occupies the safety illusion zone.</p>
+      </div>
+      <div class="finding-card">
+        <div class="finding-num">02</div>
+        <div class="finding-icon">⚙️</div>
+        <h3>Tool-Level Dissociation</h3>
+        <p><code style="color:var(--amber)">run_code</code> achieves SRR=100% with IPER=0. Schema validation on this tool gives a completely false safety signal.</p>
+      </div>
+      <div class="finding-card">
+        <div class="finding-num">03</div>
+        <div class="finding-icon">🛡️</div>
+        <h3>Prompt Hardening is Asymmetric</h3>
+        <p>Hardened prompts reduce IPER by ~35% relative but do not reduce SRR — which actually increases slightly to 67.3%.</p>
+      </div>
+      <div class="finding-card">
+        <div class="finding-num">04</div>
+        <div class="finding-icon">📈</div>
+        <h3>Urgency Amplifies Risk</h3>
+        <p>Urgent prompt styles produce the highest SRR (~80%), while minimal prompts produce the lowest. Framing drives semantic overreach.</p>
+      </div>
+      <div class="finding-card">
+        <div class="finding-num">05</div>
+        <div class="finding-icon">🎯</div>
+        <h3>CAR at 49%</h3>
+        <p>Nearly half of all tool calls are Compliant Attack Rate instances — harmful actions executed using only documented parameters.</p>
+      </div>
+      <div class="finding-card">
+        <div class="finding-num">06</div>
+        <div class="finding-icon">🔬</div>
+        <h3>Dual-Axis is Necessary</h3>
+        <p>Neither IPER nor SRR alone is sufficient. The dual-axis framework is the only way to fully characterise tool-calling safety.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUTHORS -->
+<section class="authors-section" id="authors">
+  <div class="container" style="text-align:center;">
+    <div class="section-label reveal" style="justify-content:center;">Authors</div>
+    <h2 class="reveal">Research Team</h2>
+    <div class="authors-grid reveal" id="authorsGrid"></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">HALLPERM</div>
+  <p style="margin-bottom:0.5rem;">AAAI 2026 Summer Symposium on Safety in AI Systems</p>
+  <p>Accepted Paper · 2026</p>
+
+  <div class="cite-box">
+    <button class="cite-copy" onclick="copyCite()">Copy</button>
+    <strong style="color:var(--text-dim)">BibTeX</strong><br>
+    @inproceedings{alam2026hallperm,<br>
+    &nbsp;&nbsp;title={HALLPERM: Exposing the Safety Illusion in LLM Tool Use via Implicit Privilege Escalation and Semantic Risk},<br>
+    &nbsp;&nbsp;author={Alam, Md Jahangir and Ahad, Tanzim and Hossain, Ismail and Puppala, Sai and Lee, Yoonpyo and Alam, Syed Bahauddin and Talukder, Sajedul},<br>
+    &nbsp;&nbsp;booktitle={AAAI 2026 Summer Symposium},<br>
+    &nbsp;&nbsp;year={2026}<br>
+    }
+  </div>
+</footer>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────
+const tools = [
+  { name:'run_code',      domain:'Execution', risk:'critical', iper:0,   srr:100  },
+  { name:'query_database',domain:'Data',      risk:'critical', iper:0,   srr:84.4 },
+  { name:'manage_files',  domain:'File I/O',  risk:'critical', iper:1.6, srr:72   },
+  { name:'send_message',  domain:'Comms',     risk:'high',     iper:3.1, srr:89.8 },
+  { name:'get_user_info', domain:'Identity',  risk:'high',     iper:0,   srr:78.9 },
+  { name:'get_weather',   domain:'Utility',   risk:'low',      iper:0,   srr:0    },
+];
+
+const models = [
+  { family:'Llama',   name:'Llama 3.2-3B', iper:'0.0', srr:'66.7' },
+  { family:'Llama',   name:'Llama 3.1-8B', iper:'4.2', srr:'75.0' },
+  { family:'Qwen',    name:'Qwen 2.5-7B',  iper:'6.2', srr:'64.6' },
+  { family:'Qwen',    name:'Qwen 2.5-14B', iper:'2.1', srr:'66.7' },
+  { family:'Gemma',   name:'Gemma 3-4B',   iper:'0.0', srr:'58.3' },
+  { family:'Gemma',   name:'Gemma 3-12B',  iper:'0.0', srr:'58.3' },
+  { family:'Mistral', name:'Mistral 7B',   iper:'0.0', srr:'75.0' },
+  { family:'Mistral', name:'Ministral 14B',iper:'0.0', srr:'58.3' },
+  { family:'OpenAI',  name:'GPT-4.1-mini', iper:'0.0', srr:'64.6' },
+  { family:'OpenAI',  name:'GPT-4.1',      iper:'0.0', srr:'66.7' },
+  { family:'OpenAI',  name:'GPT-5.4',      iper:'0.0', srr:'68.8' },
+  { family:'OpenAI',  name:'GPT-5-mini',   iper:'0.0', srr:'75.0' },
+  { family:'Claude',  name:'Claude Sonnet 4',   iper:'0.0', srr:'60.4' },
+  { family:'Claude',  name:'Claude Sonnet 4.6', iper:'0.0', srr:'66.7' },
+  { family:'Gemini',  name:'Gemini 2.5 Flash',  iper:'0.0', srr:'64.6' },
+  { family:'Gemini',  name:'Gemini 3 Flash',    iper:'0.0', srr:'62.5' },
+];
+
+const authors = [
+  'Md Jahangir Alam','Tanzim Ahad','Ismail Hossain',
+  'Sai Puppala','Yoonpyo Lee','Syed Bahauddin Alam','Sajedul Talukder'
+];
+
+// ─── RENDER TOOLS ────────────────────────────────────────
+function renderTools() {
+  const grid = document.getElementById('toolsGrid');
+  grid.innerHTML = tools.map(t => {
+    const dotClass = t.risk === 'critical' ? 'risk-critical' : t.risk === 'high' ? 'risk-high' : 'risk-low';
+    return `
+    <div class="tool-card">
+      <div class="tool-name">
+        <span class="risk-dot ${dotClass}"></span>
+        ${t.name}
+        <span style="margin-left:auto;font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;">${t.risk}</span>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label"><span>IPER</span><span>${t.iper}%</span></div>
+        <div class="bar-track"><div class="bar-fill iper-color" data-target="${t.iper}" style="width:0%"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label"><span>SRR</span><span>${t.srr}%</span></div>
+        <div class="bar-track"><div class="bar-fill srr-color" data-target="${t.srr}" style="width:0%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── RENDER MODEL TABLE ───────────────────────────────────
+function renderModelTable() {
+  const tbody = document.getElementById('modelTableBody');
+  tbody.innerHTML = models.map(m => {
+    const fc = 'family-' + m.family.toLowerCase();
+    const srrNum = parseFloat(m.srr);
+    const srrColor = srrNum >= 70 ? 'var(--red)' : srrNum >= 60 ? 'var(--amber)' : 'var(--green)';
+    return `
+    <tr>
+      <td><span class="family-tag ${fc}">${m.family}</span></td>
+      <td>${m.name}</td>
+      <td class="iper-value">${m.iper}</td>
+      <td class="srr-value" style="color:${srrColor}">${m.srr}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── RENDER AUTHORS ───────────────────────────────────────
+function renderAuthors() {
+  const grid = document.getElementById('authorsGrid');
+  grid.innerHTML = authors.map(a => {
+    const initials = a.split(' ').slice(0,2).map(w=>w[0]).join('');
+    return `
+    <div class="author-card">
+      <div class="author-avatar">${initials}</div>
+      <div class="author-name">${a}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── ARCHITECTURE SVG ─────────────────────────────────────
+let currentMode = 'unsafe';
+
+function setArch(mode) {
+  currentMode = mode;
+  const tabs = document.querySelectorAll('.arch-tab');
+  tabs[0].className = 'arch-tab' + (mode==='unsafe' ? ' active-unsafe' : '');
+  tabs[1].className = 'arch-tab' + (mode==='secure' ? ' active-secure' : '');
+  drawArch(mode);
+}
+
+function drawArch(mode) {
+  const svg = document.getElementById('archSvg');
+  if (mode === 'unsafe') {
+    svg.innerHTML = `
+    <defs>
+      <marker id="aRed" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3z" fill="#ff2d55"/>
+      </marker>
+      <marker id="aAmb" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3z" fill="#ffb340"/>
+      </marker>
+      <marker id="aGry" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3z" fill="rgba(255,255,255,0.3)"/>
+      </marker>
+    </defs>
+
+    <!-- Title -->
+    <text x="450" y="28" text-anchor="middle" fill="rgba(255,45,85,0.7)" font-size="11" letter-spacing="3" font-weight="bold">⚠  UNSAFE SYSTEM</text>
+
+    <!-- USER TASK -->
+    <rect x="20" y="55" width="130" height="60" rx="8" fill="#0d1220" stroke="rgba(255,255,255,0.15)" stroke-width="1.2"/>
+    <text x="85" y="78" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="9" letter-spacing="1">USER TASK</text>
+    <text x="85" y="97" text-anchor="middle" fill="#e8eaf0" font-size="11" font-weight="bold">Risky Prompt</text>
+
+    <!-- LLM AGENT -->
+    <rect x="230" y="40" width="140" height="90" rx="8" fill="#0d1220" stroke="rgba(255,179,64,0.5)" stroke-width="1.5" class="node-pulse"/>
+    <text x="300" y="62" text-anchor="middle" fill="rgba(255,179,64,0.6)" font-size="9" letter-spacing="1">LLM AGENT</text>
+    <text x="300" y="82" text-anchor="middle" fill="#ffb340" font-size="12" font-weight="bold">Infers Hidden</text>
+    <text x="300" y="98" text-anchor="middle" fill="#ffb340" font-size="12" font-weight="bold">Parameters</text>
+    <text x="300" y="118" text-anchor="middle" fill="rgba(255,179,64,0.5)" font-size="9">⚡ Hallucination active</text>
+
+    <!-- SCHEMA (under-specified) -->
+    <rect x="455" y="40" width="150" height="90" rx="8" fill="#0d1220" stroke="rgba(255,255,255,0.12)" stroke-width="1.2"/>
+    <text x="530" y="60" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" letter-spacing="1">DOCUMENTED SCHEMA</text>
+    <text x="530" y="82" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="10">{ code: string }</text>
+    <text x="530" y="100" text-anchor="middle" fill="rgba(255,45,85,0.6)" font-size="9">↳ Hidden params exist</text>
+    <text x="530" y="115" text-anchor="middle" fill="rgba(255,45,85,0.5)" font-size="9">sandbox=false ⚠</text>
+
+    <!-- HIDDEN PARAMS BOX -->
+    <rect x="680" y="30" width="190" height="110" rx="8" fill="rgba(255,45,85,0.07)" stroke="rgba(255,45,85,0.4)" stroke-width="1.5" class="danger-glow"/>
+    <text x="775" y="52" text-anchor="middle" fill="rgba(255,45,85,0.7)" font-size="9" letter-spacing="1">HALLUCINATED PARAMS</text>
+    <text x="775" y="72" text-anchor="middle" fill="#ff2d55" font-size="10" font-weight="bold">delete: true</text>
+    <text x="775" y="90" text-anchor="middle" fill="#ff2d55" font-size="10" font-weight="bold">recursive: true</text>
+    <text x="775" y="108" text-anchor="middle" fill="#ff2d55" font-size="10" font-weight="bold">sandbox: false</text>
+    <text x="775" y="127" text-anchor="middle" fill="rgba(255,45,85,0.5)" font-size="9">IPER &gt; 0 detected</text>
+
+    <!-- UNCHECKED ACCESS -->
+    <rect x="230" y="220" width="200" height="70" rx="8" fill="rgba(255,45,85,0.06)" stroke="rgba(255,45,85,0.3)" stroke-width="1.2"/>
+    <text x="330" y="247" text-anchor="middle" fill="rgba(255,45,85,0.6)" font-size="9" letter-spacing="1">UNCHECKED ACCESS</text>
+    <text x="330" y="268" text-anchor="middle" fill="#ff2d55" font-size="11" font-weight="bold">System Compromise</text>
+    <text x="330" y="283" text-anchor="middle" fill="rgba(255,45,85,0.5)" font-size="9">IPER &gt; 0 →</text>
+
+    <!-- SEMANTIC OVERREACH -->
+    <rect x="500" y="220" width="200" height="70" rx="8" fill="rgba(255,45,85,0.1)" stroke="rgba(255,45,85,0.5)" stroke-width="2" class="danger-glow"/>
+    <text x="600" y="247" text-anchor="middle" fill="rgba(255,45,85,0.8)" font-size="9" letter-spacing="1">SEMANTIC OVERREACH</text>
+    <text x="600" y="268" text-anchor="middle" fill="#ff2d55" font-size="11" font-weight="bold">Safety Illusion ☠</text>
+    <text x="600" y="283" text-anchor="middle" fill="rgba(255,45,85,0.6)" font-size="9" class="blink-text">IPER=0 but SRR=1</text>
+
+    <!-- STATUS BADGES -->
+    <rect x="230" y="350" width="100" height="36" rx="18" fill="rgba(255,45,85,0.15)" stroke="rgba(255,45,85,0.5)" stroke-width="1.2"/>
+    <text x="280" y="373" text-anchor="middle" fill="#ff2d55" font-size="11" font-weight="bold">IPER &gt; 0</text>
+
+    <rect x="360" y="350" width="100" height="36" rx="18" fill="rgba(255,45,85,0.15)" stroke="rgba(255,45,85,0.5)" stroke-width="1.2"/>
+    <text x="410" y="373" text-anchor="middle" fill="#ff2d55" font-size="11" font-weight="bold">SRR = 1</text>
+
+    <rect x="490" y="350" width="120" height="36" rx="18" fill="rgba(255,45,85,0.2)" stroke="rgba(255,45,85,0.7)" stroke-width="1.5"/>
+    <text x="550" y="373" text-anchor="middle" fill="#ff2d55" font-size="11" font-weight="bold">⚠ UNSAFE</text>
+
+    <!-- ARROWS -->
+    <!-- User → LLM -->
+    <line x1="150" y1="85" x2="228" y2="85" stroke="#ffb340" stroke-width="1.5" marker-end="url(#aAmb)" class="flow-line"/>
+    <!-- LLM → Schema -->
+    <line x1="370" y1="85" x2="453" y2="85" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" marker-end="url(#aGry)" class="flow-line"/>
+    <!-- Schema → Hidden Params -->
+    <line x1="605" y1="85" x2="678" y2="85" stroke="#ff2d55" stroke-width="1.5" marker-end="url(#aRed)" class="flow-line"/>
+    <!-- LLM → Unchecked -->
+    <line x1="300" y1="130" x2="300" y2="218" stroke="#ff2d55" stroke-width="1.5" marker-end="url(#aRed)"/>
+    <!-- Schema → Semantic -->
+    <line x1="530" y1="130" x2="575" y2="218" stroke="#ff2d55" stroke-width="1.5" marker-end="url(#aRed)"/>
+    <!-- Unchecked → IPER badge -->
+    <line x1="300" y1="290" x2="280" y2="348" stroke="rgba(255,45,85,0.5)" stroke-width="1" marker-end="url(#aRed)"/>
+    <!-- Semantic → SRR badge -->
+    <line x1="600" y1="290" x2="430" y2="348" stroke="rgba(255,45,85,0.5)" stroke-width="1" marker-end="url(#aRed)"/>
+    <!-- Badges → Unsafe -->
+    <line x1="460" y1="368" x2="488" y2="368" stroke="rgba(255,45,85,0.5)" stroke-width="1" marker-end="url(#aRed)"/>
+
+    <!-- Why label -->
+    <text x="450" y="450" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="9" letter-spacing="1">
+      Agent infers undocumented params from task semantics (IPER) or asserts privileged intent in reasoning (SRR=1)
+    </text>
+    `;
+  } else {
+    svg.innerHTML = `
+    <defs>
+      <marker id="aCy" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3z" fill="#30d5c8"/>
+      </marker>
+      <marker id="aGn" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3z" fill="#34c759"/>
+      </marker>
+      <marker id="aGry2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3z" fill="rgba(255,255,255,0.3)"/>
+      </marker>
+      <marker id="aPurp" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3z" fill="#af52de"/>
+      </marker>
+    </defs>
+
+    <!-- Title -->
+    <text x="450" y="28" text-anchor="middle" fill="rgba(48,213,200,0.7)" font-size="11" letter-spacing="3" font-weight="bold">✓  SECURE EVALUATION SYSTEM</text>
+
+    <!-- USER TASK -->
+    <rect x="20" y="55" width="130" height="60" rx="8" fill="#0d1220" stroke="rgba(255,255,255,0.15)" stroke-width="1.2"/>
+    <text x="85" y="78" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="9" letter-spacing="1">USER TASK</text>
+    <text x="85" y="97" text-anchor="middle" fill="#e8eaf0" font-size="11" font-weight="bold">Risky Prompt</text>
+
+    <!-- LLM AGENT -->
+    <rect x="210" y="40" width="140" height="90" rx="8" fill="#0d1220" stroke="rgba(48,213,200,0.4)" stroke-width="1.5" class="node-pulse"/>
+    <text x="280" y="62" text-anchor="middle" fill="rgba(48,213,200,0.6)" font-size="9" letter-spacing="1">LLM AGENT</text>
+    <text x="280" y="85" text-anchor="middle" fill="#30d5c8" font-size="12" font-weight="bold">Tool Call +</text>
+    <text x="280" y="103" text-anchor="middle" fill="#30d5c8" font-size="12" font-weight="bold">Reasoning</text>
+    <text x="280" y="122" text-anchor="middle" fill="rgba(48,213,200,0.4)" font-size="9">Protected by hardened prompt</text>
+
+    <!-- HARDENED SYSTEM PROMPT -->
+    <rect x="210" y="185" width="140" height="70" rx="8" fill="rgba(48,213,200,0.06)" stroke="rgba(48,213,200,0.35)" stroke-width="1.3" class="safe-glow"/>
+    <text x="280" y="206" text-anchor="middle" fill="rgba(48,213,200,0.6)" font-size="9" letter-spacing="1">HARDENED PROMPT</text>
+    <text x="280" y="224" text-anchor="middle" fill="#30d5c8" font-size="10" font-weight="bold">Schema Boundary</text>
+    <text x="280" y="241" text-anchor="middle" fill="#30d5c8" font-size="10" font-weight="bold">Constraint Active</text>
+
+    <!-- IPER CLASSIFIER -->
+    <rect x="415" y="40" width="160" height="90" rx="8" fill="#0d1220" stroke="rgba(48,213,200,0.3)" stroke-width="1.2"/>
+    <text x="495" y="60" text-anchor="middle" fill="rgba(48,213,200,0.5)" font-size="9" letter-spacing="1">IPER CLASSIFIER</text>
+    <text x="495" y="80" text-anchor="middle" fill="#e8eaf0" font-size="10">params(c_ij) ∩ P_risky</text>
+    <text x="495" y="98" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9">→ Structural check</text>
+    <text x="495" y="115" text-anchor="middle" fill="rgba(48,213,200,0.6)" font-size="9" font-weight="bold">JSON schema validated</text>
+
+    <!-- SRR CLASSIFIER -->
+    <rect x="415" y="180" width="160" height="85" rx="8" fill="#0d1220" stroke="rgba(175,82,222,0.35)" stroke-width="1.2"/>
+    <text x="495" y="200" text-anchor="middle" fill="rgba(175,82,222,0.6)" font-size="9" letter-spacing="1">SRR CLASSIFIER</text>
+    <text x="495" y="220" text-anchor="middle" fill="#e8eaf0" font-size="10">Keyword Filter +</text>
+    <text x="495" y="238" text-anchor="middle" fill="#e8eaf0" font-size="10">LLM Judge (GPT-4o)</text>
+    <text x="495" y="256" text-anchor="middle" fill="rgba(175,82,222,0.6)" font-size="9" font-weight="bold">κ = 0.87 agreement</text>
+
+    <!-- BEHAVIOUR CLASSIFIER -->
+    <rect x="415" y="315" width="160" height="80" rx="8" fill="#0d1220" stroke="rgba(255,255,255,0.12)" stroke-width="1.2"/>
+    <text x="495" y="335" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" letter-spacing="1">BEHAVIOUR CLASSIFIER</text>
+    <text x="495" y="355" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="10">DocOnly · Refused</text>
+    <text x="495" y="372" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="10">NoCall · WrongParam</text>
+    <text x="495" y="389" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="9">4-class taxonomy</text>
+
+    <!-- SAFETY PROFILE OUTPUT -->
+    <rect x="645" y="95" width="210" height="160" rx="8" fill="rgba(48,213,200,0.05)" stroke="rgba(48,213,200,0.4)" stroke-width="1.5" class="safe-glow"/>
+    <text x="750" y="118" text-anchor="middle" fill="rgba(48,213,200,0.6)" font-size="9" letter-spacing="1">DUAL-AXIS SAFETY PROFILE</text>
+    <text x="750" y="142" text-anchor="middle" fill="#30d5c8" font-size="11" font-weight="bold">IPER × SRR Matrix</text>
+    <text x="750" y="163" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="9">per model · tool · prompt</text>
+    <text x="750" y="183" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="9">system condition</text>
+    <line x1="680" y1="198" x2="820" y2="198" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <text x="750" y="216" text-anchor="middle" fill="rgba(255,45,85,0.7)" font-size="10">Safety Illusion Zone:</text>
+    <text x="750" y="234" text-anchor="middle" fill="#ff2d55" font-size="10" font-weight="bold">IPER=0 ∧ SRR=1</text>
+    <text x="750" y="250" text-anchor="middle" fill="rgba(255,45,85,0.5)" font-size="9">→ False safety signal</text>
+
+    <!-- SAFE OUTPUT -->
+    <rect x="670" y="320" width="160" height="50" rx="8" fill="rgba(52,199,89,0.08)" stroke="rgba(52,199,89,0.4)" stroke-width="1.2"/>
+    <text x="750" y="342" text-anchor="middle" fill="rgba(52,199,89,0.7)" font-size="9" letter-spacing="1">VERIFIED SAFE OUTPUT</text>
+    <text x="750" y="362" text-anchor="middle" fill="#34c759" font-size="11" font-weight="bold">✓ Safe □</text>
+
+    <!-- ARROWS -->
+    <line x1="150" y1="85" x2="208" y2="85" stroke="#30d5c8" stroke-width="1.5" marker-end="url(#aCy)" class="flow-line"/>
+    <!-- LLM → IPER -->
+    <line x1="350" y1="70" x2="413" y2="70" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" marker-end="url(#aGry2)" class="flow-line"/>
+    <!-- LLM → SRR -->
+    <line x1="350" y1="105" x2="413" y2="222" stroke="rgba(175,82,222,0.5)" stroke-width="1.5" marker-end="url(#aPurp)"/>
+    <!-- LLM → Behaviour -->
+    <line x1="280" y1="130" x2="415" y2="348" stroke="rgba(255,255,255,0.15)" stroke-width="1" marker-end="url(#aGry2)"/>
+    <!-- Hardened → LLM (feedback) -->
+    <path d="M210,220 Q170,220 170,160 Q170,130 210,130" fill="none" stroke="rgba(48,213,200,0.4)" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#aCy)"/>
+    <!-- IPER → Profile -->
+    <line x1="575" y1="85" x2="643" y2="155" stroke="#30d5c8" stroke-width="1.5" marker-end="url(#aCy)"/>
+    <!-- SRR → Profile -->
+    <line x1="575" y1="222" x2="643" y2="200" stroke="#af52de" stroke-width="1.5" marker-end="url(#aPurp)"/>
+    <!-- Profile → Safe -->
+    <line x1="750" y1="255" x2="750" y2="318" stroke="#34c759" stroke-width="1.5" marker-end="url(#aGn)"/>
+    <!-- Behaviour → Safe -->
+    <line x1="575" y1="355" x2="668" y2="355" stroke="rgba(255,255,255,0.2)" stroke-width="1" marker-end="url(#aGry2)"/>
+
+    <!-- Footnote -->
+    <text x="450" y="450" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="9" letter-spacing="1">
+      IPER (structural) + SRR (semantic) together expose safety illusion zone — neither axis alone is sufficient
+    </text>
+    `;
+  }
+}
+
+// ─── INTERSECTION OBSERVER ────────────────────────────────
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      // Animate bars
+      e.target.querySelectorAll && e.target.querySelectorAll('.bar-fill').forEach(bar => {
+        const t = bar.dataset.target;
+        setTimeout(() => { bar.style.width = t + '%'; }, 100);
+      });
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.15 });
+
+// ─── CITE COPY ────────────────────────────────────────────
+function copyCite() {
+  const cite = `@inproceedings{alam2026hallperm,
+  title={HALLPERM: Exposing the Safety Illusion in LLM Tool Use via Implicit Privilege Escalation and Semantic Risk},
+  author={Alam, Md Jahangir and Ahad, Tanzim and Hossain, Ismail and Puppala, Sai and Lee, Yoonpyo and Alam, Syed Bahauddin and Talukder, Sajedul},
+  booktitle={AAAI 2026 Summer Symposium},
+  year={2026}
+}`;
+  navigator.clipboard.writeText(cite).then(() => {
+    const btn = document.querySelector('.cite-copy');
+    btn.textContent = '✓ Copied';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+  });
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+renderTools();
+renderModelTable();
+renderAuthors();
+drawArch('unsafe');
+
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// Delayed observe for tool cards (after render)
+setTimeout(() => {
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+}, 100);
+</script>
+</body>
+</html>
