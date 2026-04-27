@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Art of the Jailbreak — ACM CCS 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=JetBrains+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #0f1117;
+    --ink-light: #4a4f5e;
+    --ink-faint: #9099aa;
+    --red: #c0392b;
+    --red-light: #e74c3c;
+    --navy: #1a2240;
+    --navy-mid: #243060;
+    --blue: #2563eb;
+    --blue-light: #3b82f6;
+    --gold: #d97706;
+    --green: #059669;
+    --border: #e2e5ed;
+    --surface: #f7f8fa;
+    --surface2: #eef0f5;
+    --mono: 'JetBrains Mono', monospace;
+    --serif: 'Playfair Display', serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px;
+    height: 56px;
+  }
+  .nav-brand {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--red);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .nav-links { display: flex; gap: 32px; }
+  .nav-links a {
+    font-size: 13px; font-weight: 400;
+    color: var(--ink-light);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--ink); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 120px 80px 80px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: 0; right: 0;
+    width: 480px; height: 480px;
+    background: radial-gradient(circle, rgba(192,57,43,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .conference-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    color: var(--red); letter-spacing: 0.08em;
+    border: 1px solid rgba(192,57,43,0.3);
+    padding: 6px 14px; border-radius: 2px;
+    margin-bottom: 40px;
+    background: rgba(192,57,43,0.04);
+    width: fit-content;
+  }
+  .conference-badge::before {
+    content: '';
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--red);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--ink);
+    max-width: 900px;
+    margin-bottom: 32px;
+    letter-spacing: -0.01em;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--red);
+  }
+  .hero-sub {
+    font-size: 18px; font-weight: 300;
+    color: var(--ink-light);
+    max-width: 680px;
+    line-height: 1.7;
+    margin-bottom: 48px;
+  }
+  .hero-stats {
+    display: flex; gap: 48px; flex-wrap: wrap;
+    margin-bottom: 48px;
+  }
+  .stat {
+    display: flex; flex-direction: column;
+    border-left: 2px solid var(--red);
+    padding-left: 16px;
+  }
+  .stat-num {
+    font-family: var(--serif);
+    font-size: 36px; font-weight: 700;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 12px; font-weight: 400;
+    color: var(--ink-faint);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+  .hero-buttons { display: flex; gap: 16px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 24px;
+    font-family: var(--sans); font-size: 14px; font-weight: 500;
+    text-decoration: none;
+    border-radius: 2px;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+  }
+  .btn-primary { background: var(--navy); color: white; }
+  .btn-primary:hover { background: var(--navy-mid); transform: translateY(-1px); }
+  .btn-outline { background: white; color: var(--ink); border: 1px solid var(--border); }
+  .btn-outline:hover { border-color: var(--ink); transform: translateY(-1px); }
+
+  /* SECTIONS */
+  section { padding: 96px 80px; }
+  .section-label {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    color: var(--red); letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1; max-width: 40px;
+    height: 1px; background: var(--red);
+  }
+  h2 {
+    font-family: var(--serif);
+    font-size: clamp(28px, 3.5vw, 44px);
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--ink);
+    margin-bottom: 24px;
+    letter-spacing: -0.01em;
+  }
+  .section-intro {
+    font-size: 17px; color: var(--ink-light); font-weight: 300;
+    max-width: 680px; line-height: 1.8;
+    margin-bottom: 64px;
+  }
+
+  /* ABSTRACT */
+  .abstract-section { border-bottom: 1px solid var(--border); }
+  .abstract-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 64px;
+    align-items: start;
+  }
+  .abstract-text {
+    font-size: 16px; color: var(--ink-light); line-height: 1.85;
+  }
+  .abstract-text p { margin-bottom: 20px; }
+  .abstract-text p:last-child { margin-bottom: 0; }
+  .contributions { display: flex; flex-direction: column; gap: 24px; }
+  .contribution {
+    border: 1px solid var(--border);
+    padding: 28px;
+    border-radius: 4px;
+    position: relative;
+    background: white;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .contribution:hover { border-color: var(--red); transform: translateX(4px); }
+  .contrib-num {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    color: var(--red); letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+  .contrib-title {
+    font-family: var(--sans); font-weight: 500;
+    font-size: 15px; color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .contrib-desc {
+    font-size: 14px; color: var(--ink-light); line-height: 1.7;
+  }
+
+  /* ANIMATED ARCHITECTURE */
+  .arch-section { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .arch-canvas {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .arch-svg-wrap {
+    width: 100%;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    padding: 48px 32px;
+  }
+
+  /* PIPELINE ANIMATION */
+  .pipeline {
+    display: flex;
+    gap: 0;
+    position: relative;
+    align-items: stretch;
+    justify-content: center;
+    width: 100%;
+  }
+  .phase-block {
+    flex: 1;
+    background: white;
+    border: 1px solid var(--border);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .phase-block:not(:last-child) { border-right: none; }
+  .phase-header {
+    padding: 14px 20px;
+    font-family: var(--mono); font-size: 10px; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ph-1 .phase-header { background: var(--navy); color: white; }
+  .ph-2 .phase-header { background: var(--red); color: white; }
+  .phase-content { padding: 24px 20px; }
+
+  /* STEP NODES */
+  .steps-row {
+    display: flex; align-items: center; gap: 0;
+    width: 100%;
+  }
+  .step-node {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center;
+    position: relative;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .step-node.visible { opacity: 1; transform: translateY(0); }
+  .step-icon {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 2;
+  }
+  .step-label {
+    font-size: 11px; font-weight: 500;
+    color: var(--ink); text-align: center;
+    line-height: 1.4; max-width: 90px;
+  }
+  .step-sub {
+    font-size: 10px; color: var(--ink-faint); text-align: center;
+    font-family: var(--mono);
+    margin-top: 4px;
+  }
+  .arrow-connector {
+    width: 40px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    padding-bottom: 32px;
+  }
+  .arrow-line {
+    position: absolute;
+    height: 2px;
+    width: 0;
+    background: linear-gradient(90deg, var(--border), var(--ink-faint));
+    top: 50%; transform: translateY(-50%);
+    transition: width 0.4s ease;
+  }
+  .arrow-line.animated { width: 100%; }
+  .arrow-head {
+    position: absolute;
+    right: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 0; height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 7px solid var(--ink-faint);
+    opacity: 0;
+    transition: opacity 0.2s 0.4s;
+  }
+  .arrow-head.animated { opacity: 1; }
+
+  /* DATA FLOW PARTICLES */
+  .data-flow {
+    height: 40px; position: relative;
+    margin: 16px 0;
+    overflow: visible;
+  }
+  .particle {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    top: 50%; transform: translateY(-50%);
+    opacity: 0;
+    animation: flow-particle 3s ease-in-out infinite;
+  }
+  @keyframes flow-particle {
+    0% { left: 0; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { left: calc(100% - 8px); opacity: 0; }
+  }
+
+  /* OPTIMUS METER */
+  .optimus-meter {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    margin-top: 16px;
+  }
+  .meter-label {
+    font-family: var(--mono); font-size: 10px; color: var(--ink-faint);
+    margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .meter-bar {
+    height: 12px; border-radius: 6px;
+    background: linear-gradient(90deg, #3b82f6 0%, #10b981 28.3%, #f59e0b 47.1%, #ef4444 80%);
+    position: relative;
+  }
+  .meter-zones {
+    display: flex; margin-top: 6px;
+    font-family: var(--mono); font-size: 9px;
+  }
+  .mz { flex: 1; text-align: center; }
+  .mz.safe { color: #3b82f6; }
+  .mz.weak { color: #10b981; }
+  .mz.mod { color: #f59e0b; }
+  .mz.opt { color: #ef4444; }
+  .meter-pointer {
+    position: absolute;
+    top: -4px;
+    width: 3px; height: 20px;
+    background: var(--ink);
+    border-radius: 2px;
+    transition: left 2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* ANIMATED SYSTEM DIAGRAM (main animated figure) */
+  #arch-anim {
+    width: 100%;
+    display: block;
+    overflow: visible;
+  }
+
+  /* RESULTS */
+  .results-section { border-bottom: 1px solid var(--border); }
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 48px;
+  }
+  .result-card {
+    background: white;
+    padding: 32px 28px;
+  }
+  .rc-model {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 20px;
+  }
+  .rc-metric { margin-bottom: 16px; }
+  .rc-metric-label {
+    font-size: 12px; color: var(--ink-faint); margin-bottom: 6px;
+    display: flex; justify-content: space-between;
+  }
+  .rc-bar-bg {
+    height: 6px; background: var(--surface2); border-radius: 3px;
+    overflow: hidden;
+  }
+  .rc-bar {
+    height: 100%; border-radius: 3px;
+    width: 0;
+    transition: width 1.5s cubic-bezier(0.34, 1.2, 0.64, 1);
+  }
+  .rc-bar.green { background: var(--green); }
+  .rc-bar.blue { background: var(--blue); }
+  .rc-bar.red { background: var(--red); }
+  .rc-bar.gold { background: var(--gold); }
+
+  /* TABLE */
+  .results-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 14px;
+  }
+  .results-table th {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+    background: var(--surface);
+  }
+  .results-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink-light);
+    vertical-align: middle;
+  }
+  .results-table tr:hover td { background: var(--surface); }
+  .results-table .highlight { background: rgba(192,57,43,0.04); }
+  .results-table .highlight td { color: var(--ink); font-weight: 500; }
+  .badge {
+    display: inline-flex;
+    font-family: var(--mono); font-size: 10px; font-weight: 500;
+    padding: 3px 8px; border-radius: 2px;
+    letter-spacing: 0.04em;
+  }
+  .badge-red { background: rgba(192,57,43,0.1); color: var(--red); }
+  .badge-green { background: rgba(5,150,105,0.1); color: var(--green); }
+  .badge-blue { background: rgba(37,99,235,0.1); color: var(--blue); }
+
+  /* TAXONOMY */
+  .taxonomy-section { background: var(--surface); border-bottom: 1px solid var(--border); }
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .cat-card {
+    background: white;
+    border: 1px solid var(--border);
+    padding: 20px 16px;
+    border-radius: 4px;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.2s;
+  }
+  .cat-card.visible { opacity: 1; transform: translateY(0); }
+  .cat-card:hover { border-color: var(--red); }
+  .cat-id {
+    font-family: var(--mono); font-size: 10px; font-weight: 500;
+    color: var(--red); letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .cat-name { font-size: 13px; font-weight: 500; color: var(--ink); margin-bottom: 4px; }
+  .cat-kappa {
+    font-family: var(--mono); font-size: 11px; color: var(--ink-faint);
+  }
+  .kappa-dot {
+    display: inline-block;
+    width: 8px; height: 8px; border-radius: 50%;
+    margin-right: 4px;
+  }
+  .kappa-sub { background: #f59e0b; }
+  .kappa-mod { background: #3b82f6; }
+  .kappa-sub2 { background: #10b981; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 48px 80px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 24px;
+  }
+  .footer-left { display: flex; flex-direction: column; gap: 8px; }
+  .footer-title {
+    font-family: var(--serif); font-size: 18px; font-weight: 700;
+    color: var(--ink);
+  }
+  .footer-sub {
+    font-family: var(--mono); font-size: 11px; color: var(--ink-faint);
+    letter-spacing: 0.06em;
+  }
+  .footer-links { display: flex; gap: 24px; }
+  .footer-links a {
+    font-size: 13px; color: var(--ink-faint);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--ink); }
+
+  /* SCROLL REVEAL */
+  .reveal {
+    opacity: 0; transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 900px) {
+    section { padding: 64px 32px; }
+    .hero { padding: 100px 32px 64px; }
+    nav { padding: 0 24px; }
+    .abstract-grid { grid-template-columns: 1fr; gap: 40px; }
+    .results-grid { grid-template-columns: 1fr; }
+    footer { padding: 40px 32px; flex-direction: column; align-items: flex-start; }
+    .hero-stats { gap: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <!-- <span class="nav-brand">ACM CCS 2026</span> -->
+  <div class="nav-links">
+    <a href="#abstract">Abstract</a>
+    <a href="#architecture">System</a>
+    <a href="#results">Results</a>
+    <a href="#taxonomy">Taxonomy</a>
+    <!-- <a href="https://anonymous.4open.science/r/Optimus-C8B0" target="_blank">Code</a> -->
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <!-- <div class="conference-badge">ACM CCS 2026 &nbsp;·&nbsp; Under Review</div> -->
+  <h1>The Art of the <em>Jailbreak</em>:<br>Formulating Attacks Beyond Binary Scoring</h1>
+  <p class="hero-sub">
+    A unified framework for generating, categorizing, and continuously evaluating adversarial jailbreak prompts — grounded in cybersecurity taxonomy and the Optimus two-dimensional metric.
+  </p>
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-num" data-count="114000">0</span>
+      <span class="stat-label">Adversarial Prompts</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num" data-count="912">0</span>
+      <span class="stat-label">Jailbreak Strategies</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num" data-count="14">0</span>
+      <span class="stat-label">Attack Categories</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num" data-count="6">0</span>
+      <span class="stat-label">LLM Labelers</span>
+    </div>
+  </div>
+  <div class="hero-buttons">
+    <!-- <a href="https://anonymous.4open.science/r/Optimus-C8B0" target="_blank" class="btn btn-primary">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+      Anonymous Repository
+    </a> -->
+    <a href="#architecture" class="btn btn-outline">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+      View System Animation
+    </a>
+  </div>
+</section>
+
+<!-- ABSTRACT -->
+<section class="abstract-section" id="abstract">
+  <div class="section-label">Abstract</div>
+  <div class="abstract-grid">
+    <div class="abstract-text reveal">
+      <p>Jailbreak attacks — adversarial prompts that bypass LLM alignment through purely linguistic manipulation — pose a growing operational security threat, yet the field lacks large-scale, reproducible infrastructure for generating, categorizing, and evaluating them systematically.</p>
+      <p>This paper addresses that gap with three tightly integrated contributions: a 114,000-prompt cybersecurity-grounded compositional dataset, automated jailbreak generators via instruction fine-tuning, and <strong>Optimus</strong> — a two-dimensional, training-free metric J(S, H) that jointly captures semantic similarity and harmfulness probability.</p>
+      <p>Our generators achieve perplexity 24–39 versus 40–140 for AutoDAN and AmpleGCG, with safety-filter evasion rates of 0.29–0.51 (LlamaPromptGuard-2-86M). Optimus exposes a continuous "stealth-optimal" regime — (S* ≈ 0.57, H* ≈ 0.43) — that binary ASR entirely collapses.</p>
+    </div>
+    <div class="contributions reveal">
+      <div class="contribution">
+        <div class="contrib-num">CONTRIBUTION 01</div>
+        <div class="contrib-title">Large-Scale Compositional Dataset</div>
+        <div class="contrib-desc">912 in-the-wild strategies × 125 harmful seeds = 114k adversarial prompts, each labeled to one of 14 cybersecurity attack categories via six-model majority vote.</div>
+      </div>
+      <div class="contribution">
+        <div class="contrib-num">CONTRIBUTION 02</div>
+        <div class="contrib-title">Automated Jailbreak Generation</div>
+        <div class="contrib-desc">Category-aware generator LLMs instruction-fine-tuned on Optimus-filtered subsets — synthesizing fluent jailbreaks from a simple harmful seed with no templates or gradient search.</div>
+      </div>
+      <div class="contribution">
+        <div class="contrib-num">CONTRIBUTION 03</div>
+        <div class="contrib-title">Optimus: Two-Dimensional Metric</div>
+        <div class="contrib-desc">A continuous metric J(S,H) requiring no fine-tuning that exposes the stealth-optimal regime and provides per-category defender prioritization evidence binary ASR cannot supply.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SYSTEM ARCHITECTURE ANIMATION -->
+<section class="arch-section" id="architecture">
+  <div class="section-label">System Architecture</div>
+  <h2>Two-Phase Pipeline</h2>
+  <p class="section-intro">An animated walkthrough of how the system transforms raw jailbreak strategies and harmful seeds into fine-tuned generator models.</p>
+
+  <div class="arch-canvas">
+    <div class="arch-svg-wrap">
+      <svg id="arch-anim" viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#9099aa"/>
+          </marker>
+          <marker id="arr-red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#c0392b"/>
+          </marker>
+          <marker id="arr-white" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="white"/>
+          </marker>
+          <filter id="shadow" x="-5%" y="-5%" width="110%" height="120%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.06"/>
+          </filter>
+          <linearGradient id="optGrad" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stop-color="#3b82f6"/>
+            <stop offset="28%" stop-color="#10b981"/>
+            <stop offset="47%" stop-color="#f59e0b"/>
+            <stop offset="80%" stop-color="#ef4444"/>
+          </linearGradient>
+          <clipPath id="barClip">
+            <rect x="0" y="0" width="0" height="20" id="barClipRect"/>
+          </clipPath>
+        </defs>
+
+        <!-- PHASE BACKGROUNDS -->
+        <!-- Phase 1 box -->
+        <rect x="10" y="10" width="510" height="500" rx="4" fill="#1a2240" opacity="0" id="p1bg"/>
+        <rect x="10" y="10" width="510" height="40" rx="0" fill="#1a2240" id="p1header"/>
+        <text x="30" y="35" font-family="JetBrains Mono" font-size="11" fill="white" letter-spacing="1.5" opacity="0" id="p1label">PHASE 1: COMPOSITION &amp; SYNTHESIS</text>
+
+        <!-- Phase 2 box -->
+        <rect x="580" y="10" width="510" height="500" rx="4" fill="#c0392b" opacity="0" id="p2bg"/>
+        <rect x="580" y="10" width="510" height="40" rx="0" fill="#c0392b" id="p2header"/>
+        <text x="600" y="35" font-family="JetBrains Mono" font-size="11" fill="white" letter-spacing="1.5" opacity="0" id="p2label">PHASE 2: OPTIMUS SCORING CORE</text>
+
+        <!-- ============ PHASE 1 NODES ============ -->
+
+        <!-- WildJailbreak DB -->
+        <g id="n-wild" opacity="0" transform="translate(0,0)">
+          <rect x="22" y="65" width="110" height="70" rx="4" fill="white" stroke="#e2e5ed" stroke-width="1.5" filter="url(#shadow)"/>
+          <text x="77" y="90" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c0392b" letter-spacing="0.5">DATABASE</text>
+          <text x="77" y="106" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#0f1117">WildJailbreak</text>
+          <text x="77" y="120" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#9099aa">262K pairs</text>
+        </g>
+
+        <!-- JailBreakV DB -->
+        <g id="n-jbv" opacity="0">
+          <rect x="22" y="165" width="110" height="70" rx="4" fill="white" stroke="#e2e5ed" stroke-width="1.5" filter="url(#shadow)"/>
+          <text x="77" y="190" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c0392b" letter-spacing="0.5">DATABASE</text>
+          <text x="77" y="206" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#0f1117">JailBreakV-28K</text>
+          <text x="77" y="220" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#9099aa">125 seeds</text>
+        </g>
+
+        <!-- Strategy Extraction box -->
+        <g id="n-extract" opacity="0">
+          <rect x="170" y="65" width="130" height="170" rx="4" fill="white" stroke="#e2e5ed" stroke-width="1.5" filter="url(#shadow)"/>
+          <text x="235" y="92" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c0392b" letter-spacing="0.5">STEP 1</text>
+          <text x="235" y="110" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#0f1117">Strategy</text>
+          <text x="235" y="124" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#0f1117">Extraction</text>
+
+          <!-- mini strategy icons -->
+          <rect x="186" y="138" width="98" height="14" rx="2" fill="#f7f8fa" stroke="#e2e5ed"/>
+          <text x="235" y="149" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#4a4f5e">forceful language</text>
+          <rect x="186" y="158" width="98" height="14" rx="2" fill="#f7f8fa" stroke="#e2e5ed"/>
+          <text x="235" y="169" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#4a4f5e">deceptive framing</text>
+          <rect x="186" y="178" width="98" height="14" rx="2" fill="#f7f8fa" stroke="#e2e5ed"/>
+          <text x="235" y="189" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#4a4f5e">roleplay persona</text>
+          <text x="235" y="215" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#9099aa">912 strategies</text>
+          <text x="235" y="228" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#9099aa">extracted</text>
+        </g>
+
+        <!-- Composition box -->
+        <g id="n-compose" opacity="0">
+          <rect x="340" y="65" width="150" height="170" rx="4" fill="white" stroke="#e2e5ed" stroke-width="1.5" filter="url(#shadow)"/>
+          <text x="415" y="92" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c0392b" letter-spacing="0.5">STEP 2</text>
+          <text x="415" y="110" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#0f1117">Automated</text>
+          <text x="415" y="124" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#0f1117">Composition</text>
+
+          <!-- N x M grid -->
+          <g id="compose-grid">
+            <rect x="356" y="135" width="10" height="10" rx="1" fill="#dbeafe"/>
+            <rect x="370" y="135" width="10" height="10" rx="1" fill="#bfdbfe"/>
+            <rect x="384" y="135" width="10" height="10" rx="1" fill="#93c5fd"/>
+            <rect x="398" y="135" width="10" height="10" rx="1" fill="#60a5fa"/>
+            <rect x="412" y="135" width="10" height="10" rx="1" fill="#3b82f6"/>
+
+            <rect x="356" y="149" width="10" height="10" rx="1" fill="#dcfce7"/>
+            <rect x="370" y="149" width="10" height="10" rx="1" fill="#bbf7d0"/>
+            <rect x="384" y="149" width="10" height="10" rx="1" fill="#86efac"/>
+            <rect x="398" y="149" width="10" height="10" rx="1" fill="#4ade80"/>
+            <rect x="412" y="149" width="10" height="10" rx="1" fill="#22c55e"/>
+
+            <rect x="356" y="163" width="10" height="10" rx="1" fill="#fef9c3"/>
+            <rect x="370" y="163" width="10" height="10" rx="1" fill="#fef08a"/>
+            <rect x="384" y="163" width="10" height="10" rx="1" fill="#fde047"/>
+            <rect x="398" y="163" width="10" height="10" rx="1" fill="#facc15"/>
+            <rect x="412" y="163" width="10" height="10" rx="1" fill="#eab308"/>
+
+            <rect x="356" y="177" width="10" height="10" rx="1" fill="#fee2e2"/>
+            <rect x="370" y="177" width="10" height="10" rx="1" fill="#fecaca"/>
+            <rect x="384" y="177" width="10" height="10" rx="1" fill="#fca5a5"/>
+            <rect x="398" y="177" width="10" height="10" rx="1" fill="#f87171"/>
+            <rect x="412" y="177" width="10" height="10" rx="1" fill="#ef4444"/>
+          </g>
+
+          <text x="415" y="208" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c0392b" font-weight="500">N × M Grid</text>
+
+          <rect x="356" y="214" width="118" height="18" rx="3" fill="#c0392b"/>
+          <text x="415" y="226" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="white" letter-spacing="0.5">114,000 PROMPTS</text>
+        </g>
+
+        <!-- Arrow: wild -> extract -->
+        <line id="a-wild-ext" x1="132" y1="100" x2="168" y2="130" stroke="#9099aa" stroke-width="1.5" stroke-dasharray="4" opacity="0" marker-end="url(#arr)"/>
+        <!-- Arrow: jbv -> extract -->
+        <line id="a-jbv-ext" x1="132" y1="200" x2="168" y2="175" stroke="#9099aa" stroke-width="1.5" stroke-dasharray="4" opacity="0" marker-end="url(#arr)"/>
+        <!-- Arrow: extract -> compose -->
+        <line id="a-ext-comp" x1="300" y1="150" x2="338" y2="150" stroke="#9099aa" stroke-width="1.5" opacity="0" marker-end="url(#arr)"/>
+
+        <!-- 14-category badge area -->
+        <g id="n-cats" opacity="0">
+          <rect x="22" y="280" width="468" height="210" rx="4" fill="white" stroke="#e2e5ed" stroke-width="1.5" filter="url(#shadow)"/>
+          <text x="40" y="304" font-family="JetBrains Mono" font-size="9" fill="#c0392b" letter-spacing="0.5">STEP 3 — SEED CATEGORIZATION (6-LLM MAJORITY VOTE)</text>
+
+          <!-- Category chips -->
+          <g font-family="JetBrains Mono" font-size="8.5">
+            <rect x="35" y="315" width="100" height="18" rx="9" fill="#fee2e2"/>
+            <text x="85" y="327" text-anchor="middle" fill="#c0392b">A1 Backdoor</text>
+
+            <rect x="143" y="315" width="100" height="18" rx="9" fill="#dbeafe"/>
+            <text x="193" y="327" text-anchor="middle" fill="#2563eb">A2 Data Exfil</text>
+
+            <rect x="251" y="315" width="100" height="18" rx="9" fill="#dcfce7"/>
+            <text x="301" y="327" text-anchor="middle" fill="#059669">A3 DoS</text>
+
+            <rect x="359" y="315" width="100" height="18" rx="9" fill="#fef9c3"/>
+            <text x="409" y="327" text-anchor="middle" fill="#d97706">A4 Exploit Kit</text>
+
+            <rect x="35" y="341" width="100" height="18" rx="9" fill="#ede9fe"/>
+            <text x="85" y="353" text-anchor="middle" fill="#7c3aed">A5 Fileless</text>
+
+            <rect x="143" y="341" width="100" height="18" rx="9" fill="#fee2e2"/>
+            <text x="193" y="353" text-anchor="middle" fill="#c0392b">A6 Keylogging</text>
+
+            <rect x="251" y="341" width="100" height="18" rx="9" fill="#dbeafe"/>
+            <text x="301" y="353" text-anchor="middle" fill="#2563eb">A7 Malware</text>
+
+            <rect x="359" y="341" width="100" height="18" rx="9" fill="#dcfce7"/>
+            <text x="409" y="353" text-anchor="middle" fill="#059669">A8 Phishing</text>
+
+            <rect x="35" y="367" width="110" height="18" rx="9" fill="#fef9c3"/>
+            <text x="90" y="379" text-anchor="middle" fill="#d97706">A9 Social Eng</text>
+
+            <rect x="153" y="367" width="110" height="18" rx="9" fill="#ede9fe"/>
+            <text x="208" y="379" text-anchor="middle" fill="#7c3aed">A10 Pwd Crack</text>
+
+            <rect x="271" y="367" width="110" height="18" rx="9" fill="#fee2e2"/>
+            <text x="326" y="379" text-anchor="middle" fill="#c0392b">A11 Priv Escal</text>
+
+            <rect x="35" y="393" width="100" height="18" rx="9" fill="#dbeafe"/>
+            <text x="85" y="405" text-anchor="middle" fill="#2563eb">A12 RCE</text>
+
+            <rect x="143" y="393" width="110" height="18" rx="9" fill="#dcfce7"/>
+            <text x="198" y="405" text-anchor="middle" fill="#059669">A13 USB Attack</text>
+
+            <rect x="261" y="393" width="70" height="18" rx="9" fill="#f3f4f6"/>
+            <text x="296" y="405" text-anchor="middle" fill="#6b7280">A14 Other</text>
+          </g>
+
+          <!-- vote bar -->
+          <text x="40" y="432" font-family="JetBrains Mono" font-size="9" fill="#9099aa">Majority Vote Agreement (6 LLMs)</text>
+          <rect x="40" y="440" width="430" height="8" rx="4" fill="#f7f8fa"/>
+          <rect x="40" y="440" width="0" height="8" rx="4" fill="url(#optGrad)" id="vote-bar"/>
+        </g>
+
+        <!-- PHASE DIVIDER ARROW -->
+        <g id="phase-arrow" opacity="0">
+          <line x1="525" y1="260" x2="575" y2="260" stroke="#9099aa" stroke-width="2" marker-end="url(#arr)"/>
+          <text x="550" y="250" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#9099aa">PIPELINE</text>
+        </g>
+
+        <!-- ============ PHASE 2 NODES ============ -->
+
+        <!-- Optimus function -->
+        <g id="n-optimus" opacity="0">
+          <rect x="592" y="65" width="200" height="190" rx="4" fill="white" stroke="#e2e5ed" stroke-width="1.5" filter="url(#shadow)"/>
+          <text x="692" y="92" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c0392b" letter-spacing="0.5">STEP 4 — OPTIMUS</text>
+
+          <!-- Formula display -->
+          <rect x="604" y="100" width="176" height="50" rx="3" fill="#0f1117"/>
+          <text x="692" y="120" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#60a5fa">J(S, H) =</text>
+          <text x="692" y="134" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#4ade80">Base(S,H) · P_S(S) · P_H(H)</text>
+
+          <!-- Score gradient bar -->
+          <text x="604" y="172" font-family="JetBrains Mono" font-size="8" fill="#9099aa">Score Range</text>
+          <rect x="604" y="178" width="176" height="12" rx="6" fill="url(#optGrad)"/>
+
+          <!-- Zone labels -->
+          <text x="622" y="204" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#3b82f6">Safe</text>
+          <text x="648" y="204" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#10b981">Weak</text>
+          <text x="672" y="204" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#f59e0b">Mod</text>
+          <text x="700" y="204" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#ef4444">Optimal</text>
+
+          <!-- Animated pointer -->
+          <rect x="604" y="176" width="3" height="16" rx="1" fill="#0f1117" id="meter-ptr" opacity="0"/>
+
+          <text x="692" y="230" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#9099aa">Stealth-optimal:</text>
+          <text x="692" y="244" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c0392b" font-weight="500">S* ≈ 0.57 · H* ≈ 0.43</text>
+        </g>
+
+        <!-- Strategy selection -->
+        <g id="n-stratsel" opacity="0">
+          <rect x="808" y="65" width="165" height="130" rx="4" fill="white" stroke="#e2e5ed" stroke-width="1.5" filter="url(#shadow)"/>
+          <text x="890" y="90" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c0392b" letter-spacing="0.5">STEP 5</text>
+          <text x="890" y="107" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#0f1117">Optimal Strategy</text>
+          <text x="890" y="121" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#0f1117">Selection</text>
+
+          <!-- strategy rank rows -->
+          <g font-family="JetBrains Mono" font-size="8">
+            <rect x="820" y="130" width="141" height="10" rx="2" fill="#c0392b" opacity="0.8"/>
+            <text x="826" y="139" fill="white">S1 — roleplay persona     ●●●</text>
+            <rect x="820" y="144" width="115" height="10" rx="2" fill="#c0392b" opacity="0.55"/>
+            <text x="826" y="153" fill="white">S2 — forceful language  ●●○</text>
+            <rect x="820" y="158" width="90" height="10" rx="2" fill="#c0392b" opacity="0.35"/>
+            <text x="826" y="167" fill="#c0392b">S3 — deceptive framing ●○○</text>
+          </g>
+        </g>
+
+        <!-- Fine tuning box -->
+        <g id="n-ft" opacity="0">
+          <rect x="808" y="218" width="165" height="130" rx="4" fill="white" stroke="#e2e5ed" stroke-width="1.5" filter="url(#shadow)"/>
+          <text x="890" y="242" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c0392b" letter-spacing="0.5">STEP 6</text>
+          <text x="890" y="260" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#0f1117">Instruction</text>
+          <text x="890" y="274" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#0f1117">Fine-Tuning</text>
+
+          <!-- model chips -->
+          <rect x="820" y="285" width="60" height="16" rx="3" fill="#1a2240"/>
+          <text x="850" y="296" text-anchor="middle" font-family="JetBrains Mono" font-size="7.5" fill="white">Llama-3</text>
+          <rect x="886" y="285" width="52" height="16" rx="3" fill="#1a2240"/>
+          <text x="912" y="296" text-anchor="middle" font-family="JetBrains Mono" font-size="7.5" fill="white">Tulu-3</text>
+
+          <rect x="820" y="306" width="57" height="16" rx="3" fill="#1a2240"/>
+          <text x="848" y="317" text-anchor="middle" font-family="JetBrains Mono" font-size="7.5" fill="white">Vicuna-7B</text>
+
+          <text x="890" y="340" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#9099aa">LoRA · DoRA · 24k samples</text>
+        </g>
+
+        <!-- LLM output -->
+        <g id="n-llm" opacity="0">
+          <rect x="808" y="365" width="165" height="115" rx="4" fill="#1a2240" filter="url(#shadow)"/>
+          <text x="890" y="390" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="rgba(255,255,255,0.6)" letter-spacing="0.5">OUTPUT</text>
+          <text x="890" y="410" text-anchor="middle" font-family="DM Sans" font-size="12" font-weight="600" fill="white">Jailbreak</text>
+          <text x="890" y="426" text-anchor="middle" font-family="DM Sans" font-size="12" font-weight="600" fill="white">Generator LLM</text>
+
+          <text x="890" y="450" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#60a5fa">PPL: 24–39</text>
+          <text x="890" y="464" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#4ade80">ASR: 0.84–0.98</text>
+        </g>
+
+        <!-- Tiering box -->
+        <g id="n-tier" opacity="0">
+          <rect x="592" y="280" width="200" height="210" rx="4" fill="white" stroke="#e2e5ed" stroke-width="1.5" filter="url(#shadow)"/>
+          <text x="692" y="303" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c0392b" letter-spacing="0.5">DATA TIERING</text>
+
+          <rect x="604" y="313" width="176" height="20" rx="3" fill="#3b82f6" opacity="0.2"/>
+          <text x="692" y="327" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#3b82f6">Safe  &lt; 0.212</text>
+
+          <rect x="604" y="337" width="176" height="20" rx="3" fill="#10b981" opacity="0.2"/>
+          <text x="692" y="351" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#10b981">Weak  0.212 – 0.283</text>
+
+          <rect x="604" y="361" width="176" height="24" rx="3" fill="#f59e0b" opacity="0.3"/>
+          <text x="692" y="377" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#d97706">Moderate  0.283 – 0.377  ✓</text>
+
+          <rect x="604" y="389" width="176" height="24" rx="3" fill="#ef4444" opacity="0.3"/>
+          <text x="692" y="405" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#c0392b">Optimal  0.377 – 0.471  ✓</text>
+
+          <text x="692" y="440" text-anchor="middle" font-family="DM Sans" font-size="10" fill="#9099aa">24,220 selected for</text>
+          <text x="692" y="455" text-anchor="middle" font-family="DM Sans" font-size="10" fill="#9099aa">fine-tuning (Mod + Opt)</text>
+
+          <rect x="622" y="462" width="140" height="18" rx="3" fill="#1a2240"/>
+          <text x="692" y="474" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="white" letter-spacing="0.5">80% TRAIN · 10% VAL · 10% TEST</text>
+        </g>
+
+        <!-- Phase 2 internal arrows -->
+        <line id="a-opt-tier" x1="792" y1="185" x2="808" y2="120" stroke="#9099aa" stroke-width="1.5" stroke-dasharray="4" opacity="0" marker-end="url(#arr)"/>
+        <line id="a-tier-ft" x1="692" y1="490" x2="808" y2="280" stroke="#9099aa" stroke-width="1.5" stroke-dasharray="4" opacity="0" marker-end="url(#arr)"/>
+        <line id="a-strat-ft" x1="890" y1="196" x2="890" y2="216" stroke="#9099aa" stroke-width="1.5" opacity="0" marker-end="url(#arr)"/>
+        <line id="a-ft-llm" x1="890" y1="349" x2="890" y2="363" stroke="#9099aa" stroke-width="1.5" opacity="0" marker-end="url(#arr)"/>
+
+        <!-- Animated particles (data flowing) -->
+        <g id="particles">
+          <circle cx="0" cy="100" r="4" fill="#3b82f6" opacity="0" id="p1"/>
+          <circle cx="0" cy="200" r="4" fill="#10b981" opacity="0" id="p2"/>
+          <circle cx="0" cy="150" r="4" fill="#f59e0b" opacity="0" id="p3"/>
+          <circle cx="0" cy="260" r="4" fill="#ef4444" opacity="0" id="p4"/>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Legend -->
+    <div style="display:flex; gap:32px; margin-top:24px; flex-wrap:wrap; justify-content:center;" class="reveal">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#4a4f5e;">
+        <span style="width:12px;height:12px;border-radius:2px;background:#1a2240;display:inline-block;"></span>Phase 1: Composition
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#4a4f5e;">
+        <span style="width:12px;height:12px;border-radius:2px;background:#c0392b;display:inline-block;"></span>Phase 2: Optimus Scoring
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#4a4f5e;">
+        <span style="width:28px;height:2px;background:repeating-linear-gradient(90deg,#9099aa 0,#9099aa 4px,transparent 4px,transparent 8px);display:inline-block;"></span>Data Flow
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#4a4f5e;">
+        <span style="width:24px;height:8px;background:linear-gradient(90deg,#3b82f6,#f59e0b,#ef4444);border-radius:4px;display:inline-block;"></span>Optimus Score Range
+      </div>
+    </div>
+
+    <!-- replay button -->
+    <div style="text-align:center;margin-top:24px;">
+      <button onclick="runAnimation()" class="btn btn-outline" style="font-size:13px;">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+        Replay Animation
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section class="results-section" id="results">
+  <div class="section-label">Results</div>
+  <h2>Evaluation Results</h2>
+  <p class="section-intro">Our compositional fine-tuned models outperform token-level baselines across fluency, safety-evasion, and adversarial quality while operating in the stealth-optimal Optimus regime.</p>
+
+  <div class="results-grid reveal">
+    <div class="result-card">
+      <div class="rc-model">Llama-3 (Ours)</div>
+      <div class="rc-metric">
+        <div class="rc-metric-label"><span>ASR</span><span>0.84</span></div>
+        <div class="rc-bar-bg"><div class="rc-bar green" data-w="84"></div></div>
+      </div>
+      <div class="rc-metric">
+        <div class="rc-metric-label"><span>PPL (lower = better)</span><span>24.3</span></div>
+        <div class="rc-bar-bg"><div class="rc-bar blue" data-w="17"></div></div>
+      </div>
+      <div class="rc-metric">
+        <div class="rc-metric-label"><span>LlamaPG-86M Mal.</span><span>0.51</span></div>
+        <div class="rc-bar-bg"><div class="rc-bar gold" data-w="51"></div></div>
+      </div>
+    </div>
+    <div class="result-card">
+      <div class="rc-model">Tulu-3 (Ours)</div>
+      <div class="rc-metric">
+        <div class="rc-metric-label"><span>ASR</span><span>0.98</span></div>
+        <div class="rc-bar-bg"><div class="rc-bar green" data-w="98"></div></div>
+      </div>
+      <div class="rc-metric">
+        <div class="rc-metric-label"><span>PPL (lower = better)</span><span>38.7</span></div>
+        <div class="rc-bar-bg"><div class="rc-bar blue" data-w="27"></div></div>
+      </div>
+      <div class="rc-metric">
+        <div class="rc-metric-label"><span>LlamaPG-86M Mal.</span><span>0.90</span></div>
+        <div class="rc-bar-bg"><div class="rc-bar gold" data-w="90"></div></div>
+      </div>
+    </div>
+    <div class="result-card">
+      <div class="rc-model">AutoDAN (Baseline)</div>
+      <div class="rc-metric">
+        <div class="rc-metric-label"><span>ASR</span><span>0.99</span></div>
+        <div class="rc-bar-bg"><div class="rc-bar red" data-w="99"></div></div>
+      </div>
+      <div class="rc-metric">
+        <div class="rc-metric-label"><span>PPL (lower = better)</span><span>104.6</span></div>
+        <div class="rc-bar-bg"><div class="rc-bar red" data-w="75"></div></div>
+      </div>
+      <div class="rc-metric">
+        <div class="rc-metric-label"><span>LlamaPG-86M Mal.</span><span>0.98</span></div>
+        <div class="rc-bar-bg"><div class="rc-bar red" data-w="98"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <table class="results-table reveal">
+    <thead>
+      <tr>
+        <th>Method</th><th>Model</th><th>ASR ↑</th><th>PPL ↓</th><th>StrongReject ↑</th><th>HarmBench %</th><th>LPG-86M</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="highlight">
+        <td><span class="badge badge-red">OURS</span></td>
+        <td>Llama-3</td><td>0.84</td><td>24.3</td><td>0.22</td><td>40.3%</td>
+        <td><span class="badge badge-blue">0.51 Mal</span></td>
+      </tr>
+      <tr class="highlight">
+        <td><span class="badge badge-red">OURS</span></td>
+        <td>Tulu-3</td><td>0.98</td><td>38.7</td><td>0.21</td><td>46.4%</td>
+        <td><span class="badge badge-blue">0.90 Mal</span></td>
+      </tr>
+      <tr>
+        <td>AutoDAN</td><td>Vicuna-7B</td><td>0.99</td><td>104.6</td><td>0.15</td><td>43.3%</td>
+        <td><span class="badge badge-red">0.98 Mal</span></td>
+      </tr>
+      <tr>
+        <td>AutoDAN</td><td>Llama-2</td><td>0.38</td><td>141.5</td><td>0.12</td><td>29.3%</td>
+        <td><span class="badge badge-red">0.92 Mal</span></td>
+      </tr>
+      <tr>
+        <td>AmpleGCG</td><td>Vicuna-7B</td><td>0.15</td><td>43.0</td><td>0.11</td><td>13.7%</td>
+        <td><span class="badge badge-red">1.00 Mal</span></td>
+      </tr>
+      <tr>
+        <td>PAIR</td><td>—</td><td>—</td><td>43.6</td><td>—</td><td>—</td>
+        <td><span class="badge badge-green">0.64 Ben</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- TAXONOMY -->
+<section class="taxonomy-section" id="taxonomy">
+  <div class="section-label">Attack Taxonomy</div>
+  <h2>14 Cybersecurity Attack Categories</h2>
+  <p class="section-intro">Every prompt in our dataset maps to one of 14 categories grounded in established cybersecurity taxonomies — including MITRE ATT&CK tactics T1059, T1068, T1110, T1566, and T1041.</p>
+
+  <div class="categories-grid">
+    <div class="cat-card"><div class="cat-id">A1</div><div class="cat-name">Backdoor Implantation</div><div class="cat-kappa"><span class="kappa-dot kappa-sub2"></span>κ = 0.80 Substantial</div></div>
+    <div class="cat-card"><div class="cat-id">A2</div><div class="cat-name">Data Exfiltration</div><div class="cat-kappa"><span class="kappa-dot kappa-mod"></span>κ = 0.58 Moderate</div></div>
+    <div class="cat-card"><div class="cat-id">A3</div><div class="cat-name">Denial of Service</div><div class="cat-kappa"><span class="kappa-dot kappa-sub2"></span>κ = 0.75 Substantial</div></div>
+    <div class="cat-card"><div class="cat-id">A4</div><div class="cat-name">Exploit Kit Delivery</div><div class="cat-kappa"><span class="kappa-dot kappa-mod"></span>κ = 0.48 Moderate</div></div>
+    <div class="cat-card"><div class="cat-id">A5</div><div class="cat-name">Fileless Attack</div><div class="cat-kappa"><span class="kappa-dot kappa-sub"></span>κ = N/A</div></div>
+    <div class="cat-card"><div class="cat-id">A6</div><div class="cat-name">Keylogging</div><div class="cat-kappa"><span class="kappa-dot kappa-sub2"></span>κ = 0.80 Substantial</div></div>
+    <div class="cat-card"><div class="cat-id">A7</div><div class="cat-name">Malware</div><div class="cat-kappa"><span class="kappa-dot kappa-sub"></span>κ = 0.37 Fair</div></div>
+    <div class="cat-card"><div class="cat-id">A8</div><div class="cat-name">Phishing</div><div class="cat-kappa"><span class="kappa-dot kappa-sub2"></span>κ = 0.68 Substantial</div></div>
+    <div class="cat-card"><div class="cat-id">A9</div><div class="cat-name">Social Engineering</div><div class="cat-kappa"><span class="kappa-dot kappa-mod"></span>κ = 0.60 Moderate</div></div>
+    <div class="cat-card"><div class="cat-id">A10</div><div class="cat-name">Password Cracking</div><div class="cat-kappa"><span class="kappa-dot kappa-sub2"></span>κ = 0.80 Substantial</div></div>
+    <div class="cat-card"><div class="cat-id">A11</div><div class="cat-name">Privilege Escalation</div><div class="cat-kappa"><span class="kappa-dot kappa-mod"></span>κ = 0.60 Moderate</div></div>
+    <div class="cat-card"><div class="cat-id">A12</div><div class="cat-name">Remote Code Execution</div><div class="cat-kappa"><span class="kappa-dot kappa-sub2"></span>κ = 0.65 Substantial</div></div>
+    <div class="cat-card"><div class="cat-id">A13</div><div class="cat-name">USB Based Attack</div><div class="cat-kappa"><span class="kappa-dot kappa-sub2"></span>κ = 0.65 Substantial</div></div>
+    <div class="cat-card"><div class="cat-id">A14</div><div class="cat-name">Other</div><div class="cat-kappa"><span class="kappa-dot kappa-mod"></span>κ = 0.58 Moderate</div></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    <div class="footer-title">The Art of the Jailbreak</div>
+    <!-- <div class="footer-sub">ACM CCS 2026 — ANONYMOUS SUBMISSION</div> -->
+  </div>
+  <div class="footer-links">
+    <!-- <a href="https://anonymous.4open.science/r/Optimus-C8B0" target="_blank">Anonymous Repository</a> -->
+    <a href="#abstract">Abstract</a>
+    <a href="#architecture">System</a>
+    <a href="#results">Results</a>
+  </div>
+</footer>
+
+<script>
+// ---- Counter animation ----
+function animateCounter(el, target, suffix='') {
+  const duration = 1800;
+  const start = performance.now();
+  const step = (now) => {
+    const t = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - t, 3);
+    const val = Math.floor(ease * target);
+    el.textContent = val.toLocaleString() + suffix;
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+// ---- Scroll reveal ----
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      // bars
+      e.target.querySelectorAll('.rc-bar[data-w]').forEach(bar => {
+        setTimeout(() => { bar.style.width = bar.dataset.w + '%'; }, 200);
+      });
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.reveal, .cat-card, .step-node').forEach(el => observer.observe(el));
+
+// Counter trigger
+const heroObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      document.querySelectorAll('[data-count]').forEach(el => {
+        animateCounter(el, parseInt(el.dataset.count));
+      });
+      heroObserver.disconnect();
+    }
+  });
+}, { threshold: 0.3 });
+heroObserver.observe(document.querySelector('.hero-stats'));
+
+// Cat card stagger
+const catObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      document.querySelectorAll('.cat-card').forEach((card, i) => {
+        setTimeout(() => card.classList.add('visible'), i * 50);
+      });
+      catObserver.disconnect();
+    }
+  });
+}, { threshold: 0.1 });
+catObserver.observe(document.querySelector('.categories-grid'));
+
+// ---- MAIN ANIMATION ----
+let animRunning = false;
+
+function setOpacity(id, val, delay=0) {
+  return new Promise(res => {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.transition = 'opacity 0.5s ease';
+        el.setAttribute('opacity', val);
+      }
+      res();
+    }, delay);
+  });
+}
+
+function fadeIn(id, delay=0) { return setOpacity(id, 1, delay); }
+
+function resetAnimation() {
+  ['p1bg','p1label','p2bg','p2label',
+   'n-wild','n-jbv','n-extract','n-compose',
+   'a-wild-ext','a-jbv-ext','a-ext-comp',
+   'n-cats','phase-arrow',
+   'n-optimus','n-stratsel','n-ft','n-llm','n-tier',
+   'a-opt-tier','a-tier-ft','a-strat-ft','a-ft-llm',
+   'meter-ptr'
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.setAttribute('opacity', 0); el.style.transition = ''; }
+  });
+  // reset vote bar
+  const vb = document.getElementById('vote-bar');
+  if (vb) vb.setAttribute('width', 0);
+}
+
+async function runAnimation() {
+  if (animRunning) return;
+  animRunning = true;
+  resetAnimation();
+  await new Promise(r => setTimeout(r, 200));
+
+  // Phase 1 header
+  await fadeIn('p1label', 0);
+  await fadeIn('p2label', 0);
+
+  // Sources appear
+  await fadeIn('n-wild', 300);
+  await fadeIn('n-jbv', 500);
+
+  // Arrows to extraction
+  await fadeIn('a-wild-ext', 800);
+  await fadeIn('a-jbv-ext', 900);
+
+  // Extraction
+  await fadeIn('n-extract', 1100);
+
+  // Arrow to compose
+  await fadeIn('a-ext-comp', 1600);
+
+  // Composition grid
+  await fadeIn('n-compose', 1900);
+
+  // Categories
+  await fadeIn('n-cats', 2600);
+
+  // Vote bar animation
+  await new Promise(r => setTimeout(r, 2800));
+  const vb = document.getElementById('vote-bar');
+  if (vb) {
+    vb.style.transition = 'width 1.5s ease';
+    vb.setAttribute('width', 430);
+  }
+
+  // Phase arrow
+  await fadeIn('phase-arrow', 4000);
+
+  // Phase 2
+  await fadeIn('n-optimus', 4400);
+
+  // Meter pointer sweep
+  await new Promise(r => setTimeout(r, 4600));
+  const ptr = document.getElementById('meter-ptr');
+  if (ptr) {
+    ptr.setAttribute('opacity', 1);
+    // sweep from 0 to stealth-optimal ~57%
+    ptr.style.transition = 'x 2s cubic-bezier(0.34,1.2,0.64,1)';
+    ptr.setAttribute('x', 604 + 176 * 0.57 - 1.5);
+  }
+
+  await fadeIn('a-opt-tier', 5200);
+  await fadeIn('n-stratsel', 5500);
+
+  await fadeIn('n-tier', 5800);
+  await fadeIn('a-tier-ft', 6500);
+
+  await fadeIn('a-strat-ft', 6600);
+  await fadeIn('n-ft', 6900);
+
+  await fadeIn('a-ft-llm', 7600);
+  await fadeIn('n-llm', 7900);
+
+  animRunning = false;
+}
+
+// Auto-trigger when section enters view
+const archObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      setTimeout(runAnimation, 400);
+      archObserver.disconnect();
+    }
+  });
+}, { threshold: 0.2 });
+archObserver.observe(document.getElementById('architecture'));
+</script>
+</body>
+</html>
