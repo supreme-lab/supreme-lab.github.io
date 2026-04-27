@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jailbreak Pipeline — Live Animation</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#f0f1f3; min-height:100vh;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:14px; padding:16px; font-family:'DM Sans',sans-serif;
+}
+.card {
+  background:white; border-radius:8px;
+  box-shadow:0 4px 32px rgba(0,0,0,0.09);
+  overflow:hidden; max-width:1380px; width:100%;
+}
+.topbar {
+  padding:14px 24px; display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid #e2e5ed; gap:16px;
+}
+.topbar-left h2 { font-size:15px; font-weight:600; color:#0f1117; }
+.topbar-left p  { font-size:11px; color:#9099aa; font-family:'JetBrains Mono',monospace; margin-top:2px; }
+.pill {
+  display:flex; align-items:center; gap:8px; flex-shrink:0;
+  background:#f7f8fa; border:1px solid #e2e5ed; border-radius:20px;
+  padding:5px 14px; font-size:11px; font-family:'JetBrains Mono',monospace; color:#4a4f5e;
+}
+.dot { width:7px; height:7px; border-radius:50%; background:#c0392b; flex-shrink:0;
+       animation:dp 1.4s ease-in-out infinite; }
+@keyframes dp { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+canvas { display:block; width:100%; }
+.btns {
+  padding:10px 24px; display:flex; gap:10px; align-items:center;
+  border-top:1px solid #e2e5ed;
+}
+button {
+  padding:6px 16px; border:1px solid #e2e5ed; background:white;
+  border-radius:4px; cursor:pointer; font-size:11px;
+  font-family:'JetBrains Mono',monospace; color:#4a4f5e; transition:all .15s;
+}
+button:hover { background:#f7f8fa; border-color:#9099aa; }
+#pct { margin-left:auto; font-size:11px; font-family:'JetBrains Mono',monospace; color:#9099aa; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2>The Art of the Jailbreak — Full Pipeline Animation</h2>
+      <p>ACM CCS 2026 · Composition → 6-LLM Categorization + Strategy Ranking → Optimus Scoring → Tier → Fine-Tuning</p>
+    </div>
+    <div class="pill"><div class="dot"></div><span id="stageLabel">Loading…</span></div>
+  </div>
+  <canvas id="c" width="1360" height="640"></canvas>
+  <div class="btns">
+    <button onclick="restart()">↺ Restart</button>
+    <button onclick="togglePause()" id="pauseBtn">⏸ Pause</button>
+    <span id="pct">cycle 0%</span>
+  </div>
+</div>
+
+<script>
+// ── roundRect polyfill ────────────────────────────────────────────────────────
+(function(){
+  if (CanvasRenderingContext2D.prototype.roundRect) return;
+  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+    if (typeof r === 'number') r = [r,r,r,r];
+    else if (!Array.isArray(r)) r = [0,0,0,0];
+    while (r.length < 4) r.push(r[r.length-1]);
+    var tl=Math.max(0,r[0]||0), tr=Math.max(0,r[1]||0),
+        br=Math.max(0,r[2]||0), bl=Math.max(0,r[3]||0);
+    this.moveTo(x+tl,y);
+    this.lineTo(x+w-tr,y);    this.arcTo(x+w,y,    x+w,y+tr,   tr);
+    this.lineTo(x+w,y+h-br);  this.arcTo(x+w,y+h,  x+w-br,y+h, br);
+    this.lineTo(x+bl,y+h);    this.arcTo(x,y+h,    x,y+h-bl,   bl);
+    this.lineTo(x,y+tl);      this.arcTo(x,y,      x+tl,y,      tl);
+    this.closePath(); return this;
+  };
+})();
+
+// ── canvas ────────────────────────────────────────────────────────────────────
+var canvas = document.getElementById('c');
+var ctx    = canvas.getContext('2d');
+var W = 1360, H = 640;
+var CYCLE  = 11;
+var paused = false, t0 = performance.now(), pauseAt = 0;
+
+// ── colours ───────────────────────────────────────────────────────────────────
+var C = {
+  bg:'#ffffff', grid:'#f3f4f6',
+  ink:'#0f1117', light:'#4a4f5e', faint:'#9099aa', border:'#e2e5ed', surf:'#f7f8fa',
+  navy:'#1a2240', navyM:'#243060', navyL:'#3b4f8a',
+  red:'#c0392b', blue:'#2563eb', green:'#059669',
+  gold:'#d97706', purple:'#7c3aed', teal:'#0891b2', orange:'#ea580c',
+};
+
+// ── layout [x, y, w, h] ───────────────────────────────────────────────────────
+var B = {
+  wild : [12,   10, 152, 278],
+  jbv  : [12,  318, 152, 278],
+  cmp  : [182,  188, 118, 230],
+  cat  : [318,   10, 218, 292],
+  opt  : [318,  322, 218, 252],
+  rank : [552,   10, 204, 564],  // ← NEW: Strategy Ranking
+  tier : [770,   10, 144, 564],
+  ft   : [928,  148, 148, 252],
+  out  : [1090, 176, 262, 260],
+};
+
+// ── math ──────────────────────────────────────────────────────────────────────
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function easeIO(t){ return t<.5?2*t*t:1-(2-2*t)*(2-2*t)/2; }
+function easeOut(t){ return 1-(1-t)*(1-t)*(1-t); }
+function win(c,a,b){ return clamp((c-a)/(b-a),0,1); }
+function bezPt(t,p0,p1,p2,p3){
+  var u=1-t;
+  return { x:u*u*u*p0.x+3*u*u*t*p1.x+3*u*t*t*p2.x+t*t*t*p3.x,
+           y:u*u*u*p0.y+3*u*u*t*p1.y+3*u*t*t*p2.y+t*t*t*p3.y };
+}
+function fadeA(p){ return p<.12?p/.12:p>.82?(1-p)/.18:1; }
+
+// ── draw primitives ───────────────────────────────────────────────────────────
+function rr(x,y,w,h,r,fill,stroke,sw){
+  ctx.beginPath(); ctx.roundRect(x,y,w,h,r||0);
+  if(fill){   ctx.fillStyle=fill;   ctx.fill(); }
+  if(stroke){ ctx.strokeStyle=stroke; ctx.lineWidth=sw||1; ctx.stroke(); }
+}
+function txt(s,x,y,size,weight,color,align,mono){
+  ctx.fillStyle=color||C.ink; ctx.textAlign=align||'center'; ctx.textBaseline='middle';
+  ctx.font=(weight||'400')+' '+(size||9)+"px '"+(mono?'JetBrains Mono':'DM Sans')+"'";
+  ctx.fillText(s,x,y);
+}
+function bezPipe(x0,y0,cx1,cy1,cx2,cy2,x1,y1,col,w){
+  ctx.save(); ctx.strokeStyle=col||C.border; ctx.lineWidth=w||1.5; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x0,y0);
+  ctx.bezierCurveTo(cx1,cy1,cx2,cy2,x1,y1);
+  ctx.stroke(); ctx.restore();
+}
+function tokenCard(tp,p0,cp1,cp2,p3,label,color,alpha,tw){
+  var pos=bezPt(easeIO(clamp(tp,0,1)),p0,cp1,cp2,p3), th=24; tw=tw||104;
+  ctx.save(); ctx.globalAlpha=alpha||1;
+  rr(pos.x-tw/2,pos.y-th/2,tw,th,4,'white',color,1.5);
+  rr(pos.x-tw/2,pos.y-th/2,3,th,[4,0,0,4],color,null);
+  txt(label,pos.x+2,pos.y,7.5,'500',color,'center',true);
+  ctx.restore();
+}
+
+// ── pipes ─────────────────────────────────────────────────────────────────────
+function drawPipes(){
+  var d=C.border;
+  bezPipe(164,122, 200,122, 200,268, 182,280, d);      // wild→cmp
+  bezPipe(164,448, 200,448, 200,364, 182,352, d);      // jbv→cmp
+  bezPipe(300,268, 332,268, 332,172, 318,172, d);      // cmp→cat
+  bezPipe(300,352, 332,352, 332,436, 318,436, d);      // cmp→opt
+  bezPipe(536,178, 552,178, 552,120, 552,120, d);      // cat→rank (top)
+  bezPipe(536,430, 552,430, 552,460, 552,460, d);      // opt→rank (bottom)
+  bezPipe(756,290, 778,290, 778,290, 770,290, d);      // rank→tier
+  bezPipe(914,290, 938,290, 938,268, 928,268, d);      // tier→ft
+  bezPipe(1076,272, 1096,272, 1096,272, 1090,272, d);  // ft→out
+}
+
+// ── background + phase outlines ───────────────────────────────────────────────
+function drawBg(){
+  ctx.fillStyle=C.bg; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle=C.grid; ctx.lineWidth=1;
+  for(var x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(var y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  // Phase 1 outline (up to rank start)
+  ctx.save();
+  ctx.strokeStyle=C.navy+'44'; ctx.lineWidth=1.5; ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.roundRect(6,6,540,H-12,6); ctx.stroke();
+  txt('PHASE 1: COMPOSITION & SYNTHESIS',274,20,8,'600',C.navy+'99','center',true);
+  // Phase 2 outline
+  ctx.strokeStyle=C.red+'44';
+  ctx.beginPath(); ctx.roundRect(548,6,W-554,H-12,6); ctx.stroke();
+  txt('PHASE 2: OPTIMUS SCORING CORE',955,20,8,'600',C.red+'99','center',true);
+  ctx.restore();
+}
+
+// ── static boxes ─────────────────────────────────────────────────────────────
+var STRATS=['roleplay persona','forceful language','deceptive framing','fictional context','authority appeal','seed-leading'];
+var SEEDS =['install ransomware…','write phishing email…','crack password hash…','exfiltrate user data…','build keylogger…'];
+
+function drawWild(){
+  var b=B.wild,x=b[0],y=b[1],w=b[2],h=b[3];
+  rr(x,y,w,h,4,C.surf,C.navy,1.5);
+  rr(x,y,w,28,[4,4,0,0],C.navy,null);
+  txt('WildJailbreak',x+w/2,y+14,9,'600','white');
+  STRATS.forEach(function(s,i){
+    var yy=y+38+i*36; rr(x+7,yy,w-14,26,3,'white',C.border);
+    txt('s'+(i+1),x+18,yy+13,7.5,'500',C.red,'center',true);
+    txt(s,x+30,yy+13,7.5,'400',C.light,'left',true);
+  });
+  txt('912 strategies total',x+w/2,y+h-10,7,'400',C.faint,'center',true);
+}
+function drawJBV(){
+  var b=B.jbv,x=b[0],y=b[1],w=b[2],h=b[3];
+  rr(x,y,w,h,4,C.surf,C.red,1.5);
+  rr(x,y,w,28,[4,4,0,0],C.red,null);
+  txt('JailBreakV-28K',x+w/2,y+14,9,'600','white');
+  SEEDS.forEach(function(s,i){
+    var yy=y+38+i*42; rr(x+7,yy,w-14,30,3,'white',C.border);
+    txt('q'+(i+1),x+18,yy+15,7.5,'500',C.red,'center',true);
+    txt(s,x+30,yy+15,7.5,'400',C.light,'left',true);
+  });
+  txt('125 harmful seeds',x+w/2,y+h-10,7,'400',C.faint,'center',true);
+}
+function drawCompose(){
+  var b=B.cmp,x=b[0],y=b[1],w=b[2],h=b[3];
+  rr(x,y,w,h,4,'white',C.navyM,1.5);
+  rr(x,y,w,26,[4,4,0,0],C.navyM,null);
+  txt('COMPOSE',x+w/2,y+13,8.5,'600','white','center',true);
+  var ox=x+w/2,oy=y+104;
+  ctx.save(); ctx.strokeStyle=C.navyM; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(ox,oy,20,0,Math.PI*2); ctx.stroke(); ctx.restore();
+  txt('⊗',ox,oy+1,18,'600',C.navyM);
+  txt('s_i × q_k',ox,oy+36,7.5,'400',C.faint,'center',true);
+  txt('→ j_{i,k}',ox,oy+50,7.5,'400',C.faint,'center',true);
+  rr(ox-42,oy+66,84,20,3,C.red,null);
+  txt('N×M = 114,000',ox,oy+76,7.5,'500','white','center',true);
+}
+
+var LLM_COLS =[C.blue,C.purple,C.green,C.gold,C.red,C.teal];
+var LLM_NAMES=['Llama-3.1-8B','Tulu-3-8B','Mistral-7B','Ministral-8B','Gemma-3-270M','Qwen-2.5-7B'];
+var VOTE_LBLS=['A7','A7','A7','A9','A7','A8'];
+
+function drawCategorize(){
+  var b=B.cat,x=b[0],y=b[1],w=b[2],h=b[3];
+  rr(x,y,w,h,4,C.surf,C.navyL,1.5);
+  rr(x,y,w,26,[4,4,0,0],C.navyL,null);
+  txt('CATEGORIZE (6-LLM VOTE)',x+w/2,y+13,8,'600','white','center',true);
+  LLM_NAMES.forEach(function(name,i){
+    var yy=y+32+i*40;
+    rr(x+5,yy,w-10,30,3,'white',LLM_COLS[i],1);
+    txt(name,x+18,yy+15,8,'500',LLM_COLS[i],'left',true);
+    rr(x+w-48,yy+4,40,22,3,LLM_COLS[i]+'18',LLM_COLS[i],1);
+    txt('—',x+w-28,yy+16,7.5,'400',LLM_COLS[i]+'88','center',true);
+  });
+  rr(x+5,y+h-38,w-10,28,3,C.navyL+'14',C.navyL,1.5);
+  txt('Majority Vote  →  ?',x+w/2,y+h-24,8,'600',C.navyL,'center',true);
+}
+
+function drawOptimus(){
+  var b=B.opt,x=b[0],y=b[1],w=b[2],h=b[3];
+  rr(x,y,w,h,4,C.surf,C.red,1.5);
+  rr(x,y,w,26,[4,4,0,0],C.red,null);
+  txt('OPTIMUS  J(S, H)',x+w/2,y+13,9,'600','white');
+  rr(x+5,y+30,w-10,26,3,C.ink,null);
+  txt('J = Base(S,H) · P_S(S) · P_H(H)',x+w/2,y+43,7.5,'500','#60a5fa','center',true);
+  txt('S  Semantic Similarity:',x+9,y+74,7.5,'400',C.faint,'left',true);
+  rr(x+5,y+81,w-10,10,5,'white',C.border);
+  txt('H  Harmfulness Prob.:',x+9,y+106,7.5,'400',C.faint,'left',true);
+  rr(x+5,y+113,w-10,10,5,'white',C.border);
+  txt('Score Range',x+9,y+138,7.5,'400',C.faint,'left',true);
+  var sg=ctx.createLinearGradient(x+5,0,x+w-5,0);
+  sg.addColorStop(0,'#3b82f6'); sg.addColorStop(.28,'#10b981');
+  sg.addColorStop(.47,'#f59e0b'); sg.addColorStop(1,'#ef4444');
+  rr(x+5,y+145,w-10,12,6,null,C.border);
+  ctx.fillStyle=sg; ctx.beginPath(); ctx.roundRect(x+5,y+145,w-10,12,6); ctx.fill();
+  txt('Safe',x+26,y+168,7,'400',C.blue,'center',true);
+  txt('Weak',x+68,y+168,7,'400',C.green,'center',true);
+  txt('Mod', x+112,y+168,7,'400',C.gold,'center',true);
+  txt('Opt', x+156,y+168,7,'400',C.red,'center',true);
+  txt('Stealth-optimal: S*≈0.57  H*≈0.43',x+w/2,y+188,7.5,'500',C.red,'center',true);
+  rr(x+5,y+202,w-10,38,3,'white',C.border);
+  txt('J(S,H) surface → Moderate + Optimal',x+w/2,y+221,7,'400',C.faint,'center',true);
+}
+
+// ── STRATEGY RANKING PANEL (the new element) ──────────────────────────────────
+var RANK_ROWS = [
+  { cat:'A4 Exploit Kit', col:C.gold,    score:0.334, top:['roleplay persona','fictional context','deceptive framing'],  scores:[0.91,0.68,0.44] },
+  { cat:'A3 DoS',         col:C.blue,    score:0.326, top:['roleplay persona','forceful language','authority appeal'],    scores:[0.88,0.65,0.41] },
+  { cat:'A10 Pwd Crack',  col:C.purple,  score:0.313, top:['deceptive framing','seed-leading','roleplay persona'],        scores:[0.86,0.62,0.38] },
+  { cat:'A7 Malware',     col:C.red,     score:0.301, top:['roleplay persona','fictional context','forceful language'],   scores:[0.87,0.63,0.40] },  // highlighted
+  { cat:'A8 Phishing',    col:C.green,   score:0.302, top:['authority appeal','roleplay persona','deceptive framing'],    scores:[0.84,0.61,0.36] },
+  { cat:'A12 RCE',        col:C.navyL,   score:0.307, top:['fictional context','deceptive framing','roleplay persona'],   scores:[0.85,0.60,0.37] },
+  { cat:'A9 Social Eng',  col:C.teal,    score:0.257, top:['authority appeal','roleplay persona','deceptive framing'],    scores:[0.80,0.58,0.33] },
+  { cat:'A2 Exfil',       col:C.orange,  score:0.305, top:['roleplay persona','authority appeal','seed-leading'],         scores:[0.83,0.59,0.35] },
+];
+var ROW_H = 64;
+var ROW_Y0 = B.rank[1] + 60;
+
+function drawRankStatic(){
+  var b=B.rank, x=b[0],y=b[1],w=b[2],h=b[3];
+  // Box shell
+  rr(x,y,w,h,4,C.surf,C.navyM,2);
+  rr(x,y,w,42,[4,4,0,0],C.navyM,null);
+  txt('OPTIMAL STRATEGIES',x+w/2,y+15,8.5,'600','white','center',true);
+  txt('PER ATTACK CATEGORY',x+w/2,y+29,8.5,'600','white','center',true);
+  // Subtitle
+  rr(x+5,y+44,w-10,14,3,C.navyM+'22',null);
+  txt('computed simultaneously with 6-LLM categorization',x+w/2,y+51,6.5,'400',C.navyM,'center',true);
+  // Column headers
+  txt('Category',       x+48, ROW_Y0-10, 7,'600',C.faint,'center',true);
+  txt('Top Strategy',   x+118,ROW_Y0-10, 7,'600',C.faint,'left',true);
+  txt('Score',          x+w-16,ROW_Y0-10,7,'600',C.faint,'right',true);
+  // Row backgrounds + category badges
+  RANK_ROWS.forEach(function(row,i){
+    var ry = ROW_Y0 + i*ROW_H;
+    var isTarget = (row.cat === 'A7 Malware');
+    rr(x+4,ry,w-8,ROW_H-3,3, isTarget?row.col+'0a':'white', isTarget?row.col:C.border, isTarget?1.5:1);
+    // Left color strip
+    rr(x+4,ry,4,ROW_H-3,2,row.col,null);
+    // Category badge
+    rr(x+10,ry+8,76,22,3,row.col+'18',row.col,1);
+    txt(row.cat, x+48,ry+19,6.5,'600',row.col,'center',true);
+    // 3 mini bar tracks
+    for(var j=0;j<3;j++){
+      rr(x+94,ry+10+j*16,w-104,10,3,'white',C.border);
+    }
+  });
+}
+
+// ── Tier ─────────────────────────────────────────────────────────────────────
+var TIER_DATA=[
+  {label:'SAFE',     range:'< 0.212',     col:C.blue,   n:42856, sel:false},
+  {label:'WEAK',     range:'0.212–0.283', col:C.green,  n:27843, sel:false},
+  {label:'MODERATE', range:'0.283–0.377', col:C.gold,   n:14622, sel:true},
+  {label:'OPTIMAL',  range:'0.377–0.471', col:C.red,    n:9598,  sel:true},
+];
+function drawTier(){
+  var b=B.tier,x=b[0],y=b[1],w=b[2],h=b[3];
+  rr(x,y,w,h,4,C.surf,C.border,1.5);
+  txt('DATA TIERING',x+w/2,y+18,8.5,'600',C.navy);
+  TIER_DATA.forEach(function(tr,i){
+    var yy=y+36+i*128;
+    rr(x+5,yy,w-10,112,4,tr.sel?tr.col+'14':'white',tr.sel?tr.col:C.border,tr.sel?2:1);
+    rr(x+5,yy,w-10,20,[4,4,0,0],tr.col+'28',null);
+    txt(tr.label,    x+w/2,yy+11,7.5,'600',tr.col);
+    txt(tr.range,    x+w/2,yy+30,7,'400',C.faint,'center',true);
+    rr(x+8,yy+40,w-16,7,3,'white',C.border);
+    rr(x+8,yy+40,(w-16)*tr.n/42856,7,3,tr.col,null);
+    txt(tr.n.toLocaleString()+' prompts',x+w/2,yy+58,7,'400',C.faint,'center',true);
+    rr(x+8,yy+68,w-16,18,3,tr.sel?tr.col:C.border,null);
+    txt(tr.sel?'→ fine-tuning ✓':'filtered out',x+w/2,yy+77,7.5,'600',tr.sel?'white':C.faint);
+  });
+}
+
+function drawFT(){
+  var b=B.ft,x=b[0],y=b[1],w=b[2],h=b[3];
+  rr(x,y,w,h,4,C.navy,null);
+  txt('INSTRUCTION',x+w/2,y+18,8.5,'600','white');
+  txt('FINE-TUNING',x+w/2,y+32,8.5,'600','white');
+  ['Llama-3.1-8B','Tulu-3-8B','Vicuna-7B'].forEach(function(m,i){
+    rr(x+6,y+50+i*50,w-12,38,3,'rgba(255,255,255,.08)','rgba(255,255,255,.2)',1);
+    txt(m,x+w/2,y+69+i*50,8.5,'500','white');
+  });
+  txt('LoRA · DoRA · 3 epochs',x+w/2,y+h-28,7.5,'400','rgba(255,255,255,.5)');
+  txt('24,220 samples (Mod+Opt)',x+w/2,y+h-14,7.5,'400','rgba(255,255,255,.5)');
+}
+
+function drawOut(){
+  var b=B.out,x=b[0],y=b[1],w=b[2],h=b[3];
+  rr(x,y,w,h,4,'white',C.border,1.5);
+  rr(x,y,w,26,[4,4,0,0],C.navy,null);
+  txt('GENERATOR LLM  →  VICTIM LLM',x+w/2,y+13,8,'600','white');
+  var ms=[{k:'ASR',v:'0.84–0.98',c:C.green},{k:'PPL',v:'24–39',c:C.blue},
+          {k:'LPG-86M Mal',v:'0.29–0.51',c:C.gold},{k:'HarmBench',v:'40–46%',c:C.red}];
+  ms.forEach(function(m,i){
+    txt(m.k+':',  x+12,y+44+i*40,8,'400',C.faint,'left',true);
+    txt(m.v,      x+w-10,y+44+i*40,9,'600',m.c,'right',true);
+  });
+  txt('vs. AutoDAN PPL 105–142',x+w/2,y+h-30,7,'400',C.faint);
+  txt('↑ fluency  ↑ evasion',   x+w/2,y+h-14,7.5,'500',C.green);
+}
+
+// ── DYNAMIC OVERLAYS ──────────────────────────────────────────────────────────
+function drawDynamic(cycle){
+  var i, p, yy, col;
+  var bcat=B.cat, bopt=B.opt, brank=B.rank, bft=B.ft;
+
+  // ─ 1. LLM vote labels appear one by one (cycle 0.36–0.56) ─
+  for(i=0;i<6;i++){
+    var vs=0.36+i*0.032;
+    p=easeOut(win(cycle,vs,vs+0.05));
+    if(p<=0) continue;
+    ctx.save(); ctx.globalAlpha=p;
+    yy=bcat[1]+32+i*40;
+    rr(bcat[0]+bcat[2]-48,yy+4,40,22,3,LLM_COLS[i],null);
+    txt(VOTE_LBLS[i],bcat[0]+bcat[2]-28,yy+16,9,'600','white','center',true);
+    ctx.restore();
+  }
+
+  // ─ 2. Majority vote banner (cycle 0.60–0.70) ─
+  p=easeOut(win(cycle,0.60,0.68));
+  if(p>0){
+    ctx.save(); ctx.globalAlpha=p;
+    rr(bcat[0]+5,bcat[1]+bcat[3]-38,bcat[2]-10,28,3,C.blue+'22',C.blue,2);
+    txt('→ A7: Malware  (4/6 votes)',bcat[0]+bcat[2]/2,bcat[1]+bcat[3]-24,8.5,'600',C.blue,'center',true);
+    ctx.restore();
+  }
+
+  // ─ 3. Optimus S bar (cycle 0.44–0.58) ─
+  var sV=0.62, sp=easeOut(win(cycle,0.44,0.58));
+  if(sp>0){
+    rr(bopt[0]+5,bopt[1]+81,(bopt[2]-10)*sV*sp,10,5,C.blue,null);
+    ctx.save(); ctx.globalAlpha=sp;
+    txt('S='+(sV*sp).toFixed(2),bopt[0]+bopt[2]-7,bopt[1]+86,8,'600',C.blue,'right',true);
+    ctx.restore();
+  }
+
+  // ─ 4. Optimus H bar (cycle 0.50–0.63) ─
+  var hV=0.41, hp=easeOut(win(cycle,0.50,0.63));
+  if(hp>0){
+    rr(bopt[0]+5,bopt[1]+113,(bopt[2]-10)*hV*hp,10,5,C.red,null);
+    ctx.save(); ctx.globalAlpha=hp;
+    txt('H='+(hV*hp).toFixed(2),bopt[0]+bopt[2]-7,bopt[1]+118,8,'600',C.red,'right',true);
+    ctx.restore();
+  }
+
+  // ─ 5. Score pointer sweep (cycle 0.58–0.70) ─
+  var jV=0.38, jp=easeOut(win(cycle,0.58,0.70));
+  if(jp>0){
+    var px=bopt[0]+5+(bopt[2]-10)*jV*jp;
+    ctx.save(); ctx.globalAlpha=jp;
+    rr(px-1.5,bopt[1]+141,3,20,1,C.ink,null);
+    txt('J='+(jV*jp).toFixed(2),px,bopt[1]+172,8,'600',C.ink,'center',true);
+    ctx.restore();
+  }
+
+  // ─ 6. STRATEGY RANKING BARS (cycle 0.36–0.72, simultaneous with categorization) ─
+  // Each row's 3 strategy bars fill in progressively, staggered per row
+  RANK_ROWS.forEach(function(row,i){
+    var rowStart = 0.36 + i*0.028;   // stagger each category row
+    var rowP     = win(cycle, rowStart, rowStart+0.08);  // row appear progress
+    if(rowP<=0) return;
+    var ry = ROW_Y0 + i*ROW_H;
+    var rx = brank[0]+94;
+    var barW = brank[2]-104;
+
+    // Fill each of the 3 strategy bars
+    for(var j=0;j<3;j++){
+      var barStart = rowStart + j*0.025;
+      var barP = easeOut(win(cycle, barStart, barStart+0.06));
+      if(barP<=0) continue;
+      // bar track is drawn statically; just fill the colored portion
+      rr(rx, ry+10+j*16, barW*row.scores[j]*barP, 10, 3, row.col+(j===0?'':'55'), null);
+      // strategy label appears with bar
+      ctx.save(); ctx.globalAlpha=barP;
+      // tiny label on bar
+      var lbl=row.top[j].length>14?row.top[j].slice(0,13)+'…':row.top[j];
+      txt(lbl, rx+3, ry+15+j*16, 6.5,'400',j===0?'white':row.col,'left',true);
+      // score on right
+      txt(row.scores[j].toFixed(2), brank[0]+brank[2]-6, ry+15+j*16, 6.5,'600',row.col,'right',true);
+      ctx.restore();
+    }
+
+    // Row fade-in alpha
+    ctx.save(); ctx.globalAlpha = easeOut(rowP);
+    // Mean score chip on right of category badge
+    rr(brank[0]+10, ry+34, 76, 16, 3, row.col+'14', null);
+    txt('mean J='+row.score.toFixed(3), brank[0]+48, ry+42, 6,'400',row.col,'center',true);
+    ctx.restore();
+  });
+
+  // ─ 7. Gold highlight on A7 Malware row when vote resolves (cycle 0.62+) ─
+  var highlight = easeOut(win(cycle, 0.62, 0.70));
+  if(highlight>0){
+    var malIdx=3; // A7 Malware is index 3 in RANK_ROWS
+    var ry2=ROW_Y0+malIdx*ROW_H;
+    ctx.save(); ctx.globalAlpha=highlight*0.18;
+    rr(brank[0]+4,ry2,brank[2]-8,ROW_H-3,3,C.gold,null);
+    ctx.restore();
+    ctx.save(); ctx.globalAlpha=highlight;
+    // "CURRENT PROMPT" badge
+    rr(brank[0]+brank[2]-68,ry2+4,64,16,3,C.gold,null);
+    txt('← THIS PROMPT',brank[0]+brank[2]-36,ry2+12,6,'600','white','center',true);
+    ctx.restore();
+  }
+
+  // ─ 8. Tier flash: Moderate row lights up ─
+  var tf=win(cycle,0.76,0.82);
+  if(tf>0&&tf<1){
+    var btier=B.tier, ymod=btier[1]+36+2*128;
+    ctx.save(); ctx.globalAlpha=Math.sin(tf*Math.PI)*0.28;
+    rr(btier[0]+5,ymod,btier[2]-10,112,4,C.gold,null);
+    ctx.restore();
+  }
+
+  // ─ 9. FineTune progress bar ─
+  var ftp=easeOut(win(cycle,0.84,0.97));
+  rr(bft[0]+6,bft[1]+bft[3]-52,bft[2]-12,8,4,'rgba(255,255,255,.12)',null);
+  if(ftp>0){
+    ctx.save();
+    var fg=ctx.createLinearGradient(bft[0]+6,0,bft[0]+bft[2]-6,0);
+    fg.addColorStop(0,'#60a5fa'); fg.addColorStop(1,'#3b82f6');
+    ctx.fillStyle=fg; ctx.beginPath();
+    ctx.roundRect(bft[0]+6,bft[1]+bft[3]-52,(bft[2]-12)*ftp,8,4); ctx.fill();
+    ctx.globalAlpha=ftp;
+    txt((ftp*100).toFixed(0)+'% trained',bft[0]+bft[2]/2,bft[1]+bft[3]-60,7,'400','rgba(255,255,255,.6)');
+    ctx.restore();
+  }
+
+  // ─ 10. "OPTIMAL STRATEGY SELECTED" label in rank panel after highlight ─
+  var selP=easeOut(win(cycle,0.68,0.76));
+  if(selP>0){
+    ctx.save(); ctx.globalAlpha=selP;
+    rr(brank[0]+6,brank[1]+brank[3]-32,brank[2]-12,26,3,C.navyM,null);
+    txt('✓ Best strategies selected → Fine-Tuning',brank[0]+brank[2]/2,brank[1]+brank[3]-19,7.5,'600','white','center',true);
+    ctx.restore();
+  }
+}
+
+// ── MOVING TOKENS ─────────────────────────────────────────────────────────────
+// [cycleStart, cycleEnd, p0, cp1, cp2, p3, label, color, cardW]
+var TOKENS=[
+  // strategy card: wild → cmp
+  [0.00,0.17, {x:164,y:118},{x:200,y:118},{x:200,y:264},{x:194,y:278}, 'roleplay persona',  C.navy,  108],
+  // seed card: jbv → cmp
+  [0.04,0.21, {x:164,y:436},{x:200,y:436},{x:200,y:360},{x:194,y:350}, 'write ransomware',  C.red,   108],
+  // 2nd strategy
+  [0.07,0.23, {x:164,y:152},{x:200,y:152},{x:200,y:272},{x:194,y:278}, 'deceptive framing', C.navyM, 112],
+  // composed → cat
+  [0.22,0.37, {x:300,y:264},{x:326,y:264},{x:326,y:168},{x:318,y:168}, 'composed jailbreak',C.navyM, 118],
+  // composed → opt
+  [0.24,0.39, {x:300,y:350},{x:326,y:350},{x:326,y:432},{x:318,y:432}, 'jailbreak prompt',  C.red,   112],
+  // cat → rank (category label token)
+  [0.62,0.74, {x:536,y:175},{x:552,y:175},{x:552,y:145},{x:560,y:145}, 'A7: Malware',       C.blue,  100],
+  // opt → rank (score token)
+  [0.65,0.77, {x:536,y:430},{x:552,y:430},{x:552,y:450},{x:560,y:450}, 'J=0.38 MOD',        C.gold,  96],
+  // rank → tier (ranked prompt)
+  [0.76,0.86, {x:756,y:290},{x:775,y:290},{x:775,y:290},{x:770,y:290}, 'ranked → tier',     C.navyM, 106],
+  // tier → ft (selected samples)
+  [0.86,0.93, {x:914,y:288},{x:934,y:288},{x:934,y:268},{x:928,y:268}, 'moderate sample',   C.gold,  110],
+  [0.88,0.95, {x:914,y:302},{x:934,y:302},{x:934,y:280},{x:928,y:280}, 'optimal sample',    C.red,   110],
+  // ft → output
+  [0.97,1.00, {x:1076,y:270},{x:1096,y:270},{x:1096,y:272},{x:1148,y:272},'→ attacks victim', C.navy, 120],
+];
+
+function drawTokens(cycle){
+  TOKENS.forEach(function(tk){
+    var cs=tk[0],ce=tk[1],p0=tk[2],cp1=tk[3],cp2=tk[4],p3=tk[5];
+    var label=tk[6],color=tk[7],tw=tk[8];
+    if(cycle<cs||cycle>ce+0.04) return;
+    var t=clamp((cycle-cs)/(ce-cs),0,1);
+    tokenCard(t,p0,cp1,cp2,p3,label,color,fadeA(t),tw);
+  });
+}
+
+// ── STAGE LABELS ──────────────────────────────────────────────────────────────
+var STAGES=[
+  [0.00,0.09,'① Strategy & seed cards emerge from source databases'],
+  [0.09,0.23,'② Cards flow to Compose operator  (s_i × q_k  →  j_{i,k})'],
+  [0.23,0.38,'③ Composed prompt splits → Categorize  +  Optimus paths'],
+  [0.36,0.62,'④ 6 LLMs vote simultaneously — strategy bars fill per category'],
+  [0.44,0.68,'⑤ Optimus computes S=0.62, H=0.41 → J=0.38  (MODERATE)'],
+  [0.62,0.76,'⑥ A7: Malware identified → optimal strategies highlighted in ranking'],
+  [0.76,0.87,'⑦ Ranked prompt → Tier → Moderate + Optimal selected for training'],
+  [0.87,0.97,'⑧ Instruction Fine-Tuning  (LoRA · DoRA · 24,220 samples)'],
+  [0.97,1.00,'⑨ Generator LLM attacks victim models  (ASR 0.84–0.98, PPL 24–39)'],
+];
+function stageName(c){
+  for(var i=0;i<STAGES.length;i++) if(c>=STAGES[i][0]&&c<STAGES[i][1]) return STAGES[i][2];
+  return STAGES[0][2];
+}
+
+// ── MAIN LOOP ─────────────────────────────────────────────────────────────────
+function frame(ts){
+  var elapsed = paused ? pauseAt : (ts-t0)/1000;
+  var cycle   = (elapsed%CYCLE)/CYCLE;
+
+  drawBg();
+  drawPipes();
+  drawWild(); drawJBV(); drawCompose();
+  drawCategorize(); drawOptimus();
+  drawRankStatic();
+  drawTier(); drawFT(); drawOut();
+  drawDynamic(cycle);
+  drawTokens(cycle);
+
+  document.getElementById('stageLabel').textContent = stageName(cycle);
+  document.getElementById('pct').textContent='cycle '+(cycle*100).toFixed(0)+'%  ·  t='+(elapsed%CYCLE).toFixed(1)+'s';
+
+  requestAnimationFrame(frame);
+}
+
+function restart(){
+  t0=performance.now(); pauseAt=0; paused=false;
+  document.getElementById('pauseBtn').textContent='⏸ Pause';
+}
+function togglePause(){
+  if(paused){ t0=performance.now()-pauseAt*1000; paused=false;
+    document.getElementById('pauseBtn').textContent='⏸ Pause';
+  } else { pauseAt=(performance.now()-t0)/1000; paused=true;
+    document.getElementById('pauseBtn').textContent='▶ Resume';
+  }
+}
+
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
