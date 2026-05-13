@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SkillSec – A Two-Stage Framework for Security Evaluation in Open Agentic Skill Ecosystems</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --white: #ffffff;
+    --off-white: #f8f7f4;
+    --ink: #141414;
+    --ink-light: #3a3a3a;
+    --ink-muted: #6b6b6b;
+    --rule: #e0ddd8;
+    --accent: #c0392b;
+    --accent-light: #f9eae8;
+    --blue: #1a2e4a;
+    --blue-mid: #2c4a6e;
+    --blue-light: #e8eff7;
+    --green: #1a7a4a;
+    --green-light: #e6f4ec;
+    --gold: #b8860b;
+    --gold-light: #fdf6e3;
+    --mono: 'JetBrains Mono', monospace;
+    --serif-display: 'Playfair Display', Georgia, serif;
+    --serif-body: 'Source Serif 4', Georgia, serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; font-size: 17px; }
+
+  body {
+    font-family: var(--serif-body);
+    background: var(--white);
+    color: var(--ink);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── TOP BAR ── */
+  .top-bar {
+    background: var(--blue);
+    color: #fff;
+    padding: 10px 0;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .top-bar a { color: #94c5f0; text-decoration: none; }
+  .top-bar a:hover { text-decoration: underline; }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255,255,255,0.97);
+    border-bottom: 1px solid var(--rule);
+    backdrop-filter: blur(6px);
+  }
+  .nav-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 52px;
+  }
+  .nav-logo {
+    font-family: var(--serif-display);
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--blue);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-links {
+    display: flex;
+    gap: 0;
+    list-style: none;
+  }
+  .nav-links a {
+    display: block;
+    padding: 0 0.85rem;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    text-decoration: none;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ── HERO ── */
+  .hero {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 5rem 2rem 3.5rem;
+    text-align: center;
+  }
+  .venue-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--blue-light);
+    color: var(--blue-mid);
+    border: 1px solid #b5ccdf;
+    border-radius: 2px;
+    padding: 0.28rem 0.85rem;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    margin-bottom: 1.6rem;
+    text-decoration: none;
+    transition: background .2s;
+  }
+  .venue-badge:hover { background: #cfdff0; }
+  .venue-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; }
+  h1 {
+    font-family: var(--serif-display);
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 900;
+    line-height: 1.18;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    margin-bottom: 1rem;
+  }
+  h1 em { color: var(--accent); font-style: normal; }
+  .authors {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+    letter-spacing: 0.04em;
+    margin-bottom: 0.4rem;
+  }
+  .affil {
+    font-size: 0.82rem;
+    color: var(--ink-muted);
+    font-style: italic;
+    margin-bottom: 2rem;
+  }
+  .hero-links {
+    display: flex;
+    justify-content: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1.2rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 2px;
+    transition: all .2s;
+    cursor: pointer;
+    border: none;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #a93226; }
+  .btn-outline { background: transparent; color: var(--blue); border: 1.5px solid var(--blue); }
+  .btn-outline:hover { background: var(--blue-light); }
+  .btn-ghost { background: transparent; color: var(--ink-muted); border: 1.5px solid var(--rule); }
+  .btn-ghost:hover { background: var(--off-white); }
+
+  /* ── RULE DIVIDER ── */
+  .rule-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+  hr.thick {
+    border: none;
+    border-top: 2px solid var(--ink);
+    margin: 0;
+  }
+  hr.thin {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 2rem 0;
+  }
+
+  /* ── SECTION ── */
+  section { padding: 4rem 0; border-top: 1px solid var(--rule); }
+  .section-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    max-width: 40px;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.5;
+  }
+  h2 {
+    font-family: var(--serif-display);
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    margin-bottom: 1.5rem;
+    line-height: 1.25;
+  }
+  h3 {
+    font-family: var(--serif-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 0.6rem;
+    margin-top: 1.6rem;
+  }
+  p { margin-bottom: 1rem; color: var(--ink-light); }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── ABSTRACT ── */
+  .abstract-box {
+    background: var(--off-white);
+    border-left: 3px solid var(--accent);
+    padding: 2rem 2.4rem;
+    font-size: 1.02rem;
+    line-height: 1.8;
+    color: var(--ink-light);
+  }
+
+  /* ── THREAT MODEL ── */
+  .threat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.2rem;
+    margin-top: 1.5rem;
+  }
+  .threat-card {
+    background: var(--off-white);
+    border: 1px solid var(--rule);
+    border-top: 2.5px solid var(--accent);
+    padding: 1.4rem 1.3rem;
+    border-radius: 2px;
+  }
+  .threat-card .icon {
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+  }
+  .threat-card h4 {
+    font-family: var(--serif-display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+    color: var(--ink);
+  }
+  .threat-card p { font-size: 0.88rem; color: var(--ink-muted); margin: 0; }
+
+  /* ── CONTRIBUTIONS ── */
+  .contrib-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .contrib-list li {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    background: var(--white);
+    border: 1px solid var(--rule);
+    padding: 1.2rem 1.4rem;
+    border-radius: 2px;
+  }
+  .contrib-num {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 0.2rem 0.5rem;
+    border-radius: 2px;
+    white-space: nowrap;
+    margin-top: 0.15rem;
+  }
+  .contrib-list li p { margin: 0; font-size: 0.93rem; color: var(--ink-light); }
+  .contrib-list li strong { color: var(--ink); }
+
+  /* ── ARCHITECTURE ANIMATION ── */
+  #arch-canvas-wrap {
+    background: var(--white);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 2rem;
+    position: relative;
+  }
+  #arch-canvas {
+    width: 100%;
+    display: block;
+  }
+
+  /* ── DIMENSIONS GRID ── */
+  .dim-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  @media (max-width: 640px) { .dim-grid { grid-template-columns: 1fr; } }
+  .dim-card {
+    border: 1px solid var(--rule);
+    padding: 1.2rem 1.3rem;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+  .dim-card::before {
+    content: attr(data-d);
+    position: absolute;
+    top: -0.2rem;
+    right: 0.8rem;
+    font-family: var(--serif-display);
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: var(--rule);
+    line-height: 1;
+    pointer-events: none;
+  }
+  .dim-card h4 {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--blue-mid);
+    margin-bottom: 0.4rem;
+  }
+  .dim-card p { font-size: 0.88rem; color: var(--ink-muted); margin: 0; }
+
+  /* ── RESULTS TABLE ── */
+  .table-wrap {
+    overflow-x: auto;
+    margin-top: 1.5rem;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.83rem;
+    min-width: 680px;
+  }
+  thead {
+    background: var(--blue);
+    color: #fff;
+  }
+  thead th {
+    padding: 0.7rem 0.9rem;
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  thead .sub-head {
+    background: var(--blue-mid);
+  }
+  tbody tr { border-bottom: 1px solid var(--rule); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:nth-child(even) { background: var(--off-white); }
+  td {
+    padding: 0.6rem 0.9rem;
+    color: var(--ink-light);
+    font-variant-numeric: tabular-nums;
+  }
+  td:first-child { font-weight: 600; color: var(--ink); }
+  .cell-m { color: var(--accent); font-weight: 600; }
+  .cell-s { color: var(--gold); font-weight: 600; }
+  .cell-b { color: var(--green); }
+  .zero { color: var(--ink-muted); font-weight: 400; }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+    margin-top: 1.5rem;
+  }
+  @media (max-width: 560px) { .stats-row { grid-template-columns: 1fr; } }
+  .stat-box {
+    border: 1px solid var(--rule);
+    background: var(--off-white);
+    padding: 1.4rem;
+    text-align: center;
+    border-radius: 2px;
+  }
+  .stat-num {
+    font-family: var(--serif-display);
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+  .stat-label { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
+
+  /* ── CASE STUDY ── */
+  .case-box {
+    background: var(--off-white);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--gold);
+    padding: 1.6rem 2rem;
+    margin-top: 1.5rem;
+    border-radius: 2px;
+  }
+  .case-box h4 {
+    font-family: var(--serif-display);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+  }
+  .log-block {
+    background: var(--ink);
+    color: #a8d8a8;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    padding: 1rem 1.2rem;
+    border-radius: 2px;
+    line-height: 1.7;
+    margin-top: 0.8rem;
+    overflow-x: auto;
+  }
+  .log-block .err { color: #f08080; }
+  .log-block .warn { color: #ffd700; }
+  .log-block .key { color: #87ceeb; }
+
+  /* ── FINDINGS ── */
+  .findings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-top: 1rem;
+  }
+  .finding {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    background: var(--white);
+  }
+  .finding-icon {
+    font-size: 1.1rem;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+  }
+  .finding p { margin: 0; font-size: 0.9rem; color: var(--ink-light); }
+  .finding strong { color: var(--ink); }
+
+  /* ── REFERENCES ── */
+  .ref-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+  .ref-list li {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.87rem;
+    color: var(--ink-muted);
+    padding: 0.7rem 1rem;
+    border-left: 2px solid var(--rule);
+    transition: border-color .2s;
+  }
+  .ref-list li:hover { border-color: var(--accent); }
+  .ref-num {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--accent);
+    font-weight: 500;
+    white-space: nowrap;
+    margin-top: 0.1rem;
+  }
+  .ref-list a { color: var(--blue-mid); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--ink);
+    color: rgba(255,255,255,0.55);
+    text-align: center;
+    padding: 2rem;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+  }
+  footer a { color: rgba(255,255,255,0.7); text-decoration: none; }
+  footer strong { color: rgba(255,255,255,0.9); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.7s ease both; }
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+
+  @media (max-width: 720px) {
+    .nav-links { display: none; }
+    .dim-grid { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* progress bar for detection */
+  .bar-row { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.5rem; }
+  .bar-label { font-family: var(--mono); font-size: 0.7rem; width: 130px; flex-shrink: 0; color: var(--ink-muted); letter-spacing: 0.04em; }
+  .bar-track { flex: 1; height: 10px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 2px; transition: width 1.4s cubic-bezier(.16,1,.3,1); }
+  .bar-pct { font-family: var(--mono); font-size: 0.7rem; width: 40px; text-align: right; color: var(--ink-muted); }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  Accepted · <a href="https://www.agentskills-workshop.org/" target="_blank">Agent Skills '26 — ACM CAIS Workshop</a> · May 26, 2026 · San Jose, CA
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="#top">Skill<span>Sec</span></a>
+    <ul class="nav-links">
+      <li><a href="#abstract">Abstract</a></li>
+      <li><a href="#threat">Threat</a></li>
+      <li><a href="#contributions">Contributions</a></li>
+      <li><a href="#methodology">Methodology</a></li>
+      <li><a href="#experiments">Experiments</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#references">References</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div id="top" class="hero fade-up">
+  <a class="venue-badge" href="https://www.agentskills-workshop.org/" target="_blank">
+    <span class="dot"></span>
+    Agent Skills '26 · ACM CAIS · Short Paper
+  </a>
+  <h1>SkillSec: A Two-Stage Framework for <em>Security Evaluation</em> in Open Agentic Skill Ecosystems</h1>
+  <p class="authors delay-1 fade-up">Anonymous Author(s)</p>
+  <p class="affil delay-2 fade-up">Proceedings of The First Workshop on Agent Skills (Agent Skills '26), ACM, 2026</p>
+  <div class="hero-links delay-3 fade-up">
+    <a class="btn btn-primary" href="#abstract">📄 Read Paper</a>
+    <a class="btn btn-outline" href="https://www.agentskills-workshop.org/" target="_blank">🏛 Workshop Page</a>
+    <a class="btn btn-ghost" href="#methodology">⚙ Methodology</a>
+  </div>
+</div>
+
+<!-- ─────────────── ABSTRACT ─────────────── -->
+<section id="abstract">
+  <div class="section-inner">
+    <div class="section-label">§ 1 — Abstract</div>
+    <h2>Overview</h2>
+    <div class="abstract-box">
+      Open agentic platforms have gained popularity by enabling community contributors to publish reusable skills that agents can invoke at runtime — OpenClaw alone now hosts more than <strong>60,000 skills</strong>. However, these platforms are vulnerable to supply-chain attacks, as malicious contributors can embed harmful capabilities within seemingly benign reusable tools. The recent <em>ClawHavoc</em> supply-chain campaign (January 2026), in which more than 1,184 malicious skills bypassed existing defenses in the ClawHub marketplace, demonstrates that this risk is already being exploited at scale.
+      <br/><br/>
+      We present <strong>SkillSec</strong>, a two-stage security vetting framework that combines <em>semantic analysis</em> with <em>behavioral execution</em>. The key idea is to jointly reason over two complementary views of a skill: (i) its <strong>linguistic structure</strong>, assessed by an LLM-as-a-judge that analyzes natural language definitions for covert malicious intent, and (ii) its <strong>programmatic behavior</strong>, observed by executing the skill in a controlled sandbox and tracing its actual runtime actions. We construct a benchmark of confirmed malicious skills drawn from the live OpenClaw repository, showing SkillSec substantially outperforms all baselines and produces execution traces to verify detected threats and provide actionable evidence.
+    </div>
+    <div class="stats-row" style="margin-top:1.5rem">
+      <div class="stat-box">
+        <div class="stat-num">60K+</div>
+        <div class="stat-label">Skills on OpenClaw</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">1,184</div>
+        <div class="stat-label">ClawHavoc Malicious Skills</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">100%</div>
+        <div class="stat-label">SkillSec Vulnerable Detection</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── THREAT MODEL ─────────────── -->
+<section id="threat">
+  <div class="section-inner">
+    <div class="section-label">§ 2 — Threat Model</div>
+    <h2>Attack Surface &amp; Adversary Model</h2>
+    <p>Open agentic platforms treat skills as <em>AI-native software artifacts</em> — bundles of executable scripts, configuration files, tool specifications, and natural-language instructions. This architecture introduces a multi-component attack surface that existing text-only scanners fundamentally cannot address.</p>
+    <div class="threat-grid">
+      <div class="threat-card">
+        <div class="icon">🎭</div>
+        <h4>Social Engineering via SKILL.md</h4>
+        <p>Adversaries embed covert instructions in natural-language skill definitions that induce agents to execute attacker-controlled commands while appearing benign to human reviewers.</p>
+      </div>
+      <div class="threat-card">
+        <div class="icon">📦</div>
+        <h4>Supply-Chain Injection</h4>
+        <p>Malicious scripts bundled with legitimate skill packages exfiltrate credentials, install unauthorized dependencies, or contact external C2 servers during routine skill execution.</p>
+      </div>
+      <div class="threat-card">
+        <div class="icon">💉</div>
+        <h4>Prompt Injection at Runtime</h4>
+        <p>Adversarial inputs drive apparently benign skills into harmful behavior — stealing credentials, executing arbitrary commands, or contacting attacker-controlled endpoints — invisible to static scanners.</p>
+      </div>
+      <div class="threat-card">
+        <div class="icon">🔗</div>
+        <h4>Compositional Attacks</h4>
+        <p>Skills that appear harmless in isolation become dangerous when combined: read-then-exfiltrate or execute-then-persist chains exploit multi-step agent workflows across skill boundaries.</p>
+      </div>
+      <div class="threat-card">
+        <div class="icon">🔓</div>
+        <h4>Privilege Escalation</h4>
+        <p>Maintenance skills operating with elevated trust silently introduce remote-code-execution vectors. Repeated sudo failures are treated as obstacles, not terminal conditions, by the agent.</p>
+      </div>
+      <div class="threat-card">
+        <div class="icon">👁</div>
+        <h4>Text-Only Scanner Evasion</h4>
+        <p>Attacks that distribute malicious logic across prompt, code, configuration, and tool-call layers evade scanners that inspect only natural-language text, missing the complete attack logic.</p>
+      </div>
+    </div>
+    <p style="margin-top:1.2rem; font-size:0.9rem; color:var(--ink-muted);">
+      <strong style="color:var(--ink)">Key insight:</strong> A skill's behavior emerges from the <em>interaction</em> among its prompt, code, configuration, and tool calls at runtime — not from any single component. Purely static scanners cannot model this.
+    </p>
+  </div>
+</section>
+
+<!-- ─────────────── CONTRIBUTIONS ─────────────── -->
+<section id="contributions">
+  <div class="section-inner">
+    <div class="section-label">§ 3 — Contributions</div>
+    <h2>Key Contributions</h2>
+    <ul class="contrib-list">
+      <li>
+        <span class="contrib-num">C1</span>
+        <p><strong>SkillSec Framework.</strong> A novel two-stage vetting pipeline that combines LLM-as-a-judge semantic analysis with sandboxed behavioral execution — the first framework to jointly reason over a skill's linguistic structure and runtime behavior.</p>
+      </li>
+      <li>
+        <span class="contrib-num">C2</span>
+        <p><strong>Four-Dimensional Risk Scoring.</strong> A structured evaluation protocol scoring each skill on (D1) prompt injection susceptibility, (D2) data sensitivity exposure, (D3) blast radius, and (D4) compositional risk — capturing threat vectors that monolithic classification misses.</p>
+      </li>
+      <li>
+        <span class="contrib-num">C3</span>
+        <p><strong>Live Benchmark from OpenClaw.</strong> A benchmark of 100 confirmed malicious, suspicious, and benign skills drawn from the live ClawHub repository, enabling reproducible evaluation against real-world supply-chain attack artifacts.</p>
+      </li>
+      <li>
+        <span class="contrib-num">C4</span>
+        <p><strong>Zero False Negatives.</strong> SkillSec achieves 100% detection of all 78 vulnerable skills (zero false negatives), versus 52% command injection miss rate and 84% prompt injection miss rate by the deployed OpenClaw scanner.</p>
+      </li>
+      <li>
+        <span class="contrib-num">C5</span>
+        <p><strong>Auditable Execution Evidence.</strong> Unlike baselines that produce only binary verdicts, SkillSec generates concrete, reproducible execution traces that distinguish suspected from verified threats — enabling forensic attribution and policy enforcement.</p>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ─────────────── METHODOLOGY ─────────────── -->
+<section id="methodology">
+  <div class="section-inner">
+    <div class="section-label">§ 4 — Methodology</div>
+    <h2>SkillSec: Two-Stage Vetting Pipeline</h2>
+    <p>SkillSec analyzes a skill's natural-language instructions, executable code, configuration files, and tool-use interfaces to identify cross-component attack patterns, then executes the skill in an instrumented sandbox to capture runtime behavior.</p>
+
+    <!-- ANIMATED ARCHITECTURE -->
+    <div id="arch-canvas-wrap">
+      <canvas id="arch-canvas" height="380"></canvas>
+    </div>
+
+    <h3>Stage 1 — Semantic Analysis (LLM-as-a-Judge)</h3>
+    <p>Rather than reducing skill evaluation to a single-label classification, SkillSec employs an LLM-as-a-judge paradigm that scores each SKILL.md file along four security dimensions. For each dimension, the LLM produces both a numerical score and a free-text justification, yielding a structured evaluation report.</p>
+    <div class="dim-grid">
+      <div class="dim-card" data-d="D1">
+        <h4>D1 · Prompt Injection Susceptibility</h4>
+        <p>Measures how readily a skill can be coerced into operating outside its intended purpose under adversarial prompts — whether its instruction design enforces guardrails or permits runtime hijacking.</p>
+      </div>
+      <div class="dim-card" data-d="D2">
+        <h4>D2 · Data Sensitivity Exposure</h4>
+        <p>Quantifies the sensitivity of data a skill can access or modify — inferred from declared API endpoints, parameters, data flows, and potential handling of credentials, financial records, or PII.</p>
+      </div>
+      <div class="dim-card" data-d="D3">
+        <h4>D3 · Blast Radius</h4>
+        <p>Captures the scope of impact from a successful exploit, distinguishing isolated single-user effects from broader consequences propagating to shared systems, multi-tenant services, or public APIs.</p>
+      </div>
+      <div class="dim-card" data-d="D4">
+        <h4>D4 · Compositional Risk</h4>
+        <p>Assesses how much more dangerous a skill becomes when combined with others — identifying enabling roles in multi-step harmful chains (read-then-exfiltrate, execute-then-persist) that appear benign in isolation.</p>
+      </div>
+    </div>
+
+    <h3>Stage 2 — Programmatic Analysis (Sandbox Execution)</h3>
+    <p>Flagged skills are executed inside an isolated virtual machine with no access to sensitive host resources. The full OpenCLAW stack (gateway, agent, API keys) is configured to mirror realistic end-user deployment. Task prompts naturally trigger execution of flagged skills; all tool invocations, network calls, filesystem operations, and command executions are logged verbatim and audited against threat intelligence from <em>koi.ai</em>.</p>
+    <div class="case-box" style="border-left-color: var(--blue); margin-top:1rem">
+      <h4 style="color:var(--blue-mid)">Instrumented Monitoring Surfaces</h4>
+      <p style="margin:0; font-size:0.9rem; color:var(--ink-muted)">Network calls &amp; outbound connections · Filesystem read/write/delete operations · Subprocess &amp; exec invocations · Credential access patterns · Cross-session privilege escalation attempts · Scope drift from declared skill purpose</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── EXPERIMENTS ─────────────── -->
+<section id="experiments">
+  <div class="section-inner">
+    <div class="section-label">§ 5 — Experiments</div>
+    <h2>Experimental Setup</h2>
+    <p>We collected <strong>100 skills</strong> from ClawHub.ai spanning three categories: malicious, suspicious, and benign (as labeled by ClawHub's built-in review system), comprising 78 vulnerable skills and 22 benign controls. Each skill's SKILL.md file serves as the primary input to the semantic analysis stage.</p>
+
+    <h3>Case Study: Privilege Escalation via Autonomous Update Skill</h3>
+    <div class="case-box">
+      <h4>⚠ update v1.0.0 · @timclawbot · clawhub.ai/timclawbot/update</h4>
+      <p style="font-size:0.9rem; color:var(--ink-muted); margin-bottom:0.8rem;">
+        Presents itself as a benign daily cron utility checking for, applying, and summarizing updates. Its description contains no mention of network fetches to third-party hosts, privilege escalation, or dependency installation.
+      </p>
+      <p style="font-size:0.9rem; color:var(--ink-muted); margin-bottom:0.8rem;">
+        <strong style="color:var(--ink)">Static signals:</strong> VirusTotal flagged as Suspicious. OpenClaw's code-insight engine found SKILL.md instructing macOS users to run installation from an unverified Glot.io pastebin and Windows users to download a binary from an arbitrary GitHub account.
+        Antiy-AVL: <code style="font-family:var(--mono); color:var(--accent)">Trojan/OpenClaw.PolySkill</code> · Kaspersky: <code style="font-family:var(--mono); color:var(--accent)">HEUR:Trojan.ANSI.MalClaw.gen</code>
+      </p>
+      <div class="log-block">
+<span class="key">[Session 1]</span> web_fetch ×2 within 4 seconds — pulling remote payloads before local execution<br/>
+<span class="key">[Session 2]</span> read SKILL.md → immediate exec + process sequence (~2 minutes)<br/>
+<span class="warn">[SCOPE DRIFT]</span> Agent attempting install of polymarket v0.1.5 via uv pipeline<br/>
+<span class="err">[BLOCKED]</span> tools exec failed: Installing polymarket v0.1.5 (x86_64-unknown-linux-gnu)...<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Checksum verified. sudo: a terminal is required to read the password [...]<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Command exited with code 1<br/>
+<span class="warn">[Session 4]</span> exec call at 00:34 · web_fetch at 00:42 — retrying after primary paths failed<br/>
+<span class="key">[TOTAL]</span> 5 sessions · ~30 minutes · 22+ tool invocations (web_fetch, read, exec, process)
+      </div>
+    </div>
+
+    <div class="findings-list" style="margin-top:1.5rem">
+      <div class="finding">
+        <div class="finding-icon">⚡</div>
+        <p><strong>Finding 1 — Static signals not propagated.</strong> Both VirusTotal and OpenClaw's scanner flagged the skill before a single tool was invoked, yet the agent proceeded without presenting these findings to the user or requesting explicit confirmation. A contextual Linux reference in the user query was treated as full authorization.</p>
+      </div>
+      <div class="finding">
+        <div class="finding-icon">🔁</div>
+        <p><strong>Finding 2 — Privilege escalation does not self-terminate.</strong> A sudo failure is treated as an obstacle to route around — not a terminal condition. The agent retried escalation across multiple tool calls and session boundaries, continuing for seven minutes after primary paths failed.</p>
+      </div>
+      <div class="finding">
+        <div class="finding-icon">🎯</div>
+        <p><strong>Finding 3 — Scope drift is a first-class attack surface.</strong> The skill's declared purpose was version checking and update application. Actual behavior encompassed fetching payloads from unverified external hosts, attempting system-wide Python package installation, and invoking polymarket v0.1.5 — blocked only by incidental environmental constraints (no TTY, Debian isolation, sudo password). In a CI environment with passwordless sudo, all three paths would have completed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── RESULTS ─────────────── -->
+<section id="results">
+  <div class="section-inner">
+    <div class="section-label">§ 6 — Results</div>
+    <h2>Detection Performance</h2>
+    <p>Per-category comparison across 78 vulnerable skills and 22 benign controls. SkillSec achieves <strong>zero false negatives</strong> and <strong>zero false positives</strong>, substantially outperforming all baselines.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th rowspan="2" style="vertical-align:middle;">Category</th>
+            <th rowspan="2" style="vertical-align:middle; text-align:center;">n</th>
+            <th colspan="3" style="text-align:center; border-left: 1px solid rgba(255,255,255,0.15)">SkillSec</th>
+            <th colspan="3" style="text-align:center; border-left: 1px solid rgba(255,255,255,0.15)">ClawScan</th>
+            <th colspan="3" style="text-align:center; border-left: 1px solid rgba(255,255,255,0.15)">VirusTotal</th>
+          </tr>
+          <tr class="sub-head">
+            <th style="border-left:1px solid rgba(255,255,255,0.15)">Mal.</th><th>Susp.</th><th>Ben.</th>
+            <th style="border-left:1px solid rgba(255,255,255,0.15)">Mal.</th><th>Susp.</th><th>Ben.</th>
+            <th style="border-left:1px solid rgba(255,255,255,0.15)">Mal.</th><th>Susp.</th><th>Ben.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Command Injection</td><td style="text-align:center">27</td><td class="cell-m">5</td><td class="cell-s">22</td><td class="zero">0</td><td class="zero">0</td><td class="cell-s">13</td><td class="cell-b">14</td><td class="zero">0</td><td class="cell-s">9</td><td class="cell-b">18</td></tr>
+          <tr><td>Prompt Injection</td><td style="text-align:center">19</td><td class="zero">0</td><td class="cell-s">19</td><td class="zero">0</td><td class="zero">0</td><td class="cell-s">3</td><td class="cell-b">16</td><td class="zero">0</td><td class="zero">0</td><td class="cell-b">19</td></tr>
+          <tr><td>Unsafe File Ops</td><td style="text-align:center">10</td><td class="zero">0</td><td class="cell-s">10</td><td class="zero">0</td><td class="zero">0</td><td class="cell-s">5</td><td class="cell-b">5</td><td class="zero">0</td><td class="cell-s">2</td><td class="cell-b">8</td></tr>
+          <tr><td>Memory Poisoning</td><td style="text-align:center">9</td><td class="cell-m">1</td><td class="cell-s">8</td><td class="zero">0</td><td class="zero">0</td><td class="cell-s">1</td><td class="cell-b">8</td><td class="zero">0</td><td class="cell-s">3</td><td class="cell-b">6</td></tr>
+          <tr><td>Data Exposure</td><td style="text-align:center">5</td><td class="zero">0</td><td class="cell-s">5</td><td class="zero">0</td><td class="zero">0</td><td class="cell-s">4</td><td class="cell-b">1</td><td class="zero">0</td><td class="zero">0</td><td class="cell-b">5</td></tr>
+          <tr><td>Supply Chain</td><td style="text-align:center">4</td><td class="zero">0</td><td class="cell-s">4</td><td class="zero">0</td><td class="zero">0</td><td class="cell-s">1</td><td class="cell-b">3</td><td class="zero">0</td><td class="cell-s">1</td><td class="cell-b">3</td></tr>
+          <tr><td>Privilege Abuse</td><td style="text-align:center">4</td><td class="zero">0</td><td class="cell-s">4</td><td class="zero">0</td><td class="zero">0</td><td class="cell-s">2</td><td class="cell-b">2</td><td class="zero">0</td><td class="zero">0</td><td class="cell-b">4</td></tr>
+          <tr style="background:#f0f7f0"><td><strong>No Issue (Control)</strong></td><td style="text-align:center">22</td><td class="zero">0</td><td class="zero">0</td><td class="cell-b">22</td><td class="zero">0</td><td class="cell-s">1</td><td class="cell-b">21</td><td class="zero">0</td><td class="cell-s">2</td><td class="cell-b">20</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:2rem">Detection Rate vs. Baselines</h3>
+    <p style="font-size:0.9rem; color:var(--ink-muted); margin-bottom:1rem">Percentage of vulnerable skills correctly flagged (Malicious + Suspicious) per method. SkillSec closes all detection gaps.</p>
+
+    <div id="bar-section" style="max-width:600px">
+      <div class="bar-row">
+        <span class="bar-label">SkillSec</span>
+        <div class="bar-track"><div class="bar-fill" data-pct="100" style="background:var(--accent); width:0%"></div></div>
+        <span class="bar-pct">100%</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">ClawScan</span>
+        <div class="bar-track"><div class="bar-fill" data-pct="38" style="background:var(--gold); width:0%"></div></div>
+        <span class="bar-pct">38%</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">VirusTotal</span>
+        <div class="bar-track"><div class="bar-fill" data-pct="22" style="background:var(--blue-mid); width:0%"></div></div>
+        <span class="bar-pct">22%</span>
+      </div>
+      <p style="margin-top:1rem; font-size:0.83rem; color:var(--ink-muted)">
+        VirusTotal fails entirely on prompt injection (0/19) and data exposure (0/5), reflecting its focus on signature-based rather than semantic detection. SkillSec escalates 6 skills to <em>malicious</em> (5 command injection, 1 memory poisoning) based on confirmed sandbox evidence — a verdict no baseline can produce.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── REFERENCES ─────────────── -->
+<section id="references">
+  <div class="section-inner">
+    <div class="section-label">§ 7 — References</div>
+    <h2>References</h2>
+    <ul class="ref-list">
+      <li>
+        <span class="ref-num">[1]</span>
+        <div>Ruian Duan, Omar Alrawi, Ranjita Pai Kasturi, Ryan Elder, Brendan Saltaformaggio, and Wenke Lee. <em>Towards measuring supply chain attacks on package managers for interpreted languages.</em> arXiv preprint arXiv:2002.01139, 2020.</div>
+      </li>
+      <li>
+        <span class="ref-num">[2]</span>
+        <div>Piergiorgio Ladisa, Henrik Plate, Matias Martinez, and Olivier Barais. <em>Sok: Taxonomy of attacks on open-source software supply chains.</em> In 2023 IEEE Symposium on Security and Privacy (SP), pages 1509–1526. IEEE, 2023.</div>
+      </li>
+      <li>
+        <span class="ref-num">[3]</span>
+        <div>Marc Ohm, Henrik Plate, Arnold Sykosch, and Michael Meier. <em>Backstabber's knife collection: A review of open source software supply chain attacks.</em> In International Conference on Detection of Intrusions and Malware, and Vulnerability Assessment, pages 23–43. Springer, 2020.</div>
+      </li>
+      <li>
+        <span class="ref-num">[4]</span>
+        <div>Oren Yomtov and Alex. <em>ClawHavoc: 341 Malicious Clawed Skills Found by the Bot They Were Targeting.</em> Koi Security Blog, 2026. <a href="https://www.koi.ai/blog/clawhavoc-341-maliciousclawedbot-skills-found-by-the-bot-they-were-targeting" target="_blank">koi.ai/blog/clawhavoc</a></div>
+      </li>
+    </ul>
+
+    <div style="margin-top:2.5rem; padding:1.2rem 1.5rem; border:1px solid var(--rule); border-radius:2px; background:var(--off-white); display:flex; gap:1.2rem; align-items:center; flex-wrap:wrap">
+      <div>
+        <div style="font-family:var(--mono); font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-muted); margin-bottom:0.3rem">ACM Reference Format</div>
+        <p style="font-size:0.83rem; margin:0; color:var(--ink-muted)">Anonymous Author(s). 2026. SkillSec: A Two-Stage Framework for Security Evaluation in Open Agentic Skill Ecosystems. In <em>Proceedings of The First Workshop on Agent Skills (Agent Skills '26)</em>. ACM, New York, NY, USA, 4 pages. https://doi.org/XXXXXXX.XXXXXXX</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <strong>SkillSec</strong> · Agent Skills '26 · ACM CAIS · May 26, 2026 · San Jose, CA<br/><br/>
+  <a href="https://www.agentskills-workshop.org/" target="_blank">agentskills-workshop.org</a>
+</footer>
+
+<script>
+// ─────────────── ANIMATED ARCHITECTURE ───────────────
+(function() {
+  const canvas = document.getElementById('arch-canvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    const w = canvas.parentElement.clientWidth;
+    canvas.width = w;
+    canvas.height = Math.min(380, Math.max(280, w * 0.38));
+  }
+  resize();
+  window.addEventListener('resize', () => { resize(); });
+
+  // Color palette
+  const C = {
+    bg:       '#ffffff',
+    rule:     '#e0ddd8',
+    ink:      '#141414',
+    muted:    '#6b6b6b',
+    accent:   '#c0392b',
+    blue:     '#1a2e4a',
+    blue2:    '#2c4a6e',
+    blueL:    '#e8eff7',
+    gold:     '#b8860b',
+    goldL:    '#fdf6e3',
+    green:    '#1a7a4a',
+    greenL:   '#e6f4ec',
+    gray:     '#f8f7f4',
+    particle: '#c0392b',
+  };
+
+  let t = 0;
+  let particles = [];
+  const FLOW_SPEED = 0.008;
+
+  // Define layout zones relative to canvas size
+  function layout() {
+    const W = canvas.width, H = canvas.height;
+    const pad = W * 0.04;
+    const cx = W / 2;
+
+    return {
+      // Input box
+      input: { x: pad, y: H * 0.25, w: W * 0.16, h: H * 0.5, label: 'SKILL\nINPUT', sub: 'SKILL.md files\nfrom ClawHub' },
+      // Layer 1 box
+      l1: { x: W * 0.24, y: H * 0.06, w: W * 0.3, h: H * 0.88,
+            label: 'LAYER 1', sub: 'Semantic Analysis\n(LLM-as-a-Judge)',
+            steps: ['Intent & Capability\nExtraction', 'Risk Scoring &\nClassification'] },
+      // Layer 2 box
+      l2: { x: W * 0.58, y: H * 0.06, w: W * 0.3, h: H * 0.88,
+            label: 'LAYER 2', sub: 'Programmatic Analysis\n(Sandbox Execution)',
+            steps: ['Prompt Agent &\nBehavior Monitor', 'Evidence Collection\n(Logs & Artifacts)'] },
+      // Verdict chips
+      verdicts: { x: W * 0.92, y: H * 0.25, gap: H * 0.17 },
+    };
+  }
+
+  // Particle class for flow animation
+  class Particle {
+    constructor(path) {
+      this.path = path; // array of {x,y}
+      this.progress = Math.random();
+      this.speed = 0.004 + Math.random() * 0.004;
+      this.size = 2.5 + Math.random() * 1.5;
+      this.color = C.accent;
+      this.alpha = 0.7 + Math.random() * 0.3;
+    }
+    update() {
+      this.progress += this.speed;
+      if (this.progress >= 1) this.progress = 0;
+    }
+    pos() {
+      const p = this.path;
+      const n = p.length - 1;
+      const t = this.progress * n;
+      const i = Math.floor(t);
+      const f = t - i;
+      const a = p[Math.min(i, n)];
+      const b = p[Math.min(i + 1, n)];
+      return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
+    }
+    draw(ctx) {
+      const pos = this.pos();
+      ctx.save();
+      ctx.globalAlpha = this.alpha * (0.7 + 0.3 * Math.sin(this.progress * Math.PI));
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function initParticles(paths) {
+    particles = [];
+    paths.forEach(path => {
+      const count = 6 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < count; i++) {
+        const p = new Particle(path);
+        p.progress = i / count;
+        particles.push(p);
+      }
+    });
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  function drawArrow(ctx, x1, y1, x2, y2, color) {
+    const headLen = 8;
+    const dx = x2 - x1, dy = y2 - y1;
+    const angle = Math.atan2(dy, dx);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2 - headLen * Math.cos(angle), y2 - headLen * Math.sin(angle));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - headLen * Math.cos(angle - 0.4), y2 - headLen * Math.sin(angle - 0.4));
+    ctx.lineTo(x2 - headLen * Math.cos(angle + 0.4), y2 - headLen * Math.sin(angle + 0.4));
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function multilineText(ctx, text, x, y, lineH) {
+    text.split('\n').forEach((line, i) => ctx.fillText(line, x, y + i * lineH));
+  }
+
+  let paths = [];
+  function buildPaths() {
+    const L = layout();
+    const W = canvas.width, H = canvas.height;
+    // Path 1: Input → L1 center
+    const p1x = L.input.x + L.input.w;
+    const p1y = L.input.y + L.input.h / 2;
+    const l1cx = L.l1.x + L.l1.w / 2;
+    const l1cy = L.l1.y + L.l1.h * 0.55;
+
+    // Path 2: L1 → L2
+    const l2cx = L.l2.x + L.l2.w / 2;
+    const l2cy = L.l2.y + L.l2.h * 0.55;
+
+    // Path 3: L2 → Verdict area
+    const vx = L.verdicts.x;
+
+    paths = [
+      // input → L1
+      [{x: p1x, y: p1y}, {x: L.l1.x, y: p1y}],
+      // L1 step1 → step2
+      [{x: l1cx, y: L.l1.y + L.l1.h * 0.4}, {x: l1cx, y: L.l1.y + L.l1.h * 0.55}],
+      // L1 → L2
+      [{x: L.l1.x + L.l1.w, y: l1cy}, {x: L.l2.x, y: l2cy}],
+      // L2 step1 → step2
+      [{x: l2cx, y: L.l2.y + L.l2.h * 0.4}, {x: l2cx, y: L.l2.y + L.l2.h * 0.55}],
+      // L2 → Verdict
+      [{x: L.l2.x + L.l2.w, y: H * 0.38}, {x: vx, y: H * 0.38}],
+      [{x: L.l2.x + L.l2.w, y: H * 0.55}, {x: vx, y: H * 0.55}],
+      [{x: L.l2.x + L.l2.w, y: H * 0.72}, {x: vx, y: H * 0.72}],
+    ];
+    initParticles(paths);
+  }
+
+  function draw() {
+    const W = canvas.width, H = canvas.height;
+    const L = layout();
+    ctx.clearRect(0, 0, W, H);
+
+    const scale = W / 800; // responsive scale factor
+    const fs = (n) => Math.max(8, Math.round(n * scale));
+
+    // ── Background ──
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // ── Input box ──
+    roundRect(ctx, L.input.x, L.input.y, L.input.w, L.input.h, 4);
+    ctx.fillStyle = C.blueL;
+    ctx.fill();
+    ctx.strokeStyle = C.blue2;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([]);
+    ctx.stroke();
+
+    ctx.fillStyle = C.blue;
+    ctx.font = `700 ${fs(9)}px 'JetBrains Mono', monospace`;
+    ctx.textAlign = 'center';
+    ctx.letterSpacing = '0.08em';
+    multilineText(ctx, L.input.label, L.input.x + L.input.w / 2, L.input.y + L.input.h * 0.3, fs(13));
+    ctx.fillStyle = C.muted;
+    ctx.font = `${fs(8)}px 'Source Serif 4', serif`;
+    multilineText(ctx, L.input.sub, L.input.x + L.input.w / 2, L.input.y + L.input.h * 0.55, fs(12));
+
+    // File icon animation
+    const iconPulse = 0.9 + 0.1 * Math.sin(t * 2);
+    ctx.save();
+    ctx.translate(L.input.x + L.input.w / 2, L.input.y + L.input.h * 0.18);
+    ctx.scale(iconPulse * scale * 0.8, iconPulse * scale * 0.8);
+    ctx.fillStyle = C.blue2;
+    ctx.beginPath();
+    ctx.roundRect(-12, -16, 24, 32, 3);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(-7, -8, 14, 2);
+    ctx.fillRect(-7, -3, 14, 2);
+    ctx.fillRect(-7, 2, 10, 2);
+    ctx.restore();
+
+    // ── Layer 1 box ──
+    roundRect(ctx, L.l1.x, L.l1.y, L.l1.w, L.l1.h, 4);
+    ctx.fillStyle = C.gray;
+    ctx.fill();
+    ctx.strokeStyle = C.rule;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // L1 header band
+    roundRect(ctx, L.l1.x, L.l1.y, L.l1.w, H * 0.2, 4);
+    ctx.fillStyle = C.blue;
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `700 ${fs(9)}px 'JetBrains Mono', monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText('LAYER 1: SEMANTIC ANALYSIS', L.l1.x + L.l1.w / 2, L.l1.y + H * 0.08);
+    ctx.font = `${fs(8)}px 'Source Serif 4', serif`;
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText('LLM-as-a-Judge', L.l1.x + L.l1.w / 2, L.l1.y + H * 0.14);
+
+    // L1 step boxes
+    const l1StepY1 = L.l1.y + H * 0.25;
+    const l1StepY2 = L.l1.y + H * 0.54;
+    const l1sw = L.l1.w * 0.82;
+    const l1sx = L.l1.x + L.l1.w * 0.09;
+
+    [[l1StepY1, '🧠 Intent & Capability\nExtraction', C.accent], [l1StepY2, '📊 Risk Scoring &\nClassification', C.blue2]].forEach(([sy, label, col]) => {
+      roundRect(ctx, l1sx, sy, l1sw, H * 0.2, 3);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = col;
+      ctx.font = `${fs(8.5)}px 'Source Serif 4', serif`;
+      ctx.textAlign = 'center';
+      multilineText(ctx, label, l1sx + l1sw / 2, sy + H * 0.07, fs(13));
+    });
+
+    // Arrow L1 step1→2
+    const midX1 = L.l1.x + L.l1.w / 2;
+    drawArrow(ctx, midX1, l1StepY1 + H * 0.2, midX1, l1StepY2, C.accent);
+
+    // ── Layer 2 box ──
+    roundRect(ctx, L.l2.x, L.l2.y, L.l2.w, L.l2.h, 4);
+    ctx.fillStyle = C.gray;
+    ctx.fill();
+    ctx.strokeStyle = C.rule;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    roundRect(ctx, L.l2.x, L.l2.y, L.l2.w, H * 0.2, 4);
+    ctx.fillStyle = C.blue2;
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `700 ${fs(9)}px 'JetBrains Mono', monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText('LAYER 2: PROGRAMMATIC', L.l2.x + L.l2.w / 2, L.l2.y + H * 0.08);
+    ctx.font = `${fs(8)}px 'Source Serif 4', serif`;
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText('Sandbox Execution', L.l2.x + L.l2.w / 2, L.l2.y + H * 0.14);
+
+    const l2StepY1 = L.l2.y + H * 0.25;
+    const l2StepY2 = L.l2.y + H * 0.54;
+    const l2sw = L.l2.w * 0.82;
+    const l2sx = L.l2.x + L.l2.w * 0.09;
+
+    [[l2StepY1, '🤖 Prompt Agent &\nBehavior Monitor', C.gold], [l2StepY2, '📋 Evidence Collection\n(Logs & Artifacts)', C.green]].forEach(([sy, label, col]) => {
+      roundRect(ctx, l2sx, sy, l2sw, H * 0.2, 3);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = col;
+      ctx.font = `${fs(8.5)}px 'Source Serif 4', serif`;
+      ctx.textAlign = 'center';
+      multilineText(ctx, label, l2sx + l2sw / 2, sy + H * 0.07, fs(13));
+    });
+
+    const midX2 = L.l2.x + L.l2.w / 2;
+    drawArrow(ctx, midX2, l2StepY1 + H * 0.2, midX2, l2StepY2, C.gold);
+
+    // ── Verdict chips ──
+    const vx = L.verdicts.x;
+    const vy0 = H * 0.28;
+    const verdicts = [
+      { label: '🔴 MALICIOUS', bg: '#fdf0ef', border: C.accent, text: C.accent },
+      { label: '🟡 SUSPICIOUS', bg: C.goldL, border: C.gold, text: C.gold },
+      { label: '🟢 BENIGN', bg: C.greenL, border: C.green, text: C.green },
+    ];
+    const vw = W * 0.072;
+    const vh = H * 0.14;
+    verdicts.forEach(({ label, bg, border, text }, i) => {
+      const vy = vy0 + i * H * 0.22;
+      roundRect(ctx, vx, vy, vw, vh, 3);
+      ctx.fillStyle = bg;
+      ctx.fill();
+      ctx.strokeStyle = border;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = text;
+      ctx.font = `700 ${fs(7.5)}px 'JetBrains Mono', monospace`;
+      ctx.textAlign = 'center';
+      multilineText(ctx, label, vx + vw / 2, vy + vh * 0.38, fs(12));
+    });
+
+    // ── Draw connecting arrows ──
+    // Input → L1
+    const arrowY = H * 0.5;
+    drawArrow(ctx, L.input.x + L.input.w, arrowY, L.l1.x, arrowY, C.blue);
+    // L1 → L2
+    const midY1 = L.l1.y + L.l1.h * 0.5;
+    drawArrow(ctx, L.l1.x + L.l1.w, midY1, L.l2.x, midY1, C.blue);
+    // L2 → Verdicts
+    verdicts.forEach((_, i) => {
+      const vy = vy0 + i * H * 0.22 + vh / 2;
+      drawArrow(ctx, L.l2.x + L.l2.w, vy, vx, vy, C.muted);
+    });
+
+    // ── Particles ──
+    particles.forEach(p => { p.update(); p.draw(ctx); });
+
+    // ── Pulse on L1/L2 headers ──
+    const pulse = 0.15 + 0.12 * Math.sin(t * 3);
+    ctx.save();
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = C.accent;
+    ctx.beginPath();
+    ctx.arc(L.l1.x + L.l1.w * 0.88, L.l1.y + H * 0.1, 4 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = pulse * 0.8;
+    ctx.fillStyle = C.gold;
+    ctx.beginPath();
+    ctx.arc(L.l2.x + L.l2.w * 0.88, L.l2.y + H * 0.1, 4 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    t += 0.016;
+    requestAnimationFrame(draw);
+  }
+
+  buildPaths();
+  window.addEventListener('resize', buildPaths);
+  draw();
+})();
+
+// ─────────────── BAR ANIMATION ───────────────
+(function() {
+  const bars = document.querySelectorAll('.bar-fill');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        bars.forEach(b => { b.style.width = b.dataset.pct + '%'; });
+        observer.disconnect();
+      }
+    });
+  }, { threshold: 0.3 });
+  if (document.getElementById('bar-section')) {
+    observer.observe(document.getElementById('bar-section'));
+  }
+})();
+</script>
+</body>
+</html>
