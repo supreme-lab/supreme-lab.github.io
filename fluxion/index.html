@@ -1,0 +1,2382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fluxion — User Lifecycle Forecasting</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --white: #ffffff;
+    --off-white: #f9f8f6;
+    --light: #f2f0ec;
+    --muted: #e8e4de;
+    --border: #d6d0c8;
+    --text: #1a1916;
+    --text-mid: #4a4742;
+    --text-light: #8a8580;
+    --accent: #2d5be3;
+    --accent-soft: #eef1fd;
+    --green: #1a7a4a;
+    --amber: #c47c18;
+    --red: #c42b2b;
+    --purple: #7c3ab8;
+    --teal: #1a7a6e;
+
+    /* phase colors */
+    --onboard: #4f8ef7;
+    --engage: #22c47a;
+    --identity: #f7a44f;
+    --drift: #e05a5a;
+    --dormancy: #9b8cb8;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--white);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 16px;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.3rem; letter-spacing: -0.02em;
+    color: var(--accent);
+  }
+  .nav-logo span { color: var(--text); }
+  .nav-links { display: flex; gap: 28px; }
+  .nav-links a {
+    text-decoration: none; color: var(--text-mid);
+    font-size: 0.875rem; font-weight: 500;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+  .badge {
+    background: var(--accent-soft); color: var(--accent);
+    font-size: 0.75rem; font-weight: 600;
+    padding: 4px 10px; border-radius: 20px;
+    border: 1px solid rgba(45,91,227,.18);
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 90px 40px 70px;
+    max-width: 900px; margin: 0 auto;
+    text-align: center;
+  }
+  .hero-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent); background: var(--accent-soft);
+    padding: 5px 14px; border-radius: 4px;
+    margin-bottom: 28px;
+    border: 1px solid rgba(45,91,227,.15);
+  }
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2.4rem, 5vw, 3.8rem);
+    line-height: 1.08; letter-spacing: -0.03em;
+    color: var(--text); margin-bottom: 22px;
+  }
+  .hero h1 em { font-style: italic; color: var(--accent); }
+  .hero .subtitle {
+    font-size: 1.05rem; color: var(--text-mid);
+    max-width: 620px; margin: 0 auto 36px;
+    font-weight: 300; line-height: 1.75;
+  }
+  .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    padding: 11px 26px; border-radius: 8px;
+    font-size: 0.9rem; font-weight: 600;
+    text-decoration: none; cursor: pointer; border: none;
+    transition: all .2s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #1e45cc; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(45,91,227,.25); }
+  .btn-ghost { background: transparent; color: var(--text); border: 1.5px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── SECTION WRAPPER ── */
+  .section {
+    padding: 80px 40px;
+    max-width: 1060px; margin: 0 auto;
+  }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--text-light); margin-bottom: 10px;
+  }
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.7rem, 3vw, 2.4rem);
+    letter-spacing: -0.025em; color: var(--text);
+    margin-bottom: 12px;
+  }
+  .section-desc {
+    color: var(--text-mid); font-size: 0.95rem; line-height: 1.75;
+    max-width: 640px; font-weight: 300;
+    margin-bottom: 52px;
+  }
+  hr.divider {
+    border: none; border-top: 1px solid var(--muted);
+    max-width: 1060px; margin: 0 auto;
+  }
+
+  /* ── FIGURE 1 ANIMATION ── */
+  .fig1-container {
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 40px;
+    position: relative; overflow: hidden;
+  }
+  .fig1-caption {
+    text-align: center;
+    font-size: 0.82rem; color: var(--text-light);
+    font-style: italic; margin-top: 28px;
+  }
+
+  /* Timeline track */
+  .timeline-track {
+    position: relative;
+    display: flex; align-items: flex-start;
+    gap: 0; margin-bottom: 10px;
+  }
+  .timeline-line {
+    position: absolute; top: 52px; left: 40px; right: 40px; height: 2px;
+    background: linear-gradient(90deg, var(--onboard), var(--engage), var(--identity), var(--drift), var(--dormancy));
+    border-radius: 2px;
+    opacity: 0; animation: fadeIn .6s ease forwards .3s;
+  }
+  .phase-col {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    position: relative; z-index: 2;
+  }
+
+  /* Person avatar SVG wrapper */
+  .avatar-wrap {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: var(--white);
+    border: 2.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    opacity: 0; transform: translateY(18px) scale(.85);
+    transition: box-shadow .3s;
+    cursor: default;
+  }
+  .avatar-wrap.visible {
+    animation: popIn .55s cubic-bezier(.34,1.56,.64,1) forwards;
+  }
+  .avatar-wrap:hover { transform: translateY(-4px) scale(1.07); box-shadow: 0 10px 32px rgba(0,0,0,.10); }
+
+  .phase-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    margin: 14px 0 10px;
+    border: 2px solid var(--white);
+    box-shadow: 0 0 0 2px currentColor;
+    opacity: 0; animation: none;
+  }
+  .phase-dot.visible { animation: popIn .4s ease forwards; }
+
+  .phase-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.67rem; letter-spacing: .06em; text-transform: uppercase;
+    text-align: center; font-weight: 500;
+    opacity: 0;
+  }
+  .phase-label.visible { animation: fadeIn .5s ease forwards; }
+  .phase-sub {
+    font-size: 0.73rem; color: var(--text-light);
+    text-align: center; line-height: 1.4;
+    margin-top: 4px; padding: 0 4px;
+    opacity: 0;
+  }
+  .phase-sub.visible { animation: fadeIn .5s ease forwards; }
+
+  /* Arrows between phases */
+  .arrow-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; margin-bottom: 8px; position: relative;
+  }
+  .arrow-seg {
+    flex: 1; height: 2px;
+    opacity: 0; animation: none;
+  }
+  .arrow-seg.visible { animation: growRight .5s ease forwards; }
+  .arrow-head {
+    width: 0; height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    opacity: 0;
+  }
+  .arrow-head.visible { animation: fadeIn .3s ease forwards; }
+
+  /* Animated speech/activity bubbles */
+  .bubble {
+    position: absolute;
+    background: var(--white);
+    border-radius: 10px;
+    padding: 4px 9px;
+    font-size: 0.67rem; font-weight: 600;
+    box-shadow: 0 3px 12px rgba(0,0,0,.08);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .bubble.float { animation: floatBubble 3s ease-in-out infinite; }
+
+  @keyframes popIn {
+    from { opacity:0; transform: translateY(18px) scale(.8); }
+    to   { opacity:1; transform: translateY(0) scale(1); }
+  }
+  @keyframes fadeIn {
+    from { opacity:0; } to { opacity:1; }
+  }
+  @keyframes growRight {
+    from { transform: scaleX(0); transform-origin: left; opacity:0; }
+    to   { transform: scaleX(1); transform-origin: left; opacity:1; }
+  }
+  @keyframes floatBubble {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-5px); }
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(45,91,227,.3); }
+    50%       { box-shadow: 0 0 0 8px rgba(45,91,227,.0); }
+  }
+
+  /* ── FIGURE 2 NETWORK ANIMATION ── */
+  .fig2-container {
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .fig2-header {
+    padding: 24px 32px 16px;
+    border-bottom: 1px solid var(--muted);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .fig2-header h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.05rem; color: var(--text);
+  }
+  .time-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; background: var(--accent); color: #fff;
+    padding: 3px 10px; border-radius: 4px;
+    margin-left: auto;
+  }
+  .fig2-stages {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+  .stage-panel {
+    padding: 20px 14px; border-right: 1px solid var(--muted);
+    position: relative;
+  }
+  .stage-panel:last-child { border-right: none; }
+  .stage-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem; color: var(--text-light);
+    letter-spacing: .05em; margin-bottom: 12px;
+  }
+  .net-svg { width: 100%; aspect-ratio: 1; }
+  .stage-desc {
+    font-size: 0.72rem; color: var(--text-mid);
+    line-height: 1.4; margin-top: 10px;
+    text-align: center;
+  }
+
+  /* Legend */
+  .fig2-legend {
+    padding: 14px 32px;
+    border-top: 1px solid var(--muted);
+    display: flex; gap: 20px; flex-wrap: wrap; align-items: center;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-label { font-size: 0.75rem; color: var(--text-mid); }
+
+  /* ── ABSTRACT / CONTRIBUTIONS ── */
+  .abstract-block {
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 44px;
+    font-size: 0.93rem; line-height: 1.85;
+    color: var(--text-mid); font-weight: 300;
+    border-left: 4px solid var(--accent);
+    position: relative;
+  }
+  .abstract-block::before {
+    content: '"';
+    position: absolute; top: 20px; left: 20px;
+    font-family: 'DM Serif Display', serif;
+    font-size: 4rem; color: var(--accent); opacity: .12;
+    line-height: 1;
+  }
+
+  .contrib-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+    margin-top: 8px;
+  }
+  .contrib-card {
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    border-radius: 14px; padding: 28px 24px;
+    transition: all .25s;
+    position: relative; overflow: hidden;
+  }
+  .contrib-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    border-radius: 14px 14px 0 0;
+  }
+  .contrib-card:nth-child(1)::before { background: var(--onboard); }
+  .contrib-card:nth-child(2)::before { background: var(--engage); }
+  .contrib-card:nth-child(3)::before { background: var(--identity); }
+  .contrib-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,.07); }
+  .contrib-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem; color: var(--text-light);
+    margin-bottom: 10px;
+  }
+  .contrib-card h4 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.05rem; margin-bottom: 8px;
+  }
+  .contrib-card p {
+    font-size: 0.83rem; color: var(--text-mid); line-height: 1.65;
+  }
+
+  /* ── PHASE PILLS ── */
+  .phase-pills {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 40px;
+  }
+  .phase-pill {
+    padding: 7px 18px; border-radius: 30px;
+    font-size: 0.8rem; font-weight: 600;
+    border: 1.5px solid transparent; cursor: default;
+    transition: transform .2s;
+  }
+  .phase-pill:hover { transform: translateY(-2px); }
+
+  /* ── RESULTS TABLE ── */
+  .results-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.87rem;
+  }
+  .results-table th {
+    text-align: left; padding: 12px 16px;
+    font-size: 0.75rem; font-weight: 600;
+    letter-spacing: .04em; text-transform: uppercase;
+    color: var(--text-light);
+    border-bottom: 2px solid var(--muted);
+  }
+  .results-table td {
+    padding: 12px 16px; border-bottom: 1px solid var(--muted);
+    color: var(--text-mid);
+  }
+  .results-table tr:last-child td { border-bottom: none; }
+  .results-table tr:hover td { background: var(--off-white); }
+  .val-good { color: var(--green); font-weight: 600; }
+  .val-mid  { color: var(--amber); font-weight: 500; }
+  .val-low  { color: var(--red); font-weight: 500; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--text); color: rgba(255,255,255,.55);
+    padding: 40px 40px;
+    text-align: center;
+    font-size: 0.82rem;
+  }
+  footer strong { color: rgba(255,255,255,.85); }
+
+  /* ── UTIL ── */
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  @media (max-width: 768px) {
+    nav { padding: 12px 20px; }
+    .nav-links { display: none; }
+    .section { padding: 60px 20px; }
+    .hero { padding: 60px 20px 50px; }
+    .contrib-grid { grid-template-columns: 1fr; }
+    .fig2-stages { grid-template-columns: repeat(2, 1fr); }
+    .timeline-track { flex-direction: column; align-items: center; gap: 20px; }
+    .timeline-line { display: none; }
+    .math-two-col { grid-template-columns: 1fr !important; }
+    .markov-matrix-grid { grid-template-columns: 1fr !important; }
+    .validity-grid { grid-template-columns: 1fr !important; }
+    .arch-flow { flex-direction: column !important; gap: 12px !important; }
+    .arch-flow .arch-arrow { transform: rotate(90deg); }
+  }
+
+  /* ══════════════════════════════════
+     FIGURES 9 – 15 STYLES
+  ══════════════════════════════════ */
+  .fig-card {
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .fig-card-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 20px; flex-wrap: wrap;
+    padding: 28px 32px 20px;
+    border-bottom: 1px solid var(--muted);
+    background: var(--white);
+  }
+  .fig-card-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 6px;
+  }
+  .fig-card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem; letter-spacing: -.02em; margin-bottom: 6px;
+  }
+  .fig-card-desc {
+    font-size: 0.83rem; color: var(--text-mid); line-height: 1.65;
+    max-width: 520px;
+  }
+  .fig-card-body {
+    padding: 24px 32px 28px;
+  }
+  .fig-time-tabs {
+    display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0;
+  }
+  .fig-tab {
+    padding: 6px 14px; border-radius: 6px;
+    font-size: 0.75rem; font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer; border: 1.5px solid var(--border);
+    background: var(--white); color: var(--text-mid);
+    transition: all .18s;
+  }
+  .fig-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .fig-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .fig-phase-btn {
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 600;
+    cursor: pointer; border: 1.5px solid var(--border);
+    background: var(--white); transition: all .18s;
+  }
+  .fig-phase-btn.active { background: currentColor; }
+  .fig-phase-btn.active span { color: white; }
+
+  .scatter-legend {
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+    font-size: 0.78rem; color: var(--text-mid); margin-top: 10px;
+  }
+  .scatter-dot {
+    display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+    margin-right: 4px; vertical-align: middle;
+  }
+  .fig-insight {
+    background: var(--accent-soft);
+    border: 1px solid rgba(45,91,227,.12);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.82rem; color: var(--text-mid); line-height: 1.6;
+    margin-top: 16px;
+  }
+
+  /* Radar stats panel */
+  .radar-stat-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 9px;
+  }
+  .radar-stat-label {
+    font-size: 0.78rem; width: 80px; flex-shrink: 0; color: var(--text-mid);
+  }
+  .radar-stat-bar-track {
+    flex: 1; height: 8px; background: var(--muted); border-radius: 4px; overflow: hidden;
+  }
+  .radar-stat-bar-fill {
+    height: 100%; border-radius: 4px;
+    transition: width .7s cubic-bezier(.4,0,.2,1);
+  }
+  .radar-stat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; color: var(--text-light); width: 30px; text-align: right;
+  }
+
+  /* Stat chips */
+  .stat-chip {
+    background: var(--off-white); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px 22px; text-align: center;
+  }
+  .stat-chip-val {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.8rem; color: var(--accent);
+    letter-spacing: -.03em; margin-bottom: 4px;
+  }
+  .stat-chip-label {
+    font-size: 0.76rem; color: var(--text-mid); line-height: 1.4;
+  }
+
+  @media (max-width: 768px) {
+    .fig-card-header { padding: 20px; flex-direction: column; }
+    .fig-card-body { padding: 16px 20px 20px; }
+    .stat-chip-val { font-size: 1.4rem; }
+    .fig-card-body > div[style*="grid-template-columns:repeat(4"] { grid-template-columns: repeat(2,1fr) !important; }
+  }
+
+  /* ══════════════════════════════════════════
+     MATHEMATICAL MODEL SECTION
+  ══════════════════════════════════════════ */
+
+  /* Formula blocks */
+  .formula-block {
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 32px;
+    margin: 20px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .formula-block::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    border-radius: 14px 0 0 14px;
+  }
+  .formula-block.blue::before  { background: var(--accent); }
+  .formula-block.green::before { background: var(--engage); }
+  .formula-block.amber::before { background: var(--identity); }
+  .formula-block.red::before   { background: var(--drift); }
+  .formula-block.purple::before{ background: var(--dormancy); }
+
+  .formula-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--text-light); margin-bottom: 12px;
+  }
+  .formula {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem; color: var(--text);
+    line-height: 2; background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px 20px;
+    margin: 10px 0;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .formula sup { font-size: .65em; vertical-align: super; }
+  .formula sub { font-size: .65em; vertical-align: sub; }
+  .formula-note {
+    font-size: 0.82rem; color: var(--text-mid);
+    line-height: 1.65; margin-top: 12px;
+  }
+  .formula-vars {
+    display: grid; grid-template-columns: auto 1fr;
+    gap: 6px 16px; margin-top: 14px; align-items: start;
+  }
+  .var-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem; color: var(--accent);
+    font-weight: 600; white-space: nowrap;
+  }
+  .var-desc { font-size: 0.82rem; color: var(--text-mid); line-height: 1.5; }
+
+  /* Two-column math layout */
+  .math-two-col {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 20px; margin: 20px 0;
+  }
+
+  /* Markov matrix visualization */
+  .markov-section {
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    margin: 24px 0;
+  }
+  .markov-matrix-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 32px; align-items: start;
+  }
+  .matrix-visual {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    overflow-x: auto;
+  }
+  .matrix-table {
+    border-collapse: collapse; width: 100%;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+  }
+  .matrix-table th {
+    padding: 8px 10px; text-align: center;
+    font-size: 0.68rem; letter-spacing: .05em;
+    color: var(--text-light); font-weight: 600;
+    border-bottom: 1.5px solid var(--muted);
+  }
+  .matrix-table td {
+    padding: 9px 10px; text-align: center;
+    border-bottom: 1px solid var(--muted);
+    transition: background .2s;
+  }
+  .matrix-table tr:last-child td { border-bottom: none; }
+  .matrix-table td.diagonal { font-weight: 700; }
+  .matrix-table td.zero { color: var(--border); }
+  .matrix-table tr:hover td { background: var(--off-white); }
+  .matrix-row-label {
+    font-size: 0.72rem; color: var(--text-mid);
+    writing-mode: horizontal-tb; white-space: nowrap;
+    font-weight: 600;
+  }
+
+  /* Heat cell coloring */
+  .heat-high  { background: rgba(45,91,227,.12); color: var(--accent); }
+  .heat-med   { background: rgba(34,196,122,.10); color: var(--green); }
+  .heat-low   { background: rgba(155,140,184,.10); color: var(--purple); }
+  .heat-zero  { color: #ddd; }
+
+  /* Phase score diagram */
+  .phase-score-diagram {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .psd-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--text-light); margin-bottom: 16px;
+  }
+  .psd-bar-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  }
+  .psd-bar-label { font-size: 0.78rem; color: var(--text-mid); width: 50px; flex-shrink: 0; }
+  .psd-bar-track {
+    flex: 1; height: 10px; background: var(--muted);
+    border-radius: 5px; overflow: hidden;
+  }
+  .psd-bar-fill {
+    height: 100%; border-radius: 5px;
+    transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    width: 0;
+  }
+  .psd-bar-val { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-light); width: 36px; text-align: right; }
+
+  /* Architecture diagram */
+  .arch-section {
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    margin: 24px 0;
+  }
+  .arch-flow {
+    display: flex; align-items: center; gap: 0;
+    flex-wrap: nowrap; overflow-x: auto;
+  }
+  .arch-box {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    min-width: 120px; flex: 1;
+    text-align: center;
+    transition: all .25s;
+    cursor: default;
+  }
+  .arch-box:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+  .arch-box-icon { font-size: 1.4rem; margin-bottom: 6px; }
+  .arch-box-title {
+    font-size: 0.78rem; font-weight: 700; color: var(--text);
+    margin-bottom: 3px;
+  }
+  .arch-box-sub { font-size: 0.68rem; color: var(--text-light); line-height: 1.4; }
+  .arch-box.highlight { border-color: var(--accent); background: var(--accent-soft); }
+  .arch-arrow {
+    flex-shrink: 0; padding: 0 4px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .arch-arrow svg { display: block; }
+  .arch-arrow-label { font-size: 0.62rem; color: var(--text-light); white-space: nowrap; }
+
+  /* Loss function decomposition */
+  .loss-grid {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 16px; margin: 20px 0;
+  }
+  .loss-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 18px;
+    transition: all .25s;
+  }
+  .loss-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.07); }
+  .loss-card-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem; letter-spacing: .08em;
+    padding: 3px 9px; border-radius: 4px;
+    display: inline-block; margin-bottom: 10px; font-weight: 600;
+  }
+  .loss-card h5 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1rem; margin-bottom: 6px;
+  }
+  .loss-card p { font-size: 0.78rem; color: var(--text-mid); line-height: 1.55; }
+  .loss-formula-small {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; background: var(--off-white);
+    border: 1px solid var(--muted); border-radius: 6px;
+    padding: 8px 10px; margin-top: 10px;
+    line-height: 1.7; overflow-x: auto; white-space: pre;
+  }
+
+  /* Validity proofs */
+  .validity-grid {
+    display: grid; grid-template-columns: repeat(2,1fr);
+    gap: 18px; margin: 20px 0;
+  }
+  .validity-card {
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 26px 24px;
+    position: relative; overflow: hidden;
+  }
+  .validity-card::after {
+    content: '✓';
+    position: absolute; right: 18px; top: 18px;
+    font-size: 1rem; color: var(--engage);
+    background: rgba(34,196,122,.1);
+    width: 28px; height: 28px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  .validity-card h5 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1rem; margin-bottom: 8px; padding-right: 36px;
+  }
+  .validity-card p { font-size: 0.82rem; color: var(--text-mid); line-height: 1.65; }
+  .validity-step {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid rgba(45,91,227,.12);
+    border-radius: 6px; padding: 8px 12px;
+    margin-top: 10px; line-height: 1.6;
+  }
+
+  /* Interactive Markov sim */
+  .markov-sim {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-top: 20px;
+  }
+  .sim-controls {
+    display: flex; gap: 12px; align-items: center;
+    flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .sim-btn {
+    padding: 8px 18px; border-radius: 8px;
+    font-size: 0.83rem; font-weight: 600;
+    cursor: pointer; border: 1.5px solid var(--border);
+    background: var(--white); color: var(--text);
+    transition: all .2s;
+  }
+  .sim-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .sim-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .sim-label {
+    font-size: 0.8rem; color: var(--text-mid);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .sim-bars { display: flex; flex-direction: column; gap: 10px; }
+  .sim-bar-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sim-bar-name {
+    font-size: 0.8rem; font-weight: 600; width: 80px; flex-shrink: 0;
+  }
+  .sim-bar-track {
+    flex: 1; height: 22px; background: var(--muted);
+    border-radius: 5px; overflow: hidden; position: relative;
+  }
+  .sim-bar-fill {
+    height: 100%; border-radius: 5px;
+    transition: width 0.9s cubic-bezier(.4,0,.2,1);
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: 6px;
+  }
+  .sim-bar-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem; color: white; font-weight: 600;
+  }
+  .sim-step-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; color: var(--text-light);
+    margin-left: auto;
+  }
+
+  @media (max-width: 768px) {
+    .loss-grid { grid-template-columns: 1fr; }
+    .validity-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Flux<span>ion</span></div>
+  <div class="nav-links">
+    <a href="#abstract">Abstract</a>
+    <a href="#lifecycle">Lifecycle</a>
+    <a href="#network">Network</a>
+    <a href="#contributions">Contributions</a>
+    <a href="#figures">Figures</a>
+    <a href="#math">Math Model</a>
+    <a href="#results">Results</a>
+  </div>
+  <!-- <span class="badge">ICWSM 2026</span> -->
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-tag">Research Paper · Social Media Dynamics</div>
+  <h1>Forecasting <em>User Lifecycle</em> Transitions in Social Networks</h1>
+  <p class="subtitle">Fluxion is a unified framework that models user evolution as transitions across five interpretable phases — integrating network structure, engagement activity, and semantic content history.</p>
+  <div class="hero-actions">
+    <a href="#lifecycle" class="btn btn-primary">Explore Framework</a>
+    <a href="#abstract" class="btn btn-ghost">Read Abstract</a>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ABSTRACT -->
+<section class="section" id="abstract">
+  <div class="section-label">Abstract</div>
+  <h2 class="section-title">Understanding User Evolution Over Time</h2>
+  <p class="section-desc">User behavior in social media evolves as individuals enter platforms, increase participation, develop stable roles, shift interests, and eventually become dormant.</p>
+  <div class="abstract-block">
+    We introduce <strong>Fluxion</strong>, a unified framework that models user evolution as transitions across five interpretable lifecycle phases: <strong>Onboarding, Engagement, Identity, Drift,</strong> and <strong>Dormancy</strong>. Fluxion integrates network structure, engagement activity, and semantic content history to estimate transition readiness and forecast future phases. Experiments demonstrate that Fluxion accurately forecasts phase transitions, identifies stable behavioral states such as long-term dormancy, and provides interpretable signals associated with behavioral change.
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- FIGURE 1 — LIFECYCLE ANIMATION -->
+<section class="section" id="lifecycle">
+  <div class="section-label">Figure 1 · Animated</div>
+  <h2 class="section-title">The Social Media User Lifecycle</h2>
+  <p class="section-desc">Users progress through distinct behavioral phases over time — from initial exploration to deep engagement, identity formation, and eventual dormancy.</p>
+
+  <div class="fig1-container">
+    <div style="position:relative; margin-bottom:12px;">
+      <!-- Time arrow -->
+      <div style="display:flex; align-items:center; justify-content:flex-end; margin-bottom:20px;">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:.7rem; color:var(--text-light); letter-spacing:.08em;">TIME</span>
+        <svg width="60" height="12" viewBox="0 0 60 12" style="margin-left:8px;">
+          <line x1="0" y1="6" x2="52" y2="6" stroke="#c0bbb4" stroke-width="1.5"/>
+          <polygon points="52,2 60,6 52,10" fill="#c0bbb4"/>
+        </svg>
+      </div>
+
+      <div class="timeline-track" id="timelineTrack">
+        <div class="timeline-line"></div>
+
+        <!-- Phase 1: Onboarding -->
+        <div class="phase-col">
+          <div class="avatar-wrap" id="av1" style="border-color:var(--onboard);">
+            <svg width="48" height="48" viewBox="0 0 48 48">
+              <!-- Person exploring / looking around -->
+              <circle cx="24" cy="14" r="8" fill="#4f8ef7" opacity=".15"/>
+              <circle cx="24" cy="13" r="6" fill="#4f8ef7"/>
+              <rect x="16" y="22" width="16" height="12" rx="4" fill="#4f8ef7" opacity=".7"/>
+              <!-- magnifying glass -->
+              <circle cx="30" cy="34" r="5" fill="none" stroke="#4f8ef7" stroke-width="1.8"/>
+              <line x1="34" y1="38" x2="37" y2="41" stroke="#4f8ef7" stroke-width="1.8" stroke-linecap="round"/>
+              <!-- eyes looking right -->
+              <circle cx="22" cy="13" r="1.2" fill="white"/>
+              <circle cx="26" cy="13" r="1.2" fill="white"/>
+              <circle cx="22.5" cy="13" r=".6" fill="#1a3a8a"/>
+              <circle cx="26.5" cy="13" r=".6" fill="#1a3a8a"/>
+            </svg>
+          </div>
+          <div class="phase-dot visible" style="color:var(--onboard); background:var(--onboard); animation-delay:.6s;"></div>
+          <div class="phase-label" style="color:var(--onboard);">Onboarding</div>
+          <div class="phase-sub">Exploring, observing,<br>minimal activity</div>
+          <!-- Activity bubble -->
+          <div class="bubble float" id="b1" style="top:-10px; right:-20px; color:var(--onboard); border-color:rgba(79,142,247,.2); animation-delay:.1s;">👀 Browsing</div>
+        </div>
+
+        <!-- Phase 2: Engagement -->
+        <div class="phase-col">
+          <div class="avatar-wrap" id="av2" style="border-color:var(--engage);">
+            <svg width="48" height="48" viewBox="0 0 48 48">
+              <circle cx="24" cy="13" r="6" fill="#22c47a"/>
+              <rect x="16" y="22" width="16" height="12" rx="4" fill="#22c47a" opacity=".7"/>
+              <!-- chat bubbles -->
+              <rect x="28" y="26" width="14" height="9" rx="3" fill="#22c47a"/>
+              <polygon points="30,35 28,38 33,35" fill="#22c47a"/>
+              <rect x="7" y="30" width="12" height="8" rx="3" fill="#22c47a" opacity=".5"/>
+              <polygon points="17,38 19,41 14,38" fill="#22c47a" opacity=".5"/>
+              <!-- smiling -->
+              <circle cx="22" cy="12" r="1" fill="white"/>
+              <circle cx="26" cy="12" r="1" fill="white"/>
+              <path d="M21 15 Q24 17 27 15" stroke="white" stroke-width="1" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="phase-dot" style="color:var(--engage); background:var(--engage);"></div>
+          <div class="phase-label" style="color:var(--engage);">Engagement</div>
+          <div class="phase-sub">Commenting, sharing,<br>building connections</div>
+          <div class="bubble float" style="top:-10px; right:-14px; color:var(--engage); border-color:rgba(34,196,122,.2); animation-delay:.8s;">💬 Active</div>
+        </div>
+
+        <!-- Phase 3: Identity -->
+        <div class="phase-col">
+          <div class="avatar-wrap" id="av3" style="border-color:var(--identity);">
+            <svg width="48" height="48" viewBox="0 0 48 48">
+              <circle cx="24" cy="13" r="6" fill="#f7a44f"/>
+              <rect x="16" y="22" width="16" height="12" rx="4" fill="#f7a44f" opacity=".8"/>
+              <!-- crown -->
+              <polygon points="18,8 24,3 30,8 28,5 24,7 20,5" fill="#f7a44f"/>
+              <!-- star badges -->
+              <text x="5" y="28" font-size="10" fill="#f7a44f">★</text>
+              <text x="34" y="28" font-size="10" fill="#f7a44f">★</text>
+              <!-- confident eyes -->
+              <circle cx="22" cy="12" r="1.2" fill="white"/>
+              <circle cx="26" cy="12" r="1.2" fill="white"/>
+              <line x1="21" y1="15" x2="27" y2="15" stroke="white" stroke-width=".8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="phase-dot" style="color:var(--identity); background:var(--identity);"></div>
+          <div class="phase-label" style="color:var(--identity);">Identity</div>
+          <div class="phase-sub">Influencer, stable<br>online role formed</div>
+          <div class="bubble float" style="top:-10px; right:-18px; color:var(--identity); border-color:rgba(247,164,79,.2); animation-delay:1.2s;">⭐ 12.4k</div>
+        </div>
+
+        <!-- Phase 4: Drift -->
+        <div class="phase-col">
+          <div class="avatar-wrap" id="av4" style="border-color:var(--drift);">
+            <svg width="48" height="48" viewBox="0 0 48 48">
+              <circle cx="24" cy="13" r="6" fill="#e05a5a"/>
+              <rect x="16" y="22" width="16" height="12" rx="4" fill="#e05a5a" opacity=".6"/>
+              <!-- diverging arrows -->
+              <line x1="24" y1="30" x2="10" y2="42" stroke="#e05a5a" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2,2"/>
+              <line x1="24" y1="30" x2="38" y2="42" stroke="#e05a5a" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2,2"/>
+              <!-- confused eyes -->
+              <circle cx="22" cy="12" r="1.2" fill="white"/>
+              <circle cx="26" cy="12" r="1.2" fill="white"/>
+              <path d="M21 15.5 Q24 14 27 15.5" stroke="white" stroke-width="1" fill="none"/>
+            </svg>
+          </div>
+          <div class="phase-dot" style="color:var(--drift); background:var(--drift);"></div>
+          <div class="phase-label" style="color:var(--drift);">Drift</div>
+          <div class="phase-sub">Shifting interests,<br>behavioral change</div>
+          <div class="bubble float" style="top:-10px; right:-16px; color:var(--drift); border-color:rgba(224,90,90,.2); animation-delay:.4s;">↗ Shifting</div>
+        </div>
+
+        <!-- Phase 5: Dormancy -->
+        <div class="phase-col">
+          <div class="avatar-wrap" id="av5" style="border-color:var(--dormancy);">
+            <svg width="48" height="48" viewBox="0 0 48 48">
+              <circle cx="24" cy="13" r="6" fill="#9b8cb8" opacity=".6"/>
+              <rect x="16" y="22" width="16" height="12" rx="4" fill="#9b8cb8" opacity=".35"/>
+              <!-- Zzz -->
+              <text x="28" y="14" font-size="9" fill="#9b8cb8" font-weight="bold">z</text>
+              <text x="32" y="10" font-size="7" fill="#9b8cb8" font-weight="bold">z</text>
+              <text x="35" y="7" font-size="5" fill="#9b8cb8" font-weight="bold">z</text>
+              <!-- closed eyes -->
+              <line x1="20" y1="12" x2="23" y2="12" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="25" y1="12" x2="28" y2="12" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+              <!-- frown -->
+              <path d="M21 15.5 Q24 14 27 15.5" stroke="white" stroke-width="1" fill="none"/>
+            </svg>
+          </div>
+          <div class="phase-dot" style="color:var(--dormancy); background:var(--dormancy);"></div>
+          <div class="phase-label" style="color:var(--dormancy);">Dormancy</div>
+          <div class="phase-sub">Inactive, reduced<br>or no participation</div>
+          <div class="bubble float" style="top:-6px; right:-8px; color:var(--dormancy); border-color:rgba(155,140,184,.2); animation-delay:1.6s;">💤 Quiet</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="fig1-caption">Figure 1 — Conceptual illustration of social media user lifecycle dynamics across time</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- FIGURE 2 — NETWORK EVOLUTION ANIMATION -->
+<section class="section" id="network">
+  <div class="section-label">Figure 2 · Animated</div>
+  <h2 class="section-title">Network Evolution Over Time</h2>
+  <p class="section-desc">As users progress through lifecycle phases, the network densifies, interests converge, and some users drift away or become dormant.</p>
+
+  <div class="fig2-container">
+    <div class="fig2-header">
+      <h3>Social Graph Evolution</h3>
+      <span id="timeBadge" class="time-badge">t = 0</span>
+    </div>
+
+    <div class="fig2-stages">
+      <!-- Stage panels with SVG network graphs -->
+      <div class="stage-panel">
+        <div class="stage-time">t = 0 · Early Stage</div>
+        <svg class="net-svg" id="net0" viewBox="0 0 140 140"></svg>
+        <div class="stage-desc">New users join. Isolated nodes, minimal connections.</div>
+      </div>
+      <div class="stage-panel">
+        <div class="stage-time">t = 1 · Growing</div>
+        <svg class="net-svg" id="net1" viewBox="0 0 140 140"></svg>
+        <div class="stage-desc">Connections form. Homophily clusters emerge.</div>
+      </div>
+      <div class="stage-panel">
+        <div class="stage-time">t = 2 · Densifying</div>
+        <svg class="net-svg" id="net2" viewBox="0 0 140 140"></svg>
+        <div class="stage-desc">Hubs appear. Triadic closure strengthens groups.</div>
+      </div>
+      <div class="stage-panel">
+        <div class="stage-time">t = 3 · Mature</div>
+        <svg class="net-svg" id="net3" viewBox="0 0 140 140"></svg>
+        <div class="stage-desc">Some users drift. Others become dormant (faded).</div>
+      </div>
+    </div>
+
+    <div class="fig2-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--onboard)"></div><span class="legend-label">Onboarding</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--engage)"></div><span class="legend-label">Engagement</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--identity)"></div><span class="legend-label">Identity</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--drift)"></div><span class="legend-label">Drift</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--dormancy)"></div><span class="legend-label">Dormancy</span></div>
+      <div class="legend-item" style="margin-left:auto;">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:.7rem; color:var(--text-light);">Node size ∝ degree</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- CONTRIBUTIONS -->
+<section class="section" id="contributions">
+  <div class="section-label">Key Contributions</div>
+  <h2 class="section-title">What Fluxion Introduces</h2>
+  <p class="section-desc">Three core innovations that advance the modeling of user lifecycle dynamics in evolving social networks.</p>
+
+  <div class="phase-pills">
+    <span class="phase-pill" style="color:var(--onboard); border-color:var(--onboard); background:rgba(79,142,247,.08);">Onboarding</span>
+    <span class="phase-pill" style="color:var(--engage); border-color:var(--engage); background:rgba(34,196,122,.08);">Engagement</span>
+    <span class="phase-pill" style="color:var(--identity); border-color:var(--identity); background:rgba(247,164,79,.08);">Identity</span>
+    <span class="phase-pill" style="color:var(--drift); border-color:var(--drift); background:rgba(224,90,90,.08);">Drift</span>
+    <span class="phase-pill" style="color:var(--dormancy); border-color:var(--dormancy); background:rgba(155,140,184,.08);">Dormancy</span>
+  </div>
+
+  <div class="contrib-grid">
+    <div class="contrib-card">
+      <div class="contrib-num">01 / MODELING</div>
+      <h4>Mathematical Framework</h4>
+      <p>Semi-Markov process with readiness scores. Multimodal encoder combining GNNs, Transformers, and attention for interpretable predictions.</p>
+    </div>
+    <div class="contrib-card">
+      <div class="contrib-num">02 / DATA</div>
+      <h4>Synthetic Testbed</h4>
+      <p>Controlled dataset simulating realistic user trajectories with preferential attachment, homophily, triadic closure, topic drift, and engagement bursts.</p>
+    </div>
+    <div class="contrib-card">
+      <div class="contrib-num">03 / APPLICATION</div>
+      <h4>Risk Analysis</h4>
+      <p>Early detection of polarization, radicalization, and disengagement signals from user interaction trajectories across all five phases.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════
+     MATHEMATICAL MODEL SECTION
+══════════════════════════════════════════ -->
+<section class="section" id="math">
+  <div class="section-label">Mathematical Framework</div>
+  <h2 class="section-title">How Fluxion Works — The Model</h2>
+  <p class="section-desc">Fluxion is grounded in three interlocking mathematical components: a multimodal feature representation, a phase score function, and a semi-Markov transition model. Together they form a principled, learnable system for forecasting user lifecycle transitions.</p>
+
+  <!-- ── 1. Feature Representation ── -->
+  <h3 style="font-family:'DM Serif Display',serif; font-size:1.4rem; margin-bottom:6px; letter-spacing:-.02em;">① User State Representation</h3>
+  <p style="font-size:.88rem; color:var(--text-mid); margin-bottom:16px; line-height:1.7;">At each discrete time step <em>t</em>, every user <em>u<sub>i</sub></em> is described by a <strong>multimodal feature vector</strong> that captures three orthogonal dimensions of their online presence.</p>
+
+  <div class="formula-block blue">
+    <div class="formula-label">Eq. 1 — User Feature Representation</div>
+    <div class="formula">x⁽ᵗ⁾ᵢ  =  ( C⁽ᵗ⁾ᵢ ,  E⁽ᵗ⁾ᵢ ,  H⁽ᵗ⁾ᵢ )</div>
+    <div class="formula-vars">
+      <span class="var-name">C⁽ᵗ⁾ᵢ</span><span class="var-desc">Network/structural features — degree centrality, clustering coefficient, follower/following ratio, local neighbourhood density</span>
+      <span class="var-name">E⁽ᵗ⁾ᵢ</span><span class="var-desc">Engagement features — normalized counts of likes, comments, shares, posts across k content categories</span>
+      <span class="var-name">H⁽ᵗ⁾ᵢ</span><span class="var-desc">Content history — topic distribution vector over time, capturing semantic drift and interest specialisation</span>
+    </div>
+    <p class="formula-note">This three-part representation is deliberately exhaustive: <strong>C</strong> captures <em>who</em> the user is connected to, <strong>E</strong> captures <em>what</em> they do, and <strong>H</strong> captures <em>what</em> they talk about. Ablation experiments confirm all three are necessary (see Results).</p>
+  </div>
+
+  <!-- Content drift sub-equation -->
+  <div class="math-two-col">
+    <div class="formula-block green">
+      <div class="formula-label">Eq. 2 — Content History Drift (Random Walk)</div>
+      <div class="formula">H⁽ᵗ⁺¹⁾ᵢ = H⁽ᵗ⁾ᵢ + η(H̄⁽ᵗ⁾ₙ₍ᵢ₎ − H⁽ᵗ⁾ᵢ) + γe⁽ᵗ⁾ᵢ + ε⁽ᵗ⁾ᵢ</div>
+      <div class="formula-vars">
+        <span class="var-name">η</span><span class="var-desc">Social influence rate ∈ (0,1) — how strongly neighbours pull the user's content preferences</span>
+        <span class="var-name">H̄ₙ₍ᵢ₎</span><span class="var-desc">Average content vector of user i's neighbours at time t</span>
+        <span class="var-name">γe⁽ᵗ⁾ᵢ</span><span class="var-desc">External event term — shifts topics toward election/sport/crisis themes (persistent for long events, transient for short ones)</span>
+        <span class="var-name">ε⁽ᵗ⁾ᵢ</span><span class="var-desc">Gaussian noise ~ N(0, σ²I) — stochastic individual variation</span>
+      </div>
+    </div>
+    <div class="formula-block amber">
+      <div class="formula-label">Eq. 3 — Network Growth (Composite Model)</div>
+      <div class="formula">C(uᵢ,uⱼ∈Eₜ₊₁)
+ = α₁·f_deg(uⱼ)
+ + α₂·f_sim(uᵢ,uⱼ)
+ + α₃·f_triad(uᵢ,uⱼ)</div>
+      <div class="formula-vars">
+        <span class="var-name">α₁·f_deg</span><span class="var-desc">Preferential attachment — popular users attract more connections (∝ degree)</span>
+        <span class="var-name">α₂·f_sim</span><span class="var-desc">Homophily — users with similar topics/demographics connect (cosine similarity)</span>
+        <span class="var-name">α₃·f_triad</span><span class="var-desc">Triadic closure — friends of friends become friends</span>
+      </div>
+      <p class="formula-note" style="margin-top:10px; font-size:.78rem;">Weights α₁+α₂+α₃ = 1 are calibrated empirically.</p>
+    </div>
+  </div>
+
+  <hr class="divider" style="margin: 40px 0;">
+
+  <!-- ── 2. Phase Score ── -->
+  <h3 style="font-family:'DM Serif Display',serif; font-size:1.4rem; margin-bottom:6px; letter-spacing:-.02em;">② Phase Score Function φ</h3>
+  <p style="font-size:.88rem; color:var(--text-mid); margin-bottom:16px; line-height:1.7;">The phase score φ⁽ᵗ⁾ᵢ ∈ [0,1] is the central signal of Fluxion — a learned scalar that quantifies how <em>ready</em> a user is to transition out of their current phase. It is first defined analytically, then extended to a full neural model.</p>
+
+  <div class="formula-block blue">
+    <div class="formula-label">Eq. 4 — Analytic Phase Score</div>
+    <div class="formula">φ⁽ᵗ⁾ᵢ = w₁·C⁽ᵗ⁾(uᵢ) + w₂·‖E⁽ᵗ⁾ᵢ(uᵢ)‖ + w₃·entropy(H⁽ᵗ⁾ᵢ(uᵢ))</div>
+    <div class="formula-vars">
+      <span class="var-name">w₁·C</span><span class="var-desc">Network centrality contribution — hub users are more likely to solidify identity or drift</span>
+      <span class="var-name">w₂·‖E‖</span><span class="var-desc">Total engagement magnitude — high activity signals readiness to advance phases</span>
+      <span class="var-name">w₃·H(H)</span><span class="var-desc">Entropy of content distribution — low entropy = specialised (Identity); high entropy = exploratory (Onboarding) or drifting</span>
+    </div>
+  </div>
+
+  <!-- Phase score bars — interactive -->
+  <div class="markov-sim" style="margin-top:0; border-top:none; border-radius:0 0 14px 14px; border-top: 1px solid var(--border); margin-bottom:20px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:.72rem; color:var(--text-light); letter-spacing:.05em;">INTERACTIVE — PHASE SCORE COMPONENTS</span>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;" id="phaseSelector">
+        <button class="sim-btn active" onclick="showPhaseScore('onboard',this)">Onboarding</button>
+        <button class="sim-btn" onclick="showPhaseScore('engage',this)">Engagement</button>
+        <button class="sim-btn" onclick="showPhaseScore('identity',this)">Identity</button>
+        <button class="sim-btn" onclick="showPhaseScore('drift',this)">Drift</button>
+        <button class="sim-btn" onclick="showPhaseScore('dormancy',this)">Dormancy</button>
+      </div>
+    </div>
+    <div class="sim-bars" id="phaseScoreBars">
+      <div class="sim-bar-row">
+        <span class="sim-bar-name" style="color:var(--accent);">C (network)</span>
+        <div class="sim-bar-track"><div class="sim-bar-fill" id="psC" style="background:var(--accent);"><span class="sim-bar-pct" id="psCt">0%</span></div></div>
+      </div>
+      <div class="sim-bar-row">
+        <span class="sim-bar-name" style="color:var(--engage);">E (engage)</span>
+        <div class="sim-bar-track"><div class="sim-bar-fill" id="psE" style="background:var(--engage);"><span class="sim-bar-pct" id="psEt">0%</span></div></div>
+      </div>
+      <div class="sim-bar-row">
+        <span class="sim-bar-name" style="color:var(--identity);">H (entropy)</span>
+        <div class="sim-bar-track"><div class="sim-bar-fill" id="psH" style="background:var(--identity);"><span class="sim-bar-pct" id="psHt">0%</span></div></div>
+      </div>
+      <div class="sim-bar-row" style="margin-top:6px; border-top:1px solid var(--muted); padding-top:10px;">
+        <span class="sim-bar-name" style="font-size:.72rem; color:var(--text-light);">φ score</span>
+        <div class="sim-bar-track"><div class="sim-bar-fill" id="psPhi" style="background: linear-gradient(90deg, var(--accent), var(--engage));"><span class="sim-bar-pct" id="psPhit">0%</span></div></div>
+      </div>
+    </div>
+    <p style="font-size:.75rem; color:var(--text-light); margin-top:14px; font-style:italic;">Click a phase to see its typical φ component profile. A high φ means the user is ready to leave their current phase.</p>
+  </div>
+
+  <hr class="divider" style="margin: 40px 0;">
+
+  <!-- ── 3. Model Architecture ── -->
+  <h3 style="font-family:'DM Serif Display',serif; font-size:1.4rem; margin-bottom:6px; letter-spacing:-.02em;">③ Neural Architecture — Learning φ</h3>
+  <p style="font-size:.88rem; color:var(--text-mid); margin-bottom:20px; line-height:1.7;">In practice, φ is parameterised as a <strong>multimodal neural encoder</strong> fθ. Three specialist encoders process C, E, and H independently before fusion.</p>
+
+  <div class="arch-section">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:.7rem; color:var(--text-light); letter-spacing:.08em; margin-bottom:22px;">DATA FLOW — INPUT → ENCODING → FUSION → PHASE PREDICTION</div>
+    <div class="arch-flow">
+      <!-- Input -->
+      <div class="arch-box">
+        <div class="arch-box-icon">🔗</div>
+        <div class="arch-box-title">C⁽ᵗ⁾ᵢ</div>
+        <div class="arch-box-sub">Dynamic graph<br>adjacency + node feats</div>
+      </div>
+      <div class="arch-arrow">
+        <svg width="28" height="16" viewBox="0 0 28 16"><line x1="2" y1="8" x2="22" y2="8" stroke="#d6d0c8" stroke-width="1.5"/><polygon points="22,4 28,8 22,12" fill="#d6d0c8"/></svg>
+      </div>
+      <div class="arch-box" style="border-color:var(--onboard);">
+        <div class="arch-box-icon">🕸️</div>
+        <div class="arch-box-title">EvolveGCN</div>
+        <div class="arch-box-sub">Temporal GNN<br>captures structural evolution</div>
+      </div>
+
+      <div class="arch-arrow">
+        <svg width="28" height="16" viewBox="0 0 28 16"><line x1="2" y1="8" x2="22" y2="8" stroke="#d6d0c8" stroke-width="1.5"/><polygon points="22,4 28,8 22,12" fill="#d6d0c8"/></svg>
+        <div class="arch-arrow-label">E⁽ᶜ⁾</div>
+      </div>
+
+      <div class="arch-box" style="border-color:var(--engage);">
+        <div class="arch-box-icon">⚡</div>
+        <div class="arch-box-title">Transformer</div>
+        <div class="arch-box-sub">Seq encoder for<br>H⁽ᵗ⁾ and E⁽ᵗ⁾ histories</div>
+      </div>
+
+      <div class="arch-arrow">
+        <svg width="28" height="16" viewBox="0 0 28 16"><line x1="2" y1="8" x2="22" y2="8" stroke="#d6d0c8" stroke-width="1.5"/><polygon points="22,4 28,8 22,12" fill="#d6d0c8"/></svg>
+        <div class="arch-arrow-label">E⁽ᴱ⁾,E⁽ᴴ⁾</div>
+      </div>
+
+      <div class="arch-box highlight">
+        <div class="arch-box-icon">🔀</div>
+        <div class="arch-box-title">Attention Fusion</div>
+        <div class="arch-box-sub">z⁽ᵗ⁾ = Fusion(E_C, E_E, E_H)</div>
+      </div>
+
+      <div class="arch-arrow">
+        <svg width="28" height="16" viewBox="0 0 28 16"><line x1="2" y1="8" x2="22" y2="8" stroke="#d6d0c8" stroke-width="1.5"/><polygon points="22,4 28,8 22,12" fill="#d6d0c8"/></svg>
+        <div class="arch-arrow-label">z⁽ᵗ⁾ᵢ</div>
+      </div>
+
+      <div class="arch-box" style="border-color:var(--identity);">
+        <div class="arch-box-icon">σ</div>
+        <div class="arch-box-title">Sigmoid Layer</div>
+        <div class="arch-box-sub">φ⁽ᵗ⁾ᵢ = σ(Wz⁽ᵗ⁾ᵢ + b)</div>
+      </div>
+
+      <div class="arch-arrow">
+        <svg width="28" height="16" viewBox="0 0 28 16"><line x1="2" y1="8" x2="22" y2="8" stroke="#d6d0c8" stroke-width="1.5"/><polygon points="22,4 28,8 22,12" fill="#d6d0c8"/></svg>
+      </div>
+
+      <div class="arch-box" style="border-color:var(--drift); background:rgba(224,90,90,.04);">
+        <div class="arch-box-icon">🎯</div>
+        <div class="arch-box-title">Phase Label</div>
+        <div class="arch-box-sub">s⁽ᵗ⁺¹⁾ᵢ ∈ {S₁…S₅}</div>
+      </div>
+    </div>
+
+    <div class="formula-block blue" style="margin-top:24px; margin-bottom:0;">
+      <div class="formula-label">Eq. 5 — Learned Phase Score</div>
+      <div class="formula">φ⁽ᵗ⁾ᵢ  =  fθ( C⁽ᵗ⁾ᵢ ,  E⁽ᵗ⁾ᵢ ,  H⁽ᵗ⁾ᵢ )     where  fθ: ℝᵈ → [0,1]</div>
+      <p class="formula-note">fθ is trained end-to-end with the composite loss (Eq. 7). The output φ ∈ [0,1] directly parameterises the Markov transition probabilities below.</p>
+    </div>
+  </div>
+
+  <hr class="divider" style="margin: 40px 0;">
+
+  <!-- ── 4. Markov Chain ── -->
+  <h3 style="font-family:'DM Serif Display',serif; font-size:1.4rem; margin-bottom:6px; letter-spacing:-.02em;">④ Semi-Markov Transition Model</h3>
+  <p style="font-size:.88rem; color:var(--text-mid); margin-bottom:16px; line-height:1.7;">User phase evolution is modelled as a <strong>discrete-time Markov chain</strong> over 5 states. The transition matrix P is nearly <em>upper-triangular</em> — enforcing natural left-to-right progression and heavily penalising regressions (e.g. Identity → Onboarding).</p>
+
+  <div class="markov-section">
+    <div class="markov-matrix-grid">
+      <!-- Matrix -->
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:.68rem; color:var(--text-light); letter-spacing:.06em; margin-bottom:12px;">TRANSITION MATRIX P ∈ ℝ⁵ˣ⁵</div>
+        <div class="matrix-visual">
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th style="color:var(--onboard);">On</th>
+                <th style="color:var(--engage);">En</th>
+                <th style="color:var(--identity);">Id</th>
+                <th style="color:var(--drift);">Dr</th>
+                <th style="color:var(--dormancy);">Do</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="matrix-row-label" style="color:var(--onboard);">On</td>
+                <td class="diagonal heat-high">p₁₁</td>
+                <td class="heat-med">p₁₂</td>
+                <td class="heat-zero">0</td>
+                <td class="heat-zero">0</td>
+                <td class="heat-zero">0</td>
+              </tr>
+              <tr>
+                <td class="matrix-row-label" style="color:var(--engage);">En</td>
+                <td class="heat-zero">0</td>
+                <td class="diagonal heat-high">p₂₂</td>
+                <td class="heat-med">p₂₃</td>
+                <td class="heat-zero">0</td>
+                <td class="heat-zero">0</td>
+              </tr>
+              <tr>
+                <td class="matrix-row-label" style="color:var(--identity);">Id</td>
+                <td class="heat-zero">0</td>
+                <td class="heat-zero">0</td>
+                <td class="diagonal heat-high">p₃₃</td>
+                <td class="heat-med">p₃₄</td>
+                <td class="heat-zero">0</td>
+              </tr>
+              <tr>
+                <td class="matrix-row-label" style="color:var(--drift);">Dr</td>
+                <td class="heat-zero">0</td>
+                <td class="heat-zero">0</td>
+                <td class="heat-zero">0</td>
+                <td class="diagonal heat-high">p₄₄</td>
+                <td class="heat-med">p₄₅</td>
+              </tr>
+              <tr>
+                <td class="matrix-row-label" style="color:var(--dormancy);">Do</td>
+                <td class="heat-zero">0</td>
+                <td class="heat-zero">0</td>
+                <td class="heat-zero">0</td>
+                <td class="heat-zero">0</td>
+                <td class="diagonal heat-high">1.0</td>
+              </tr>
+            </tbody>
+          </table>
+          <p style="font-size:.72rem; color:var(--text-light); margin-top:10px; font-style:italic;">pᵢᵢ + pᵢ,ᵢ₊₁ = 1 for i &lt; 5. Dormancy (row 5) is an absorbing state.</p>
+        </div>
+
+        <div class="formula-block blue" style="margin-top:16px;">
+          <div class="formula-label">Eq. 6 — φ-Modulated Transition Probability</div>
+          <div class="formula">P⁽ⁱ'ᵗ⁾ᵢⱼ = exp(αᵢⱼ · φ⁽ᵗ⁾ᵢ) / Σₖ exp(αᵢₖ · φ⁽ᵗ⁾ᵢ)</div>
+          <p class="formula-note">Higher φ shifts mass from self-loop Pᵢᵢ → forward transition Pᵢ,ᵢ₊₁. Calibration coefficients αᵢⱼ are learned. This is a <em>softmax over phase readiness</em> — interpretable and differentiable.</p>
+        </div>
+      </div>
+
+      <!-- Interactive Markov simulator -->
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:.68rem; color:var(--text-light); letter-spacing:.06em; margin-bottom:12px;">MARKOV SIMULATION — USER COHORT OVER TIME</div>
+        <div class="markov-sim" style="padding:20px;">
+          <div class="sim-controls">
+            <button class="sim-btn active" id="simPlayBtn" onclick="toggleSim()">▶ Play</button>
+            <button class="sim-btn" onclick="resetSim()">↺ Reset</button>
+            <span class="sim-step-counter" id="simStep">Step: 0 / 9</span>
+          </div>
+          <div class="sim-bars" id="simBars">
+            <div class="sim-bar-row">
+              <span class="sim-bar-name" style="color:var(--onboard); font-size:.75rem;">Onboarding</span>
+              <div class="sim-bar-track"><div class="sim-bar-fill" id="sb0" style="background:var(--onboard); width:69.2%;"><span class="sim-bar-pct" id="sb0t">69%</span></div></div>
+            </div>
+            <div class="sim-bar-row">
+              <span class="sim-bar-name" style="color:var(--engage); font-size:.75rem;">Engagement</span>
+              <div class="sim-bar-track"><div class="sim-bar-fill" id="sb1" style="background:var(--engage); width:30.8%;"><span class="sim-bar-pct" id="sb1t">31%</span></div></div>
+            </div>
+            <div class="sim-bar-row">
+              <span class="sim-bar-name" style="color:var(--identity); font-size:.75rem;">Identity</span>
+              <div class="sim-bar-track"><div class="sim-bar-fill" id="sb2" style="background:var(--identity); width:0%;"><span class="sim-bar-pct" id="sb2t">0%</span></div></div>
+            </div>
+            <div class="sim-bar-row">
+              <span class="sim-bar-name" style="color:var(--drift); font-size:.75rem;">Drift</span>
+              <div class="sim-bar-track"><div class="sim-bar-fill" id="sb3" style="background:var(--drift); width:0%;"><span class="sim-bar-pct" id="sb3t">0%</span></div></div>
+            </div>
+            <div class="sim-bar-row">
+              <span class="sim-bar-name" style="color:var(--dormancy); font-size:.75rem;">Dormancy</span>
+              <div class="sim-bar-track"><div class="sim-bar-fill" id="sb4" style="background:var(--dormancy); width:0%;"><span class="sim-bar-pct" id="sb4t">0%</span></div></div>
+            </div>
+          </div>
+          <p style="font-size:.72rem; color:var(--text-light); margin-top:12px; font-style:italic;">Simulates 500-user cohort using empirical transition probabilities from Table 1. Press Play to watch the lifecycle unfold.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider" style="margin: 40px 0;">
+
+  <!-- ── 5. Loss Function ── -->
+  <h3 style="font-family:'DM Serif Display',serif; font-size:1.4rem; margin-bottom:6px; letter-spacing:-.02em;">⑤ Composite Training Objective</h3>
+  <p style="font-size:.88rem; color:var(--text-mid); margin-bottom:20px; line-height:1.7;">Standard cross-entropy fails for ordered phase prediction because it ignores <em>transition readiness</em> and <em>structural phase constraints</em>. Fluxion uses a three-part composite loss.</p>
+
+  <div class="formula-block blue" style="margin-bottom:20px;">
+    <div class="formula-label">Eq. 7 — Composite Loss Function</div>
+    <div class="formula">ℒ  =  ℒ_CE  +  λ₁ · ℒ_readiness  +  λ₂ · ℒ_transition</div>
+    <p class="formula-note">λ₁ and λ₂ are balancing hyperparameters tuned on the validation set. Each term addresses a distinct failure mode of naive classification.</p>
+  </div>
+
+  <div class="loss-grid">
+    <div class="loss-card">
+      <div class="loss-card-tag" style="background:rgba(45,91,227,.08); color:var(--accent);">ℒ_CE · Phase Classification</div>
+      <h5>Cross-Entropy Loss</h5>
+      <p>Ensures the model correctly identifies the current phase label. Standard supervised classification objective.</p>
+      <div class="loss-formula-small">ℒ_CE = −Σᵢ yᵢ log ŷᵢ
+
+yᵢ  = true phase label
+ŷᵢ  = predicted distribution</div>
+    </div>
+    <div class="loss-card">
+      <div class="loss-card-tag" style="background:rgba(34,196,122,.08); color:var(--green);">ℒ_readiness · Transition Signal</div>
+      <h5>Readiness Alignment</h5>
+      <p>Supervises the scalar φ score directly using observed transitions. Makes φ an interpretable, actionable readiness signal.</p>
+      <div class="loss-formula-small">ℒ_r = −[yᵗʳᵃⁿˢ·log φ
+     + (1−yᵗʳᵃⁿˢ)·log(1−φ)]
+
+yᵗʳᵃⁿˢ = 1 if transition occurred</div>
+    </div>
+    <div class="loss-card">
+      <div class="loss-card-tag" style="background:rgba(224,90,90,.08); color:var(--drift);">ℒ_transition · Structure Penalty</div>
+      <h5>Markov Validity Penalty</h5>
+      <p>Penalises implausible phase jumps (e.g. Onboarding→Dormancy) using a fixed penalty matrix M. Encodes structural prior knowledge.</p>
+      <div class="loss-formula-small">ℒ_t = Σᵢ,ⱼ Mᵢⱼ · P̂ᵢⱼ
+
+Mᵢⱼ small → valid transition
+Mᵢⱼ large → implausible jump</div>
+    </div>
+  </div>
+
+  <hr class="divider" style="margin: 40px 0;">
+
+  <!-- ── 6. Validity ── -->
+  <h3 style="font-family:'DM Serif Display',serif; font-size:1.4rem; margin-bottom:6px; letter-spacing:-.02em;">⑥ Why the Model is Valid &amp; Workable</h3>
+  <p style="font-size:.88rem; color:var(--text-mid); margin-bottom:20px; line-height:1.7;">Four formal properties guarantee Fluxion's mathematical soundness and practical reliability.</p>
+
+  <div class="validity-grid">
+    <div class="validity-card">
+      <h5>Loss Bounded Below (ℒ ≥ 0)</h5>
+      <p>All three loss components are non-negative by construction: cross-entropy and binary cross-entropy are always ≥ 0, and the penalty term Mᵢⱼ·P̂ᵢⱼ ≥ 0 since Mᵢⱼ ≥ 0 and P̂ᵢⱼ ∈ [0,1]. Therefore the composite loss ℒ has a valid lower bound and gradient descent is well-defined.</p>
+      <div class="validity-step">ℒ_CE ≥ 0  ∧  ℒ_r ≥ 0  ∧  ℒ_t ≥ 0  ⟹  ℒ ≥ 0</div>
+    </div>
+    <div class="validity-card">
+      <h5>SGD Convergence Guaranteed</h5>
+      <p>ℒ_CE and ℒ_readiness have Lipschitz-continuous gradients under bounded network weights. ℒ_transition is linear in P̂ᵢⱼ and preserves Lipschitz continuity. Under standard Robbins–Monro conditions on the learning rate, Adam/SGD converges to a stationary point.</p>
+      <div class="validity-step">lim_{t→∞} E[‖∇ℒ(θₜ)‖²] = 0</div>
+    </div>
+    <div class="validity-card">
+      <h5>Transition Probabilities are Valid</h5>
+      <p>The softmax parameterisation of P⁽ⁱ'ᵗ⁾ᵢⱼ guarantees probabilities sum to 1 for every row and every user at every time step. The upper-triangular constraint suppresses regression transitions without violating the stochastic matrix requirement.</p>
+      <div class="validity-step">Σⱼ P⁽ⁱ'ᵗ⁾ᵢⱼ = 1  ∀ i,t  (softmax normalisation)</div>
+    </div>
+    <div class="validity-card">
+      <h5>Dormancy is an Absorbing State</h5>
+      <p>The final row of P is fixed as [0, 0, 0, 0, 1.0], making Dormancy an absorbing state. This is empirically confirmed: once users enter Dormancy, the model assigns near-zero probability to recovery, matching real platform behaviour.</p>
+      <div class="validity-step">P₅₅ = 1.0  ⟹  P(Dormancy→X) = 0  ∀ X≠Dormancy</div>
+    </div>
+  </div>
+
+  <!-- Social mechanism grounding -->
+  <div style="background:var(--off-white); border:1px solid var(--border); border-radius:14px; padding:28px 32px; margin-top:20px;">
+    <div class="section-label" style="margin-bottom:10px;">Grounding in Social Science Theory</div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
+      <div>
+        <div style="font-weight:700; font-size:.85rem; margin-bottom:4px; color:var(--accent);">Preferential Attachment</div>
+        <p style="font-size:.78rem; color:var(--text-mid); line-height:1.6;">Barabási & Albert (1999) — scale-free network growth. Popular users attract more edges. Directly drives the C component of Eq. 3.</p>
+      </div>
+      <div>
+        <div style="font-weight:700; font-size:.85rem; margin-bottom:4px; color:var(--engage);">Homophily &amp; Triadic Closure</div>
+        <p style="font-size:.78rem; color:var(--text-mid); line-height:1.6;">Newman (2003), Leskovec et al. (2008) — like-minded users connect; friend-of-friend ties form. Captured by f_sim and f_triad in Eq. 3.</p>
+      </div>
+      <div>
+        <div style="font-weight:700; font-size:.85rem; margin-bottom:4px; color:var(--identity);">Social Influence Theory</div>
+        <p style="font-size:.78rem; color:var(--text-mid); line-height:1.6;">Friedkin & Johnsen (2011) — users shift preferences toward neighbours' content. Modelled by the η term in the content drift equation (Eq. 2).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- RESULTS -->
+<section class="section" id="results">
+  <div class="section-label">Ablation Study · Table 5</div>
+  <h2 class="section-title">Modality Contribution Analysis</h2>
+  <p class="section-desc">Removing any single modality consistently degrades performance — confirming the need for joint multimodal integration.</p>
+
+  <div style="background:var(--off-white); border:1px solid var(--border); border-radius:16px; overflow:hidden;">
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>Model Variant</th>
+          <th>Phase Accuracy</th>
+          <th>Drift F1</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Full Fluxion</strong></td>
+          <td class="val-good">0.78 ± 0.01</td>
+          <td class="val-good">0.71 ± 0.05</td>
+          <td><span style="background:#e6f7ee; color:var(--green); padding:3px 10px; border-radius:20px; font-size:.75rem; font-weight:600;">Best</span></td>
+        </tr>
+        <tr>
+          <td>− C (no network features)</td>
+          <td class="val-mid">0.69 ± 0.03</td>
+          <td class="val-mid">0.55 ± 0.06</td>
+          <td><span style="background:#fef7e6; color:var(--amber); padding:3px 10px; border-radius:20px; font-size:.75rem; font-weight:600;">−11.5%</span></td>
+        </tr>
+        <tr>
+          <td>− E (no engagement features)</td>
+          <td class="val-low">0.65 ± 0.07</td>
+          <td class="val-low">0.49 ± 0.09</td>
+          <td><span style="background:#feecec; color:var(--red); padding:3px 10px; border-radius:20px; font-size:.75rem; font-weight:600;">−16.7%</span></td>
+        </tr>
+        <tr>
+          <td>− H (no content history)</td>
+          <td class="val-mid">0.72 ± 0.12</td>
+          <td class="val-mid">0.60 ± 0.13</td>
+          <td><span style="background:#fef7e6; color:var(--amber); padding:3px 10px; border-radius:20px; font-size:.75rem; font-weight:600;">−7.7%</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p style="font-size:.8rem; color:var(--text-light); margin-top:16px; font-style:italic;">Results averaged over five random seeds. Engagement features (E) produce the largest drop when removed, underscoring their centrality to lifecycle prediction.</p>
+</section>
+
+<hr class="divider">
+
+<!-- FIGURES 9 – 15 -->
+<section class="section" id="figures">
+  <div class="section-label">Experimental Results · Figures 9 – 15</div>
+  <h2 class="section-title">Visual Evidence of Lifecycle Dynamics</h2>
+  <p class="section-desc">Seven figures from the paper — topical cluster evolution, phase-specific engagement radars, and network snapshots across time — all rendered interactively below.</p>
+
+  <!-- ══ FIGURE 9 — Topical Cluster Evolution ══ -->
+  <div class="fig-card" id="fig9">
+    <div class="fig-card-header">
+      <div>
+        <div class="fig-card-label">Figure 9</div>
+        <h3 class="fig-card-title">Topical Cluster Evolution Across Time</h3>
+        <p class="fig-card-desc">PCA-projected topic vectors clustered into 5 groups (K-Means, k=5) at time steps 0–4. Early clusters overlap broadly; by t=4 they are compact and distinct — users specialise.</p>
+      </div>
+      <div class="fig-time-tabs" id="fig9tabs">
+        <button class="fig-tab active" onclick="setFig9Time(0,this)">t=0</button>
+        <button class="fig-tab" onclick="setFig9Time(1,this)">t=1</button>
+        <button class="fig-tab" onclick="setFig9Time(2,this)">t=2</button>
+        <button class="fig-tab" onclick="setFig9Time(3,this)">t=3</button>
+        <button class="fig-tab" onclick="setFig9Time(4,this)">t=4</button>
+      </div>
+    </div>
+    <div class="fig-card-body">
+      <canvas id="scatterCanvas" width="780" height="340" style="width:100%;border-radius:10px;background:var(--white);border:1px solid var(--border);"></canvas>
+      <div class="scatter-legend">
+        <span class="scatter-dot" style="background:#e05a5a;"></span>Political
+        <span class="scatter-dot" style="background:#4f8ef7;"></span>Sports
+        <span class="scatter-dot" style="background:#22c47a;"></span>Health
+        <span class="scatter-dot" style="background:#f7a44f;"></span>Entertainment
+        <span class="scatter-dot" style="background:#9b8cb8;"></span>Education
+      </div>
+      <p class="fig-insight">💡 <strong>Key insight:</strong> Cluster separation increases monotonically — early users are broadly exploratory (overlapping clouds), while late-stage users form tight specialist communities (compact, well-separated clusters).</p>
+    </div>
+  </div>
+
+  <!-- ══ FIGURE 10 — Radar Charts ══ -->
+  <div class="fig-card" id="fig10">
+    <div class="fig-card-header">
+      <div>
+        <div class="fig-card-label">Figure 10</div>
+        <h3 class="fig-card-title">Topic Engagement Radar by Phase</h3>
+        <p class="fig-card-desc">Mean engagement vector per phase visualised as a radar across 5 topics. Select a time step and phase to explore how topical focus shifts through the lifecycle.</p>
+      </div>
+      <div class="fig-time-tabs" id="fig10tabs">
+        <button class="fig-tab active" onclick="setFig10(0,null,this)">t=0</button>
+        <button class="fig-tab" onclick="setFig10(1,null,this)">t=1</button>
+        <button class="fig-tab" onclick="setFig10(2,null,this)">t=2</button>
+        <button class="fig-tab" onclick="setFig10(3,null,this)">t=3</button>
+        <button class="fig-tab" onclick="setFig10(4,null,this)">t=4</button>
+      </div>
+    </div>
+    <div class="fig-card-body">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px;" id="fig10phaseBtns">
+        <button class="fig-phase-btn active" style="border-color:var(--onboard);color:var(--onboard);" onclick="setFig10(null,'onboard',this)">Onboarding</button>
+        <button class="fig-phase-btn" style="border-color:var(--engage);color:var(--engage);" onclick="setFig10(null,'engage',this)">Engagement</button>
+        <button class="fig-phase-btn" style="border-color:var(--identity);color:var(--identity);" onclick="setFig10(null,'identity',this)">Identity</button>
+        <button class="fig-phase-btn" style="border-color:var(--drift);color:var(--drift);" onclick="setFig10(null,'drift',this)">Drift</button>
+        <button class="fig-phase-btn" style="border-color:var(--dormancy);color:var(--dormancy);" onclick="setFig10(null,'dormancy',this)">Dormancy</button>
+      </div>
+      <div style="display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap;">
+        <canvas id="radarCanvas" width="320" height="300" style="max-width:320px; flex-shrink:0;"></canvas>
+        <div id="radarStats" style="flex:1; min-width:180px;"></div>
+      </div>
+      <p class="fig-insight">💡 <strong>Key insight:</strong> Early stages show near-uniform distributions. Identity users tilt strongly toward 1–2 topics (specialisation). Drift users show resurgent entropy. Dormancy collapses across all axes.</p>
+    </div>
+  </div>
+
+  <!-- ══ FIGURES 11–15 — Network Snapshots ══ -->
+  <div class="fig-card" id="fig11to15">
+    <div class="fig-card-header">
+      <div>
+        <div class="fig-card-label">Figures 11 – 15</div>
+        <h3 class="fig-card-title">Network Evolution: t = 0 → 4</h3>
+        <p class="fig-card-desc">Social graph snapshots at each of the five time steps. Node size scales with degree. Edge opacity reflects tie strength. Observe preferential attachment, triadic closure, and dormancy emergence.</p>
+      </div>
+      <div class="fig-time-tabs" id="netTabs">
+        <button class="fig-tab active" onclick="setNetTime(0,this)">t=0 · Fig 11</button>
+        <button class="fig-tab" onclick="setNetTime(1,this)">t=1 · Fig 12</button>
+        <button class="fig-tab" onclick="setNetTime(2,this)">t=2 · Fig 13</button>
+        <button class="fig-tab" onclick="setNetTime(3,this)">t=3 · Fig 14</button>
+        <button class="fig-tab" onclick="setNetTime(4,this)">t=4 · Fig 15</button>
+      </div>
+    </div>
+    <div class="fig-card-body">
+      <canvas id="networkCanvas" width="900" height="480" style="width:100%;border-radius:10px;background:var(--off-white);border:1px solid var(--border);"></canvas>
+      <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:12px; align-items:center;">
+        <div class="scatter-legend" style="margin:0;">
+          <span class="scatter-dot" style="background:var(--onboard);"></span>Onboarding
+          <span class="scatter-dot" style="background:var(--engage);"></span>Engagement
+          <span class="scatter-dot" style="background:var(--identity);"></span>Identity
+          <span class="scatter-dot" style="background:var(--drift);"></span>Drift
+          <span class="scatter-dot" style="background:var(--dormancy); opacity:.5;"></span>Dormancy (faded)
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:.68rem; color:var(--text-light); margin-left:auto;">Node size ∝ degree · Edge opacity ∝ tie strength</span>
+      </div>
+      <div id="netAnnotation" class="fig-insight" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <!-- Stats strip across all figures -->
+  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:28px;">
+    <div class="stat-chip">
+      <div class="stat-chip-val">5</div>
+      <div class="stat-chip-label">Topic clusters (K-Means, k=5)</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-chip-val">t=0→4</div>
+      <div class="stat-chip-label">Network snapshots captured</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-chip-val">500</div>
+      <div class="stat-chip-label">Simulated users tracked</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-chip-val">100%</div>
+      <div class="stat-chip-label">Dormancy absorption rate</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p><strong>Fluxion</strong> — A Unified Framework for Forecasting User Lifecycle Transitions in Social Media Networks</p>
+  <p style="margin-top:8px;">Anonymous submission · Evaluated on synthetic data only</p>
+</footer>
+
+<script>
+// ── FIGURE 1: Staggered avatar reveal ──
+const avatars = [1,2,3,4,5];
+avatars.forEach((n, i) => {
+  const el = document.getElementById('av' + n);
+  const dots = document.querySelectorAll('.phase-dot');
+  const labels = document.querySelectorAll('.phase-label');
+  const subs = document.querySelectorAll('.phase-sub');
+  const bubbles = document.querySelectorAll('.bubble');
+
+  setTimeout(() => {
+    el.classList.add('visible');
+    el.style.animationDelay = '0s';
+    if (dots[i]) { dots[i].classList.add('visible'); dots[i].style.animationDelay = '0s'; }
+    if (labels[i]) { labels[i].classList.add('visible'); labels[i].style.animationDelay = '0s'; }
+    if (subs[i]) { subs[i].classList.add('visible'); subs[i].style.animationDelay = '0s'; }
+    if (bubbles[i]) {
+      bubbles[i].style.opacity = '1';
+      bubbles[i].style.animation = `floatBubble 3s ease-in-out infinite ${i * 0.4}s`;
+    }
+  }, 300 + i * 260);
+});
+
+// ── FIGURE 2: Network graph generation ──
+const phaseColors = {
+  onboard: '#4f8ef7',
+  engage:  '#22c47a',
+  identity:'#f7a44f',
+  drift:   '#e05a5a',
+  dormancy:'#9b8cb8'
+};
+
+// Node definitions per stage — positions in 140x140 viewBox
+const nodeData = [
+  // t=0: sparse, mostly onboarding
+  [
+    {x:30,y:30,r:6,phase:'onboard'}, {x:70,y:25,r:5,phase:'onboard'},
+    {x:110,y:35,r:5,phase:'onboard'}, {x:20,y:80,r:5,phase:'onboard'},
+    {x:60,y:90,r:7,phase:'engage'},  {x:100,y:75,r:5,phase:'onboard'},
+    {x:45,y:55,r:4,phase:'onboard'}, {x:90,y:110,r:4,phase:'onboard'},
+    {x:125,y:95,r:5,phase:'engage'}
+  ],
+  // t=1: more engage, some identity
+  [
+    {x:30,y:30,r:6,phase:'onboard'}, {x:70,y:20,r:5,phase:'onboard'},
+    {x:110,y:35,r:7,phase:'engage'}, {x:20,y:75,r:5,phase:'onboard'},
+    {x:60,y:85,r:9,phase:'engage'},  {x:105,y:70,r:6,phase:'engage'},
+    {x:45,y:50,r:5,phase:'engage'},  {x:90,y:110,r:5,phase:'engage'},
+    {x:125,y:90,r:7,phase:'identity'},{x:55,y:115,r:4,phase:'onboard'},
+    {x:15,y:115,r:4,phase:'onboard'}
+  ],
+  // t=2: identity hubs, first drift
+  [
+    {x:28,y:28,r:5,phase:'onboard'}, {x:75,y:18,r:5,phase:'onboard'},
+    {x:112,y:30,r:9,phase:'identity'},{x:22,y:72,r:5,phase:'engage'},
+    {x:62,y:82,r:11,phase:'identity'},{x:108,y:68,r:7,phase:'engage'},
+    {x:44,y:48,r:6,phase:'engage'},  {x:88,y:108,r:5,phase:'engage'},
+    {x:122,y:88,r:8,phase:'identity'},{x:52,y:112,r:4,phase:'drift'},
+    {x:14,y:112,r:4,phase:'onboard'},{x:30,y:100,r:5,phase:'drift'},
+    {x:95,y:35,r:4,phase:'engage'}
+  ],
+  // t=3: dormancy appears, drift grows
+  [
+    {x:26,y:26,r:4,phase:'dormancy',op:.45}, {x:73,y:16,r:4,phase:'dormancy',op:.4},
+    {x:114,y:28,r:10,phase:'identity'},{x:20,y:70,r:4,phase:'dormancy',op:.45},
+    {x:60,y:80,r:12,phase:'identity'},{x:110,y:65,r:7,phase:'engage'},
+    {x:42,y:46,r:6,phase:'drift'},   {x:86,y:106,r:5,phase:'drift'},
+    {x:124,y:86,r:9,phase:'identity'},{x:50,y:110,r:5,phase:'drift'},
+    {x:12,y:110,r:3,phase:'dormancy',op:.35},{x:28,y:98,r:5,phase:'drift'},
+    {x:93,y:33,r:4,phase:'engage'},  {x:70,y:115,r:4,phase:'dormancy',op:.4},
+    {x:38,y:115,r:3,phase:'dormancy',op:.35}
+  ]
+];
+
+const edgeData = [
+  // t=0
+  [[0,1],[1,2],[4,6],[5,8],[3,6]],
+  // t=1
+  [[0,1],[1,2],[4,6],[5,8],[3,6],[2,5],[4,5],[7,8],[6,9],[0,3]],
+  // t=2
+  [[0,1],[1,2],[4,6],[5,8],[3,6],[2,5],[4,5],[7,8],[6,9],[0,3],[2,8],[4,7],[10,3],[11,3],[4,11],[12,2]],
+  // t=3
+  [[4,6],[5,8],[2,5],[4,5],[7,8],[2,8],[4,7],[11,6],[13,7],[4,8],[2,11],[5,12]]
+];
+
+function drawNetwork(svgId, nodes, edges, animated) {
+  const svg = document.getElementById(svgId);
+  svg.innerHTML = '';
+
+  // Draw edges first
+  edges.forEach(([a,b], i) => {
+    const na = nodes[a], nb = nodes[b];
+    if (!na || !nb) return;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', na.x); line.setAttribute('y1', na.y);
+    line.setAttribute('x2', nb.x); line.setAttribute('y2', nb.y);
+    line.setAttribute('stroke', '#d0cbc4');
+    line.setAttribute('stroke-width', '1.2');
+    line.setAttribute('opacity', '0.7');
+    if (animated) {
+      line.style.strokeDasharray = '200';
+      line.style.strokeDashoffset = '200';
+      line.style.animation = `drawLine .5s ease forwards ${i * 0.06 + 0.2}s`;
+    }
+    svg.appendChild(line);
+  });
+
+  // Draw nodes
+  nodes.forEach((n, i) => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx', n.x); circle.setAttribute('cy', n.y);
+    circle.setAttribute('r', n.r || 5);
+    circle.setAttribute('fill', phaseColors[n.phase]);
+    circle.setAttribute('opacity', n.op || 1);
+    circle.setAttribute('stroke', 'white');
+    circle.setAttribute('stroke-width', '1.5');
+    if (animated) {
+      circle.style.opacity = '0';
+      circle.style.animation = `svgPop .4s cubic-bezier(.34,1.56,.64,1) forwards ${i * 0.07 + 0.1}s`;
+    }
+    g.appendChild(circle);
+
+    // Number label
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x', n.x); txt.setAttribute('y', n.y + 3.5);
+    txt.setAttribute('text-anchor','middle');
+    txt.setAttribute('font-size', Math.max(n.r * 0.85, 5));
+    txt.setAttribute('fill','white'); txt.setAttribute('font-weight','600');
+    txt.setAttribute('font-family','DM Sans, sans-serif');
+    txt.textContent = i+1;
+    if (animated) { txt.style.opacity='0'; txt.style.animation=`fadeIn .3s ease forwards ${i*.07+.35}s`; }
+    g.appendChild(txt);
+    svg.appendChild(g);
+  });
+}
+
+// Add keyframes for SVG animations
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes drawLine {
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes svgPop {
+    from { opacity:0; transform-origin: center; transform: scale(0); }
+    to   { opacity:1; transform: scale(1); }
+  }
+`;
+document.head.appendChild(style);
+
+// Draw all 4 network stages
+nodeData.forEach((nodes, t) => {
+  drawNetwork('net' + t, nodes, edgeData[t], true);
+});
+
+// Animate time badge
+let currentT = 0;
+setInterval(() => {
+  currentT = (currentT + 1) % 4;
+  const badge = document.getElementById('timeBadge');
+  if (badge) badge.textContent = 't = ' + currentT;
+  // Re-animate current stage briefly
+  nodeData.forEach((nodes, t) => {
+    if (t === currentT) drawNetwork('net' + t, nodes, edgeData[t], true);
+  });
+}, 2800);
+
+// ── Intersection observer for scroll reveals ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.contrib-card, .abstract-block').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(20px)';
+  el.style.transition = 'opacity .5s ease, transform .5s ease';
+  observer.observe(el);
+});
+
+// ── PHASE SCORE INTERACTIVE BARS ──
+const phaseScoreData = {
+  onboard:  { c: 18, e: 22, h: 72, phi: 28, label: 'Low C & E, high H entropy → exploratory, not yet ready to advance' },
+  engage:   { c: 52, e: 78, h: 58, phi: 64, label: 'Rising C & E, moderate H entropy → building up, ready to solidify' },
+  identity: { c: 88, e: 85, h: 18, phi: 82, label: 'High C & E, low H entropy → specialist, stable; may start to drift' },
+  drift:    { c: 45, e: 48, h: 82, phi: 55, label: 'Moderate C & E but rising H entropy → topic instability signals drift' },
+  dormancy: { c: 12, e: 8,  h: 30, phi: 10, label: 'Very low activity across all dimensions → absorbing state' }
+};
+
+function showPhaseScore(phase, btn) {
+  // Update button states
+  document.querySelectorAll('#phaseSelector .sim-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  const d = phaseScoreData[phase];
+  const animate = (id, valId, pct) => {
+    setTimeout(() => {
+      document.getElementById(id).style.width = pct + '%';
+      document.getElementById(valId).textContent = pct + '%';
+    }, 50);
+  };
+  animate('psC','psCt', d.c);
+  animate('psE','psEt', d.e);
+  animate('psH','psHt', d.h);
+  animate('psPhi','psPhit', d.phi);
+}
+
+// Init on load
+setTimeout(() => showPhaseScore('onboard', null), 600);
+
+// ── MARKOV COHORT SIMULATION ──
+// Data from Table 1 — actual phase counts / 500
+const simData = [
+  [346, 154,   0,   0,   0],  // t=0
+  [241, 197,  62,   0,   0],  // t=1
+  [175, 176, 128,  21,   0],  // t=2
+  [119, 156, 160,  57,   8],  // t=3
+  [ 82, 135, 156, 100,  27],  // t=4
+  [ 61, 101, 149, 131,  58],  // t=5
+  [ 39,  77, 148, 140,  96],  // t=6
+  [ 31,  57, 132, 148, 132],  // t=7
+  [ 26,  34, 125, 145, 170],  // t=8
+  [ 16,  27, 102, 147, 208],  // t=9
+];
+
+let simStep = 0, simInterval = null, simPlaying = false;
+
+function updateSimBars(step) {
+  const total = 500;
+  const d = simData[step];
+  const ids = ['sb0','sb1','sb2','sb3','sb4'];
+  const tidIds = ['sb0t','sb1t','sb2t','sb3t','sb4t'];
+  ids.forEach((id, i) => {
+    const pct = Math.round(d[i] / total * 100);
+    document.getElementById(id).style.width = pct + '%';
+    document.getElementById(tidIds[i]).textContent = pct + '%';
+  });
+  document.getElementById('simStep').textContent = 'Step: ' + step + ' / 9';
+}
+
+function toggleSim() {
+  simPlaying = !simPlaying;
+  const btn = document.getElementById('simPlayBtn');
+  if (simPlaying) {
+    btn.textContent = '⏸ Pause';
+    btn.classList.add('active');
+    simInterval = setInterval(() => {
+      simStep = (simStep + 1) % 10;
+      updateSimBars(simStep);
+      if (simStep === 9) { simPlaying = false; btn.textContent = '▶ Play'; btn.classList.remove('active'); clearInterval(simInterval); }
+    }, 1100);
+  } else {
+    btn.textContent = '▶ Play';
+    btn.classList.remove('active');
+    clearInterval(simInterval);
+  }
+}
+
+function resetSim() {
+  simPlaying = false;
+  clearInterval(simInterval);
+  simStep = 0;
+  document.getElementById('simPlayBtn').textContent = '▶ Play';
+  document.getElementById('simPlayBtn').classList.remove('active');
+  updateSimBars(0);
+}
+
+// Init sim bars
+updateSimBars(0);
+
+// Scroll-reveal for math cards
+document.querySelectorAll('.validity-card, .loss-card, .formula-block').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(16px)';
+  el.style.transition = 'opacity .5s ease, transform .5s ease';
+  observer.observe(el);
+});
+// ══════════════════════════════════════════════════════
+//  FIGURES 9 – 15  Canvas Rendering
+// ══════════════════════════════════════════════════════
+
+const TOPIC_COLORS = ['#e05a5a','#4f8ef7','#22c47a','#f7a44f','#9b8cb8'];
+const TOPIC_NAMES  = ['Political','Sports','Health','Entertainment','Education'];
+const PHASE_COLS   = { onboard:'#4f8ef7', engage:'#22c47a', identity:'#f7a44f', drift:'#e05a5a', dormancy:'#9b8cb8' };
+
+// ─── FIGURE 9: Scatter plot cluster data ─────────────────
+// 5 clusters × 5 timesteps. Each cluster: {cx,cy,spread,count}
+// Clusters tighten as t increases (specialisation)
+const clusterSeeds = {
+  0: [{cx:280,cy:170,sx:90,sy:75},{cx:500,cy:145,sx:85,sy:70},{cx:185,cy:255,sx:80,sy:72},{cx:600,cy:255,sx:80,sy:68},{cx:390,cy:290,sx:88,sy:72}],
+  1: [{cx:265,cy:165,sx:75,sy:62},{cx:510,cy:140,sx:70,sy:60},{cx:180,cy:260,sx:68,sy:60},{cx:610,cy:248,sx:66,sy:56},{cx:385,cy:285,sx:72,sy:60}],
+  2: [{cx:255,cy:160,sx:58,sy:50},{cx:518,cy:135,sx:54,sy:48},{cx:175,cy:265,sx:52,sy:48},{cx:618,cy:242,sx:50,sy:44},{cx:382,cy:282,sx:56,sy:48}],
+  3: [{cx:248,cy:157,sx:42,sy:36},{cx:524,cy:132,sx:40,sy:36},{cx:172,cy:268,sx:38,sy:36},{cx:624,cy:238,sx:36,sy:32},{cx:380,cy:280,sx:40,sy:36}],
+  4: [{cx:243,cy:155,sx:26,sy:22},{cx:528,cy:130,sx:24,sy:22},{cx:170,cy:270,sx:22,sy:22},{cx:628,cy:235,sx:20,sy:18},{cx:378,cy:278,sx:24,sy:22}],
+};
+
+let fig9Rng = null;
+function seededRng(seed) {
+  let s = seed;
+  return () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 4294967296; };
+}
+
+let currentFig9Time = 0;
+function drawFig9(t) {
+  const canvas = document.getElementById('scatterCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = '#ece8e1'; ctx.lineWidth = 1;
+  for (let x = 0; x <= W; x += 78) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = 0; y <= H; y += 68) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // Axis labels
+  ctx.fillStyle = '#b0aa9f'; ctx.font = '11px JetBrains Mono, monospace';
+  ctx.fillText('PC1 →', W - 50, H - 8);
+  ctx.save(); ctx.translate(14, 40); ctx.rotate(-Math.PI/2);
+  ctx.fillText('PC2 →', 0, 0); ctx.restore();
+
+  const seeds = clusterSeeds[t];
+  const rng = seededRng(42 + t * 17);
+  const pointsPerCluster = 32;
+
+  seeds.forEach((seed, ci) => {
+    const col = TOPIC_COLORS[ci];
+    for (let p = 0; p < pointsPerCluster; p++) {
+      // Box-Muller for normal distribution
+      const u1 = rng(), u2 = rng();
+      const z0 = Math.sqrt(-2 * Math.log(Math.max(u1,0.001))) * Math.cos(2 * Math.PI * u2);
+      const z1 = Math.sqrt(-2 * Math.log(Math.max(u2,0.001))) * Math.sin(2 * Math.PI * u1);
+      const px = seed.cx + z0 * seed.sx;
+      const py = seed.cy + z1 * seed.sy;
+      if (px < 20 || px > W-20 || py < 20 || py > H-20) continue;
+
+      ctx.beginPath();
+      ctx.arc(px, py, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = col + 'cc';
+      ctx.fill();
+      ctx.strokeStyle = col + '55';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+    }
+
+    // Cluster label
+    ctx.font = 'bold 11px DM Sans, sans-serif';
+    ctx.fillStyle = col;
+    ctx.textAlign = 'center';
+    ctx.fillText(TOPIC_NAMES[ci], seed.cx, seed.cy - seed.sy - 6);
+    ctx.textAlign = 'left';
+
+    // Ellipse outline
+    ctx.beginPath();
+    ctx.ellipse(seed.cx, seed.cy, seed.sx * 1.35, seed.sy * 1.35, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = col + '33';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // Time stamp
+  ctx.font = 'bold 13px JetBrains Mono, monospace';
+  ctx.fillStyle = '#4a4742'; ctx.textAlign = 'right';
+  ctx.fillText('t = ' + t, W - 20, 24);
+  ctx.textAlign = 'left';
+}
+
+function setFig9Time(t, btn) {
+  currentFig9Time = t;
+  document.querySelectorAll('#fig9tabs .fig-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  drawFig9(t);
+}
+drawFig9(0);
+
+// ─── FIGURE 10: Radar chart ─────────────────────────────
+// Phase × Topic engagement values (5 topics, 5 phases, 5 time steps)
+// [Sports, Health, Political, Education, Entertainment]
+const radarData = {
+  0: {
+    onboard:  [0.22, 0.20, 0.19, 0.21, 0.18],
+    engage:   [0.28, 0.25, 0.22, 0.14, 0.11],
+    identity: [0.38, 0.32, 0.14, 0.10, 0.06],
+    drift:    [0.16, 0.18, 0.32, 0.22, 0.12],
+    dormancy: [0.08, 0.09, 0.07, 0.06, 0.05],
+  },
+  1: {
+    onboard:  [0.23, 0.21, 0.20, 0.19, 0.17],
+    engage:   [0.30, 0.26, 0.24, 0.13, 0.07],
+    identity: [0.42, 0.35, 0.12, 0.08, 0.03],
+    drift:    [0.14, 0.16, 0.38, 0.20, 0.12],
+    dormancy: [0.06, 0.07, 0.05, 0.05, 0.04],
+  },
+  2: {
+    onboard:  [0.23, 0.21, 0.20, 0.20, 0.16],
+    engage:   [0.32, 0.28, 0.24, 0.12, 0.04],
+    identity: [0.46, 0.38, 0.10, 0.05, 0.01],
+    drift:    [0.12, 0.14, 0.42, 0.20, 0.12],
+    dormancy: [0.05, 0.05, 0.04, 0.04, 0.03],
+  },
+  3: {
+    onboard:  [0.22, 0.22, 0.21, 0.20, 0.15],
+    engage:   [0.34, 0.30, 0.22, 0.10, 0.04],
+    identity: [0.48, 0.40, 0.08, 0.03, 0.01],
+    drift:    [0.10, 0.12, 0.46, 0.22, 0.10],
+    dormancy: [0.04, 0.04, 0.03, 0.03, 0.02],
+  },
+  4: {
+    onboard:  [0.22, 0.22, 0.22, 0.20, 0.14],
+    engage:   [0.36, 0.31, 0.21, 0.09, 0.03],
+    identity: [0.50, 0.42, 0.06, 0.02, 0.00],
+    drift:    [0.09, 0.11, 0.48, 0.23, 0.09],
+    dormancy: [0.03, 0.03, 0.02, 0.02, 0.01],
+  },
+};
+const radarLabels = ['Sports','Health','Political','Education','Entertainment'];
+
+let fig10Time = 0, fig10Phase = 'onboard';
+
+function drawRadar(t, phase) {
+  const canvas = document.getElementById('radarCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2 - 10, R = Math.min(W,H) * 0.38;
+  const n = 5;
+  ctx.clearRect(0, 0, W, H);
+
+  const vals = radarData[t][phase];
+  const color = PHASE_COLS[phase];
+
+  // Grid rings
+  [0.25, 0.5, 0.75, 1.0].forEach(frac => {
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+      const x = cx + Math.cos(angle) * R * frac;
+      const y = cy + Math.sin(angle) * R * frac;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = frac === 1.0 ? '#d6d0c8' : '#e8e4de';
+    ctx.lineWidth = frac === 1.0 ? 1.5 : 1;
+    ctx.stroke();
+  });
+
+  // Spokes and labels
+  radarLabels.forEach((label, i) => {
+    const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+    const x1 = cx + Math.cos(angle) * R;
+    const y1 = cy + Math.sin(angle) * R;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x1, y1);
+    ctx.strokeStyle = '#d6d0c8'; ctx.lineWidth = 1; ctx.stroke();
+
+    const lx = cx + Math.cos(angle) * (R + 20);
+    const ly = cy + Math.sin(angle) * (R + 20);
+    ctx.fillStyle = '#6a6560'; ctx.font = '10.5px DM Sans, sans-serif';
+    ctx.textAlign = Math.abs(Math.cos(angle)) < 0.1 ? 'center'
+                   : Math.cos(angle) > 0 ? 'left' : 'right';
+    ctx.fillText(label, lx, ly + 4);
+  });
+
+  // Data polygon
+  ctx.beginPath();
+  vals.forEach((v, i) => {
+    const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+    const r = R * Math.min(v / 0.5, 1.0);
+    const x = cx + Math.cos(angle) * r;
+    const y = cy + Math.sin(angle) * r;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.fillStyle = color + '30';
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Dots
+  vals.forEach((v, i) => {
+    const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+    const r = R * Math.min(v / 0.5, 1.0);
+    const x = cx + Math.cos(angle) * r;
+    const y = cy + Math.sin(angle) * r;
+    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
+  });
+
+  // Centre dot
+  ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+  ctx.fillStyle = '#d6d0c8'; ctx.fill();
+
+  // Stats sidebar
+  const statsEl = document.getElementById('radarStats');
+  if (!statsEl) return;
+  const phaseName = phase.charAt(0).toUpperCase() + phase.slice(1);
+  let html = `<div style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text-light);letter-spacing:.06em;margin-bottom:14px;">TOPIC ENGAGEMENT · ${phaseName.toUpperCase()} · t=${t}</div>`;
+  radarLabels.forEach((label, i) => {
+    const pct = Math.round(vals[i] * 100);
+    html += `<div class="radar-stat-row">
+      <span class="radar-stat-label">${label}</span>
+      <div class="radar-stat-bar-track"><div class="radar-stat-bar-fill" style="width:${pct*2}%;background:${color};"></div></div>
+      <span class="radar-stat-val">${pct}%</span>
+    </div>`;
+  });
+  const entropy = -vals.reduce((s,v) => s + (v > 0 ? v * Math.log2(v+0.001) : 0), 0);
+  html += `<div style="margin-top:14px;padding:10px 12px;background:var(--off-white);border:1px solid var(--border);border-radius:8px;">
+    <span style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text-light);">ENTROPY</span>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:.88rem;color:${color};font-weight:700;float:right;">${entropy.toFixed(2)} bits</span>
+  </div>`;
+  statsEl.innerHTML = html;
+}
+
+function setFig10(t, phase, btn) {
+  if (t !== null) {
+    fig10Time = t;
+    document.querySelectorAll('#fig10tabs .fig-tab').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+  }
+  if (phase !== null) {
+    fig10Phase = phase;
+    document.querySelectorAll('#fig10phaseBtns .fig-phase-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+  }
+  drawRadar(fig10Time, fig10Phase);
+}
+drawRadar(0, 'onboard');
+
+// ─── FIGURES 11-15: Full network canvas ─────────────────
+const NET_ANNOTATIONS = [
+  '📍 t=0 (Fig 11): Sparse graph with mostly Onboarding users. Isolated triads begin forming around early adopters. Hub nodes 30, 59, 63 emerge with preferential attachment.',
+  '📍 t=1 (Fig 12): Network densifies rapidly. Engagement phase users cluster around hubs. Triadic closure visible in groups (43-30-60) and (35-48-37). Weak bridge ties connect periphery.',
+  '📍 t=2 (Fig 13): Identity hubs (22, 35, 90) dominate. Dense communities separate from peripheral users. First Drift nodes appear, weakly connected with high topic entropy.',
+  '📍 t=3 (Fig 14): Community consolidation. Hubs (37, 42, 36) maintain dense cores. Drift users cluster in homophilic echo-chambers. Dormancy users are structurally isolated.',
+  '📍 t=4 (Fig 15): Mature network with stable cores and peripheral assimilation. Dormancy has absorbed isolated nodes. Structural balance visible between core hubs and bridging weak ties.',
+];
+
+// Rich node layout for full canvas (900×480 viewBox)
+const fullNetNodes = [
+  // t=0
+  [
+    {x:120,y:90,r:9,p:'onboard'},{x:230,y:70,r:8,p:'onboard'},{x:340,y:95,p:'onboard',r:7},
+    {x:450,y:65,r:8,p:'onboard'},{x:560,y:90,r:7,p:'onboard'},{x:660,y:75,r:8,p:'onboard'},
+    {x:780,y:100,r:7,p:'onboard'},{x:100,y:220,r:8,p:'onboard'},{x:200,y:200,r:9,p:'engage'},
+    {x:320,y:190,r:8,p:'engage'},{x:430,y:210,r:10,p:'engage'},{x:540,y:185,r:8,p:'onboard'},
+    {x:650,y:210,r:8,p:'onboard'},{x:770,y:200,r:7,p:'onboard'},{x:155,y:340,r:7,p:'onboard'},
+    {x:270,y:320,r:8,p:'onboard'},{x:390,y:340,r:7,p:'onboard'},{x:500,y:325,r:9,p:'engage'},
+    {x:620,y:340,r:7,p:'onboard'},{x:730,y:330,r:8,p:'onboard'},{x:840,y:310,r:7,p:'onboard'},
+    {x:180,y:430,r:7,p:'onboard'},{x:360,y:420,r:8,p:'onboard'},{x:530,y:425,r:7,p:'onboard'},
+    {x:700,y:415,r:7,p:'onboard'},{x:840,y:430,r:6,p:'onboard'},
+  ],
+  // t=1
+  [
+    {x:120,y:90,r:9,p:'onboard'},{x:230,y:68,r:8,p:'onboard'},{x:345,y:90,r:9,p:'engage'},
+    {x:455,y:62,r:8,p:'onboard'},{x:565,y:88,r:9,p:'engage'},{x:665,y:72,r:9,p:'engage'},
+    {x:782,y:98,r:8,p:'onboard'},{x:100,y:218,r:10,p:'engage'},{x:204,y:196,r:11,p:'engage'},
+    {x:325,y:188,r:10,p:'engage'},{x:435,y:208,r:13,p:'engage'},{x:545,y:182,r:10,p:'engage'},
+    {x:655,y:208,r:9,p:'engage'},{x:772,y:198,r:8,p:'onboard'},{x:158,y:338,r:8,p:'onboard'},
+    {x:272,y:318,r:10,p:'engage'},{x:392,y:338,r:9,p:'engage'},{x:505,y:322,r:12,p:'engage'},
+    {x:622,y:338,r:8,p:'engage'},{x:734,y:328,r:9,p:'identity'},{x:842,y:308,r:7,p:'onboard'},
+    {x:182,y:428,r:7,p:'onboard'},{x:362,y:418,r:9,p:'engage'},{x:534,y:422,r:8,p:'engage'},
+    {x:702,y:412,r:9,p:'identity'},{x:842,y:428,r:6,p:'onboard'},
+  ],
+  // t=2
+  [
+    {x:120,y:88,r:8,p:'onboard'},{x:228,y:66,r:7,p:'onboard'},{x:344,y:88,r:10,p:'engage'},
+    {x:454,y:60,r:8,p:'onboard'},{x:564,y:85,r:11,p:'identity'},{x:664,y:70,r:12,p:'identity'},
+    {x:780,y:96,r:7,p:'onboard'},{x:98,y:215,r:10,p:'engage'},{x:202,y:193,r:13,p:'identity'},
+    {x:323,y:185,r:11,p:'engage'},{x:433,y:205,r:15,p:'identity'},{x:543,y:180,r:11,p:'engage'},
+    {x:653,y:205,r:10,p:'engage'},{x:770,y:195,r:8,p:'onboard'},{x:156,y:335,r:8,p:'drift'},
+    {x:270,y:315,r:11,p:'engage'},{x:390,y:333,r:10,p:'engage'},{x:503,y:318,r:14,p:'identity'},
+    {x:620,y:333,r:9,p:'engage'},{x:732,y:325,r:12,p:'identity'},{x:840,y:305,r:6,p:'onboard'},
+    {x:180,y:425,r:7,p:'drift'},{x:360,y:415,r:10,p:'engage'},{x:532,y:418,r:9,p:'engage'},
+    {x:700,y:408,r:11,p:'identity'},{x:840,y:425,r:5,p:'onboard'},
+  ],
+  // t=3
+  [
+    {x:118,y:86,r:6,p:'dormancy',op:.35},{x:226,y:64,r:6,p:'dormancy',op:.38},{x:342,y:86,r:9,p:'engage'},
+    {x:452,y:58,r:6,p:'dormancy',op:.4},{x:562,y:82,r:13,p:'identity'},{x:662,y:67,r:14,p:'identity'},
+    {x:778,y:93,r:5,p:'dormancy',op:.35},{x:96,y:212,r:8,p:'engage'},{x:200,y:190,r:14,p:'identity'},
+    {x:320,y:182,r:11,p:'drift'},{x:430,y:202,r:16,p:'identity'},{x:540,y:177,r:10,p:'drift'},
+    {x:650,y:202,r:10,p:'engage'},{x:768,y:192,r:5,p:'dormancy',op:.4},{x:154,y:332,r:8,p:'drift'},
+    {x:268,y:312,r:11,p:'engage'},{x:388,y:330,r:9,p:'drift'},{x:501,y:315,r:15,p:'identity'},
+    {x:618,y:330,r:8,p:'drift'},{x:730,y:322,r:13,p:'identity'},{x:838,y:302,r:5,p:'dormancy',op:.35},
+    {x:178,y:422,r:5,p:'dormancy',op:.38},{x:358,y:412,r:9,p:'drift'},{x:530,y:415,r:8,p:'drift'},
+    {x:698,y:405,r:12,p:'identity'},{x:838,y:422,r:4,p:'dormancy',op:.35},
+  ],
+  // t=4
+  [
+    {x:116,y:84,r:4,p:'dormancy',op:.28},{x:224,y:62,r:5,p:'dormancy',op:.30},{x:340,y:84,r:8,p:'engage'},
+    {x:450,y:56,r:4,p:'dormancy',op:.28},{x:560,y:80,r:14,p:'identity'},{x:660,y:64,r:16,p:'identity'},
+    {x:776,y:90,r:4,p:'dormancy',op:.28},{x:94,y:209,r:6,p:'dormancy',op:.35},{x:198,y:188,r:15,p:'identity'},
+    {x:318,y:180,r:10,p:'drift'},{x:428,y:200,r:17,p:'identity'},{x:538,y:174,r:9,p:'drift'},
+    {x:648,y:199,r:9,p:'engage'},{x:766,y:189,r:4,p:'dormancy',op:.30},{x:152,y:329,r:7,p:'drift'},
+    {x:266,y:309,r:10,p:'engage'},{x:386,y:327,r:8,p:'drift'},{x:499,y:312,r:16,p:'identity'},
+    {x:616,y:327,r:7,p:'drift'},{x:728,y:319,r:14,p:'identity'},{x:836,y:299,r:4,p:'dormancy',op:.28},
+    {x:176,y:419,r:4,p:'dormancy',op:.28},{x:356,y:409,r:8,p:'drift'},{x:528,y:412,r:7,p:'drift'},
+    {x:696,y:402,r:13,p:'identity'},{x:836,y:419,r:3,p:'dormancy',op:.28},
+  ],
+];
+
+const fullNetEdges = [
+  [[0,1],[1,2],[2,3],[4,5],[5,6],[7,8],[8,9],[9,10],[10,11],[11,12],[14,15],[15,16],[16,17],[17,18],[21,22],[22,23]],
+  [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[7,8],[8,9],[9,10],[10,11],[10,12],[10,17],[11,12],[14,15],[15,16],[16,17],[17,18],[18,19],[21,22],[22,23],[23,24],[24,19],[12,19]],
+  [[0,1],[1,2],[2,3],[4,5],[5,6],[7,8],[8,9],[9,10],[10,11],[10,12],[10,17],[10,24],[11,12],[11,5],[14,15],[15,16],[16,17],[17,18],[18,19],[19,24],[21,22],[22,23],[23,24],[14,8],[2,9]],
+  [[2,3],[4,5],[5,6],[7,8],[8,9],[9,10],[10,11],[10,17],[10,24],[11,5],[15,16],[16,17],[17,18],[18,19],[19,24],[22,23],[23,24],[8,17],[10,19],[5,17]],
+  [[4,5],[5,6],[8,9],[9,10],[10,17],[10,24],[11,5],[15,16],[16,17],[17,18],[18,19],[19,24],[22,23],[23,24],[8,17],[10,19],[5,17],[10,5]],
+];
+
+let currentNetTime = 0;
+
+function drawFullNetwork(t) {
+  const canvas = document.getElementById('networkCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Background grid
+  ctx.strokeStyle = '#edebe8'; ctx.lineWidth = 1;
+  for (let x = 0; x <= W; x += 60) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = 0; y <= H; y += 60) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  const nodes = fullNetNodes[t];
+  const edges = fullNetEdges[t];
+
+  // Draw edges
+  edges.forEach(([a, b]) => {
+    const na = nodes[a], nb = nodes[b];
+    if (!na || !nb) return;
+    const grad = ctx.createLinearGradient(na.x, na.y, nb.x, nb.y);
+    const c1 = PHASE_COLS[na.p], c2 = PHASE_COLS[nb.p];
+    grad.addColorStop(0, c1 + '55');
+    grad.addColorStop(1, c2 + '55');
+    ctx.beginPath();
+    ctx.moveTo(na.x, na.y); ctx.lineTo(nb.x, nb.y);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+  });
+
+  // Draw nodes
+  nodes.forEach((n, i) => {
+    const col = PHASE_COLS[n.p];
+    const op = n.op || 1;
+    const r = n.r || 7;
+
+    // Glow for high-degree (large) nodes
+    if (r >= 12 && op === 1) {
+      const grd = ctx.createRadialGradient(n.x, n.y, r*0.4, n.x, n.y, r*2.2);
+      grd.addColorStop(0, col + '30');
+      grd.addColorStop(1, col + '00');
+      ctx.beginPath(); ctx.arc(n.x, n.y, r*2.2, 0, Math.PI*2);
+      ctx.fillStyle = grd; ctx.fill();
+    }
+
+    ctx.globalAlpha = op;
+    ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, Math.PI*2);
+    ctx.fillStyle = col; ctx.fill();
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 1.8; ctx.stroke();
+
+    // Node number
+    if (r >= 7) {
+      ctx.fillStyle = 'white';
+      ctx.font = `bold ${Math.max(r*0.7,8)}px DM Sans, sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(i+1, n.x, n.y);
+    }
+    ctx.globalAlpha = 1;
+  });
+  ctx.textBaseline = 'alphabetic';
+
+  // Timestamp
+  ctx.font = 'bold 14px JetBrains Mono, monospace';
+  ctx.fillStyle = '#4a4742'; ctx.textAlign = 'right';
+  ctx.fillText('t = ' + t, W - 20, 28);
+  ctx.textAlign = 'left';
+
+  // Update annotation
+  const ann = document.getElementById('netAnnotation');
+  if (ann) ann.textContent = NET_ANNOTATIONS[t];
+}
+
+function setNetTime(t, btn) {
+  currentNetTime = t;
+  document.querySelectorAll('#netTabs .fig-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  drawFullNetwork(t);
+}
+drawFullNetwork(0);
+
+// Re-draw on resize
+window.addEventListener('resize', () => {
+  drawFig9(currentFig9Time);
+  drawRadar(fig10Time, fig10Phase);
+  drawFullNetwork(currentNetTime);
+});
+
+</script>
+
+</body>
+</html>
