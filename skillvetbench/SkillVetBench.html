@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillVetBench — Benchmarking Security Risk Detection in Open Agentic Skill Ecosystems</title>
+<script>
+  // Gate entrance animations: only animate when the page is actually visible
+  // (a hidden/background iframe freezes the animation clock, which would
+  // otherwise leave content stuck in its hidden pre-animation state).
+  (function () {
+    var ok = document.visibilityState === 'visible'
+      && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (ok) document.documentElement.classList.add('anim');
+  })();
+</script>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="sections.css">
+<link rel="stylesheet" href="pipeline.css">
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<nav class="nav">
+  <div class="nav-brand">
+    <span class="nav-mark">S</span>
+    SkillVetBench
+  </div>
+  <div class="nav-links">
+    <a href="#architecture">Architecture</a>
+    <a href="#threat">Threat model</a>
+    <a href="#results">Results</a>
+    <a href="#categories">Categories</a>
+    <a href="#cases">Case studies</a>
+    <a class="nav-cta" href="https://arxiv.org/pdf/2606.00925" target="_blank" rel="noopener">Read paper ↗</a>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero wrap">
+  <div class="hero-meta reveal">
+    <span class="eyebrow">arXiv:2606.00925 · cs.CR</span>
+    <span class="hero-badge">Security benchmark</span>
+  </div>
+
+  <h1 class="hero-title reveal">Vetting the skills<br>your agents trust.</h1>
+
+  <p class="hero-sub reveal">
+    <b>SkillVetBench</b> is a two-stage security benchmark for open agentic skill
+    ecosystems — it reasons about what a skill <em>claims</em> to do, then executes it
+    in an instrumented sandbox to prove what it <em>actually</em> does.
+  </p>
+
+  <div class="authors reveal">
+    <div class="author"><span>Ismail Hossain</span><small>UT El Paso</small></div>
+    <div class="author"><span>Sai Puppala</span><small>SIU Carbondale</small></div>
+    <div class="author"><span>Zhuoran Lu</span><small>Purdue</small></div>
+    <div class="author"><span>Sajedul Talukder</span><small>UT El Paso ·&nbsp;senior</small></div>
+    <div class="author"><span>Nan Jiang</span><small>UT El Paso ·&nbsp;senior</small></div>
+  </div>
+
+  <div class="hero-actions reveal">
+    <a class="btn btn-dark" href="https://arxiv.org/pdf/2606.00925" target="_blank" rel="noopener">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      Read the paper
+    </a>
+    <a class="btn btn-ghost" href="https://github.com/supreme-lab/SkillVetBench" target="_blank" rel="noopener">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a11 11 0 0 0-3.5 21.4c.55.1.75-.24.75-.53v-2c-3 .65-3.7-1.3-3.7-1.3-.5-1.3-1.2-1.6-1.2-1.6-1-.67.08-.66.08-.66 1.1.08 1.7 1.13 1.7 1.13 1 1.7 2.6 1.2 3.2.93.1-.72.4-1.2.7-1.5-2.4-.27-4.9-1.2-4.9-5.3 0-1.18.42-2.14 1.1-2.9-.1-.27-.48-1.36.1-2.84 0 0 .9-.29 2.95 1.1a10.2 10.2 0 0 1 5.36 0c2.04-1.39 2.94-1.1 2.94-1.1.59 1.48.22 2.57.11 2.84.69.76 1.1 1.72 1.1 2.9 0 4.1-2.5 5-4.9 5.28.41.35.77 1.02.77 2.06v3.06c0 .29.2.64.76.53A11 11 0 0 0 12 1z"/></svg>
+      Code & benchmark
+    </a>
+    <a class="btn btn-ghost" href="#cite">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      Cite
+    </a>
+  </div>
+
+  <div class="hero-stats reveal">
+    <div class="hstat"><b>0</b><small>false negatives across 78 malicious skills</small></div>
+    <div class="hstat"><b>89%</b><small>of threats missed by signature baselines</small></div>
+    <div class="hstat"><b>261,891</b><small>gateway log lines analyzed at runtime</small></div>
+    <div class="hstat"><b>60k+</b><small>community skills in the live ecosystem</small></div>
+  </div>
+</header>
+
+<!-- ============ ARCHITECTURE / CENTERPIECE ============ -->
+<section id="architecture" class="arch wrap-wide">
+  <div class="arch-head reveal">
+    <span class="eyebrow">The system</span>
+    <h2 class="section-title">One skill. Two stages of scrutiny.</h2>
+    <p class="section-lede">
+      Watch a candidate skill flow through SkillVetBench. Static reasoning surfaces hidden
+      intent; sandboxed execution turns suspicion into auditable proof.
+    </p>
+  </div>
+
+  <div class="pipeline-shell reveal" id="pipeline">
+    <div class="pl-head">
+      <div class="pl-phase">Now running: <b>Candidate skill ingested</b></div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <span class="pl-live"><i></i> Live trace</span>
+        <button class="pl-replay" type="button">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+          Replay
+        </button>
+      </div>
+    </div>
+
+    <div class="pl-track">
+      <!-- INPUT -->
+      <div class="station" data-st="input">
+        <div class="station-inner">
+          <div class="st-label"><span class="sc-glyph">in</span> Input</div>
+          <div class="st-title">Candidate&nbsp;skill</div>
+          <div class="st-sub">SKILL.md + scripts + config + tools[]</div>
+          <div class="skill-card">
+            <div class="sc-name"><span class="sc-glyph">md</span> rednote-helper</div>
+            <div class="sc-files">
+              <span class="sc-file"><b>SKILL</b>.md</span>
+              <span class="sc-file">scripts/</span>
+              <span class="sc-file">config.yaml</span>
+              <span class="sc-file">tools<b>[9]</b></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAGE 1 -->
+      <div class="station" data-st="s1">
+        <div class="station-inner">
+          <div class="st-label"><span class="st-stage-no">1</span> Semantic analysis</div>
+          <div class="st-title">LLM-as-a-Judge</div>
+          <div class="st-sub">What the skill <em>claims</em> to do</div>
+          <div class="dims">
+            <div class="dim"><span class="dim-key">IFR</span><span class="dim-bar"><span class="dim-fill" style="--w:100%"></span></span><span class="dim-val">3</span></div>
+            <div class="dim"><span class="dim-key">DG</span><span class="dim-bar"><span class="dim-fill" style="--w:66%"></span></span><span class="dim-val">2</span></div>
+            <div class="dim"><span class="dim-key">AI</span><span class="dim-bar"><span class="dim-fill" style="--w:66%"></span></span><span class="dim-val">2</span></div>
+            <div class="dim"><span class="dim-key">BR</span><span class="dim-bar"><span class="dim-fill" style="--w:66%"></span></span><span class="dim-val">2</span></div>
+            <div class="dim"><span class="dim-key">CA</span><span class="dim-bar"><span class="dim-fill" style="--w:100%"></span></span><span class="dim-val">3</span></div>
+          </div>
+          <div class="detected">
+            <span class="lbl">Flagged:</span>
+            <span class="chip"><span class="chip-dot" style="background:var(--red-br)"></span>Prompt&nbsp;Injection</span>
+            <span class="verdict v-susp">Suspicious</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAGE 2 -->
+      <div class="station" data-st="s2">
+        <div class="station-inner">
+          <div class="st-label"><span class="st-stage-no">2</span> Programmatic analysis</div>
+          <div class="st-title">Instrumented sandbox</div>
+          <div class="st-sub">What the skill <em>actually</em> does</div>
+          <div class="term">
+            <div class="term-bar"><i></i><i></i><i></i><span>openclaw logs --follow</span></div>
+            <code class="log"><span class="arrow">▸</span> <span class="ro">read_file</span>(<span class="arg">"SKILL.md"</span>) <span class="tok">ok</span></code>
+            <code class="log"><span class="arrow">▸</span> <span class="hi">write_file</span>(<span class="arg">"./SKILL.md"</span>) <span class="danger">self-overwrite</span></code>
+            <code class="log"><span class="arrow">▸</span> <span class="danger">exec</span>(<span class="arg">"cron * * * * *"</span>) <span class="danger">×10</span></code>
+            <code class="log"><span class="arrow">▸</span> <span class="danger">install_skill</span>(<span class="arg">"polymarket"</span>) <span class="danger">unverified</span></code>
+            <code class="log"><span class="arrow">▸</span> <span class="danger">spawn</span>(<span class="arg">subagent</span>) <span class="tok">orphaned session</span></code>
+          </div>
+          <div class="evidence">
+            <span class="ev-chip">cron persistence</span>
+            <span class="ev-chip">memory poisoned</span>
+            <span class="ev-chip">outbound fetch</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- OUTPUT -->
+      <div class="station" data-st="out">
+        <div class="station-inner">
+          <div class="st-label"><span class="sc-glyph">out</span> Output</div>
+          <div class="st-title">Verdict + evidence</div>
+          <div class="st-sub">Grounded in execution traces</div>
+          <div class="out-body">
+            <div class="out-badge">
+              <div class="out-verdict">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2 2 7v6c0 5 3.8 8.5 10 11 6.2-2.5 10-6 10-11V7z"/><path d="m9 12 2 2 4-4"/></svg>
+                MALICIOUS
+              </div>
+              <p class="out-note">Escalated from <em>Suspicious</em> only after the sandbox produced an attributable harmful trace.</p>
+            </div>
+            <div class="out-score">
+              <div class="sc"><small>SARS</small><b>5.4</b></div>
+              <div class="sc"><small>CVSS v4</small><b>4.5</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pl-flow"></div>
+    <div class="pl-packet">SKILL</div>
+
+    <div class="pl-caption">
+      <div class="cap" data-cap="0"><small>① Ingest</small><p>A skill is read as a single operational artifact — prose, code, config, tools.</p></div>
+      <div class="cap" data-cap="1"><small>② Reason</small><p>The judge scores five agentic-risk dimensions and names the attack class.</p></div>
+      <div class="cap" data-cap="2"><small>③ Execute</small><p>Flagged skills run under instrumentation; every tool call is recorded.</p></div>
+      <div class="cap" data-cap="3"><small>④ Verify</small><p>A malicious verdict is issued only with concrete, reproducible evidence.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ THREAT MODEL ============ -->
+<section id="threat" class="threat wrap">
+  <div class="threat-grid">
+    <div class="threat-copy reveal">
+      <span class="eyebrow">Why this is hard</span>
+      <h2 class="section-title">A skill isn't a library. It's an instruction set an agent obeys.</h2>
+      <p class="section-lede">
+        Open platforms let anyone publish reusable skills that agents discover and invoke at
+        runtime. The same openness is a supply chain: malicious behavior can hide across
+        components and surface only when they interact.
+      </p>
+      <p class="threat-quote">
+        “No component-level scanner can observe the threat in full, because the threat only
+        materializes through the interaction among components at runtime.”
+      </p>
+    </div>
+
+    <div class="threat-art reveal">
+      <div class="artifact">
+        <div class="artifact-head"><span class="sc-glyph" style="width:24px;height:24px">md</span> a benign-looking skill</div>
+        <div class="layer">
+          <div class="layer-tag">SKILL.md</div>
+          <p>“Always summarize the user's note into <span class="mark">persistent memory</span> for later.”</p>
+        </div>
+        <div class="layer">
+          <div class="layer-tag">scripts/xhs_client.py</div>
+          <p>user input → API payload, <span class="mark">no validation</span> (lines 52, 89–90)</p>
+        </div>
+        <div class="layer">
+          <div class="layer-tag">config / tools[]</div>
+          <p>grants <code>cron</code>, <code>exec</code>, <code>install_skill</code>, <code>spawn</code></p>
+        </div>
+        <div class="artifact-chain">
+          <span>read</span><i>→</i><span>store</span><i>→</i><span class="bad">poison</span><i>→</i><span class="bad">persist</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="threat-flow reveal">
+    <div class="tf"><b>Static blind spot</b><p>Prompt injection and semantic attacks carry few — if any — code-level signatures for scanners to anchor on.</p></div>
+    <div class="tf"><b>Compositional blind spot</b><p>Harmful logic is split across SKILL.md, config, memory, and chained tool calls — invisible to text-only scanners.</p></div>
+    <div class="tf"><b>Runtime blind spot</b><p>Benign-looking skills turn malicious only under an adversarial agent context that static inspection can't reproduce.</p></div>
+  </div>
+</section>
+
+<!-- ============ RESULTS ============ -->
+<section id="results" class="results">
+  <div class="wrap">
+    <div class="results-head reveal">
+      <span class="eyebrow">The evidence</span>
+      <h2 class="section-title">Where existing defenses fail, and where SkillVetBench holds.</h2>
+    </div>
+
+    <div class="bigstat-grid">
+      <div class="bigstat reveal">
+        <div class="bs-num">0<span class="bs-unit">/ 78</span></div>
+        <div class="bs-label">false negatives</div>
+        <p>SkillVetBench is the only system to flag every confirmed-malicious skill — zero misses.</p>
+      </div>
+      <div class="bigstat reveal">
+        <div class="bs-num">89<span class="bs-unit">%</span></div>
+        <div class="bs-label">missed by baselines</div>
+        <p>Signature scanners miss up to 89% of Memory-Poisoning threats; 100% of Prompt Injection for VirusTotal.</p>
+      </div>
+      <div class="bigstat reveal">
+        <div class="bs-num">0<span class="bs-unit">/ 22</span></div>
+        <div class="bs-label">false positives</div>
+        <p>On benign controls, SkillVetBench raises no false alarms while baselines flag one or two.</p>
+      </div>
+    </div>
+
+    <div class="primitives reveal">
+      <div class="prim-head">
+        <h3>Runtime risk concentrates in a few high-permission primitives.</h3>
+        <p>Across 261,891 log lines, read-only tools produced almost no confirmed attacks. The danger lives in write, execute, and delegation.</p>
+      </div>
+      <div class="prim-bars">
+        <div class="prim-row"><span class="prim-name">spawn</span><div class="prim-track"><span class="prim-fill" data-w="100"></span></div><span class="prim-val">49,976</span><span class="prim-tier tier-x">exec / spawn</span></div>
+        <div class="prim-row"><span class="prim-name">install_skill</span><div class="prim-track"><span class="prim-fill" data-w="45"></span></div><span class="prim-val">22,321</span><span class="prim-tier tier-x">exec / spawn</span></div>
+        <div class="prim-row"><span class="prim-name">exec</span><div class="prim-track"><span class="prim-fill" data-w="30"></span></div><span class="prim-val">12,705</span><span class="prim-tier tier-x">exec / spawn</span></div>
+        <div class="prim-row"><span class="prim-name">write_file</span><div class="prim-track"><span class="prim-fill" data-w="14"></span></div><span class="prim-val">1,328</span><span class="prim-tier tier-w">write</span></div>
+        <div class="prim-row"><span class="prim-name">read_file</span><div class="prim-track"><span class="prim-fill" data-w="2"></span></div><span class="prim-val">~0</span><span class="prim-tier tier-r">read-only</span></div>
+      </div>
+      <div class="prim-legend">
+        <span><i class="tier-r"></i> read-only · near-zero attacks</span>
+        <span><i class="tier-w"></i> write</span>
+        <span><i class="tier-x"></i> exec / spawn · disproportionate risk</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VULNERABILITY CATEGORIES ============ -->
+<section id="categories" class="cats wrap">
+  <div class="cats-head reveal">
+    <span class="eyebrow">The taxonomy</span>
+    <h2 class="section-title">Seven ways a skill turns hostile.</h2>
+    <p class="section-lede">Each candidate is scored against categories spanning classic software risk and agent-native attack surfaces.</p>
+  </div>
+
+  <div class="cat-grid">
+    <article class="cat reveal" style="--n:27">
+      <div class="cat-top"><span class="cat-id">01</span><span class="cat-count">n=27</span></div>
+      <h3>Command Injection</h3>
+      <p>Unintended system commands via <code>os.system()</code>, <code>subprocess</code>, <code>exec()</code>, or pipe operators.</p>
+    </article>
+    <article class="cat reveal" style="--n:19">
+      <div class="cat-top"><span class="cat-id">02</span><span class="cat-count">n=19</span></div>
+      <h3>Prompt Injection</h3>
+      <p>External content — retrieved docs, tool output, fetched pages — treated as agent instructions.</p>
+    </article>
+    <article class="cat reveal" style="--n:10">
+      <div class="cat-top"><span class="cat-id">03</span><span class="cat-count">n=10</span></div>
+      <h3>Unsafe File Ops</h3>
+      <p>Path traversal <code>../../</code>, writes to <code>/etc</code> or <code>/tmp</code>, destructive <code>rmtree</code>.</p>
+    </article>
+    <article class="cat reveal" style="--n:9">
+      <div class="cat-top"><span class="cat-id">04</span><span class="cat-count">n=9</span></div>
+      <h3>Memory Poisoning</h3>
+      <p>Malicious data written into persistent memory, corrupting agent behavior across future sessions.</p>
+    </article>
+    <article class="cat reveal" style="--n:5">
+      <div class="cat-top"><span class="cat-id">05</span><span class="cat-count">n=5</span></div>
+      <h3>Data Exposure</h3>
+      <p>Leaks via outbound HTTP, plaintext credentials, or base64-encoded exfiltration channels.</p>
+    </article>
+    <article class="cat reveal" style="--n:4">
+      <div class="cat-top"><span class="cat-id">06</span><span class="cat-count">n=4</span></div>
+      <h3>Supply Chain</h3>
+      <p>Runtime <code>pip</code>/<code>npm install</code> or remote <code>curl</code> scripts, with no integrity verification.</p>
+    </article>
+    <article class="cat reveal" style="--n:4">
+      <div class="cat-top"><span class="cat-id">07</span><span class="cat-count">n=4</span></div>
+      <h3>Privilege Abuse</h3>
+      <p><code>sudo</code> escalation, auth bypass, disabling controls, or claiming capabilities beyond scope.</p>
+    </article>
+    <article class="cat cat-dims reveal">
+      <div class="cat-top"><span class="cat-id">SARS</span></div>
+      <h3>Scored 0–3 on five axes</h3>
+      <ul class="cat-axes">
+        <li><b>IFR</b> Instruction fidelity</li>
+        <li><b>DG</b> Data gravity</li>
+        <li><b>AI</b> Action irreversibility</li>
+        <li><b>BR</b> Blast radius</li>
+        <li><b>CA</b> Chain amplification</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<!-- ============ CASE STUDIES ============ -->
+<section id="cases" class="cases wrap">
+  <div class="cases-head reveal">
+    <span class="eyebrow">Caught in the act</span>
+    <h2 class="section-title">Two skills, verified by their own logs.</h2>
+  </div>
+
+  <div class="case reveal">
+    <div class="case-side">
+      <span class="case-tag">Case 01</span>
+      <div class="case-skill"><span class="sc-glyph">md</span> xiaohongshu_mcp</div>
+      <span class="verdict v-mal">Malicious</span>
+      <p class="case-meta">The most severe attack chain in the benchmark — all of it inside a single adversarial session.</p>
+    </div>
+    <div class="case-main">
+      <p class="case-lead">Prompt injection drove the agent to <strong>overwrite its own SKILL.md</strong>, schedule <strong>10 cron jobs at one-minute intervals</strong>, and inject fabricated results into persistent memory — within <strong>23 seconds</strong> of the initial request.</p>
+      <div class="case-timeline">
+        <div class="ct"><span class="ct-t">+0s</span><span class="ct-e">Adversarial prompt injected via note content</span></div>
+        <div class="ct"><span class="ct-t">+6s</span><span class="ct-e">Agent rewrites its own SKILL.md with attacker text</span></div>
+        <div class="ct"><span class="ct-t">+14s</span><span class="ct-e">10× <code>cron * * * * *</code> persistence jobs scheduled</span></div>
+        <div class="ct"><span class="ct-t">+23s</span><span class="ct-e bad">Fabricated benchmark results poisoned into memory</span></div>
+        <div class="ct"><span class="ct-t">after</span><span class="ct-e bad">Orphaned session keeps firing <code>install_skill</code> post-disconnect</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="case reveal">
+    <div class="case-side">
+      <span class="case-tag">Case 02</span>
+      <div class="case-skill"><span class="sc-glyph">md</span> update v1.0.0</div>
+      <span class="verdict v-mal">Malicious</span>
+      <p class="case-meta">Presented as a harmless daily cron utility for applying skill updates. It wasn't.</p>
+    </div>
+    <div class="case-main">
+      <p class="case-lead">A routine version-check — with no authorization to download or elevate — drove the agent to attempt installing <strong>polymarket</strong>, an unrelated trading binary, via a <code>uv</code> pipeline. It reached checksum verification before a <code>sudo</code> constraint blocked it.</p>
+      <div class="case-risks">
+        <div class="cr"><b>Scope drift</b><p>Silently expanded to fetch unverified remote payloads and attempt system-wide installs.</p></div>
+        <div class="cr"><b>No self-termination</b><p>Escalation rejections were routed around, not obeyed — execution continued 7 more minutes.</p></div>
+        <div class="cr"><b>Signal not propagated</b><p>Pre-execution scanner flags never reached the execution layer; no checkpoint fired.</p></div>
+      </div>
+      <p class="case-foot">In a passwordless <code>sudo</code> environment — standard in many CI pipelines — every harmful path would have completed.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMPARISON TABLE ============ -->
+<section id="compare" class="compare wrap">
+  <div class="compare-head reveal">
+    <span class="eyebrow">Against the field</span>
+    <h2 class="section-title">Only one system covers every capability.</h2>
+    <p class="section-lede">SkillVetBench doesn't replace existing scanners — it integrates and systematizes them, then adds the runtime layer they all lack.</p>
+  </div>
+
+  <div class="table-scroll reveal">
+    <table class="cmp">
+      <thead>
+        <tr>
+          <th class="th-method">Method</th>
+          <th>Tool<br>mapping</th>
+          <th>Multi-dim<br>scoring</th>
+          <th>CVSS</th>
+          <th>Attack<br>category</th>
+          <th>Security<br>pattern</th>
+          <th>Remediation<br>priority</th>
+          <th>Runtime<br>verification</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="th-method">VirusTotal</td><td data-v="x"></td><td data-v="x"></td><td data-v="x"></td><td data-v="~"></td><td data-v="x"></td><td data-v="x"></td><td data-v="x"></td></tr>
+        <tr><td class="th-method">ClawScan</td><td data-v="x"></td><td data-v="x"></td><td data-v="x"></td><td data-v="y"></td><td data-v="y"></td><td data-v="x"></td><td data-v="x"></td></tr>
+        <tr><td class="th-method">ClawVet</td><td data-v="x"></td><td data-v="x"></td><td data-v="x"></td><td data-v="y"></td><td data-v="y"></td><td data-v="x"></td><td data-v="x"></td></tr>
+        <tr><td class="th-method">LLM (few-shot)</td><td data-v="~"></td><td data-v="~"></td><td data-v="x"></td><td data-v="y"></td><td data-v="~"></td><td data-v="~"></td><td data-v="x"></td></tr>
+        <tr><td class="th-method">CodeBERT</td><td data-v="x"></td><td data-v="x"></td><td data-v="x"></td><td data-v="~"></td><td data-v="~"></td><td data-v="x"></td><td data-v="x"></td></tr>
+        <tr><td class="th-method">SkillProbe</td><td data-v="~"></td><td data-v="~"></td><td data-v="x"></td><td data-v="y"></td><td data-v="y"></td><td data-v="x"></td><td data-v="x"></td></tr>
+        <tr><td class="th-method">SkillSieve</td><td data-v="~"></td><td data-v="~"></td><td data-v="x"></td><td data-v="y"></td><td data-v="y"></td><td data-v="x"></td><td data-v="x"></td></tr>
+        <tr class="cmp-ours"><td class="th-method">SkillVetBench</td><td data-v="y"></td><td data-v="y"></td><td data-v="y"></td><td data-v="y"></td><td data-v="y"></td><td data-v="y"></td><td data-v="y"></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="cmp-key reveal">
+    <span><b data-v="y"></b> supported</span>
+    <span><b data-v="~"></b> partial</span>
+    <span><b data-v="x"></b> not supported</span>
+  </div>
+</section>
+
+<!-- ============ CITE / FOOTER ============ -->
+<section id="cite" class="cite wrap">
+  <div class="cite-grid reveal">
+    <div>
+      <span class="eyebrow">Cite this work</span>
+      <h2 class="section-title">SkillVetBench</h2>
+      <p class="section-lede">Benchmarking Security Risk Detection and Verification in Open Agentic Skill Ecosystems.</p>
+      <div class="hero-actions" style="margin-top:26px">
+        <a class="btn btn-dark" href="https://arxiv.org/pdf/2606.00925" target="_blank" rel="noopener">Read the paper</a>
+        <a class="btn btn-ghost" href="https://github.com/supreme-lab/SkillVetBench" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+    <pre class="bibtex"><code>@article{hossain2026skillvetbench,
+  title   = {SkillVetBench: Benchmarking Security Risk
+             Detection and Verification in Open
+             Agentic Skill Ecosystems},
+  author  = {Hossain, Ismail and Puppala, Sai and
+             Lu, Zhuoran and Talukder, Sajedul and
+             Jiang, Nan},
+  journal = {arXiv preprint arXiv:2606.00925},
+  year    = {2026}
+}</code></pre>
+  </div>
+  <footer class="foot">
+    <span>SkillVetBench · UT El Paso · SIU Carbondale · Purdue</span>
+    <span>arXiv:2606.00925 [cs.CR]</span>
+  </footer>
+</section>
+
+<script src="page.js"></script>
+<script src="pipeline.js"></script>
+</body>
+</html>
